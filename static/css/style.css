@@ -1,8 +1,24 @@
+/* =========================
+   HAR GHAR SOLAR
+   MAIN STYLE
+========================= */
+
+
 *{
 
 margin:0;
+
 padding:0;
+
 box-sizing:border-box;
+
+}
+
+
+
+html{
+
+scroll-behavior:smooth;
 
 }
 
@@ -10,90 +26,407 @@ box-sizing:border-box;
 
 body{
 
-font-family:'Segoe UI',sans-serif;
+font-family:'Inter',sans-serif;
+
+background:#fff;
+
+overflow-x:hidden;
+
+color:#222;
 
 }
 
 
-/* TOP */
 
-.top-bar{
+
+
+
+/* =========================
+   LOADER
+========================= */
+
+
+#loader{
+
+position:fixed;
+
+inset:0;
 
 background:#063b2d;
+
+z-index:99999;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+flex-direction:column;
+
 color:white;
-padding:8px;
-font-size:14px;
 
 }
 
 
-/* NAV */
+
+.sun{
+
+font-size:55px;
+
+animation:spin 2s linear infinite;
+
+}
+
+
+
+#loader p{
+
+font-size:25px;
+
+font-weight:900;
+
+}
+
+
+
+@keyframes spin{
+
+100%{
+
+transform:rotate(360deg);
+
+}
+
+}
+
+
+
+
+
+
+
+/* =========================
+   PREMIUM TOP BAR
+========================= */
+
+
+.gov-header{
+
+background:
+
+linear-gradient(
+90deg,
+#063b2d,
+#0b7a45
+);
+
+
+color:white;
+
+padding:4px 0;
+
+border-bottom:2px solid #ffc107;
+
+}
+
+
+
+
+.gov-brand{
+
+display:flex;
+
+align-items:center;
+
+gap:8px;
+
+}
+
+
+
+
+.gov-icon{
+
+width:24px;
+
+height:24px;
+
+border-radius:50%;
+
+background:#ffc107;
+
+color:#063b2d;
+
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+
+font-size:13px;
+
+}
+
+
+
+.gov-brand h3{
+
+font-size:14px;
+
+font-weight:800;
+
+margin:0;
+
+letter-spacing:.3px;
+
+}
+
+
+
+
+.gov-brand p{
+
+display:none;
+
+}
+
+
+
+
+
+
+
+
+.header-contact{
+
+display:flex;
+
+justify-content:flex-end;
+
+align-items:center;
+
+gap:25px;
+
+}
+
+
+
+
+.header-contact div{
+
+display:flex;
+
+align-items:center;
+
+gap:6px;
+
+
+background:none;
+
+padding:0;
+
+}
+
+
+
+.header-contact i{
+
+font-size:13px;
+
+color:#ffc107;
+
+}
+
+
+
+.header-contact span{
+
+display:none;
+
+}
+
+
+
+
+.header-contact h5{
+
+font-size:13px;
+
+font-weight:700;
+
+margin:0;
+
+}
+
+
+
+
+/* =========================
+   NAVBAR
+========================= */
+
 
 .main-nav{
 
 background:white;
-padding:15px 0;
-box-shadow:0 5px 20px #0002;
+
+padding: 6px;px 0;
+
+box-shadow:
+
+0 5px 25px rgba(0,0,0,.08);
+
+
+position:sticky;
+
+top:0;
+
+z-index:999;
 
 }
 
 
 
-.navbar-brand{
+.solar-logo{
 
-font-size:28px;
-font-weight:800;
-color:#0c7c3c;
+display:flex;
 
-}
+align-items:center;
 
-
-.navbar-brand span{
-
-display:block;
-font-size:12px;
-color:#777;
-
-}
-
-
-.navbar-nav li{
-
-margin-left:25px;
-
-}
-
-
-.navbar-nav a{
+gap:12px;
 
 text-decoration:none;
-color:#111;
-font-weight:600;
 
 }
+
+
+
+.site-logo{
+
+width:45px !important;
+
+height:45px !important;
+
+object-fit:contain;
+
+}
+
+
+
+.logo-text h3{
+
+font-size:23px;
+
+font-weight:900;
+
+margin:0;
+
+color:#063b2d;
+
+}
+
+
+
+.logo-text span{
+
+font-size:13px;
+
+font-weight:600;
+
+color:#666;
+
+}
+
+
+
+
+
+.navbar-nav{
+
+align-items:center;
+
+gap:25px;
+
+}
+
+
+
+.navbar-nav .nav-link{
+
+font-size:16px;
+
+font-weight:800;
+
+color:#063b2d;
+
+}
+
+
+
+.navbar-nav .nav-link:hover{
+
+color:#00834d;
+
+}
+
+
+
 
 
 .quote-btn{
 
 background:#ffc107;
-padding:10px 20px;
-border-radius:30px;
+
+color:#063b2d;
+
+padding:11px 24px;
+
+border-radius:50px;
+
+font-weight:900;
+
+text-decoration:none;
+
+}
+
+
+
+.quote-btn:hover{
+
+background:#063b2d;
+
+color:white;
 
 }
 
 
 
 
-/* HERO */
 
+.govt-strip{
 
-/* GOVT STYLE HERO SLIDER */
+background:#ffc107;
+
+color:#063b2d;
+
+font-size:14px;
+
+padding:5px;
+
+font-weight:800;
+
+}
+/* =========================
+   HERO SLIDER
+========================= */
 
 
 .slide-img{
 
-
-height:90vh;
+height:85vh;
 
 background-size:cover;
 
@@ -101,11 +434,9 @@ background-position:center;
 
 position:relative;
 
-
 display:flex;
 
 align-items:center;
-
 
 }
 
@@ -113,19 +444,11 @@ align-items:center;
 
 .slide-img::before{
 
-
 content:"";
 
 position:absolute;
 
-top:0;
-
-left:0;
-
-width:100%;
-
-height:100%;
-
+inset:0;
 
 background:
 
@@ -133,48 +456,39 @@ linear-gradient(
 
 90deg,
 
-rgba(0,40,20,.8),
+rgba(0,50,25,.85),
 
-rgba(0,0,0,.3)
+rgba(0,0,0,.25)
 
 );
 
-
 }
-
 
 
 
 .img1{
 
-
 background-image:
-url("https://images.unsplash.com/photo-1509391366360-2e959784a276");
 
+url("../images/solar1.jpg");
 
 }
-
-
 
 
 .img2{
 
-
 background-image:
-url("https://images.unsplash.com/photo-1508514177221-188b1cf16e9d");
 
+url("../images/solar2.jpg");
 
 }
 
 
-
-
 .img3{
 
-
 background-image:
-url("https://images.unsplash.com/photo-1497440001374-f26997328c1b");
 
+url("../images/solar3.jpg");
 
 }
 
@@ -182,7 +496,6 @@ url("https://images.unsplash.com/photo-1497440001374-f26997328c1b");
 
 
 .hero-content{
-
 
 position:relative;
 
@@ -194,13 +507,11 @@ max-width:700px;
 
 color:white;
 
-
 }
 
 
 
 .hero-content h5{
-
 
 background:#ffc107;
 
@@ -210,10 +521,9 @@ padding:8px 18px;
 
 border-radius:5px;
 
-color:#063b2d;
-
 font-weight:900;
 
+color:#063b2d;
 
 }
 
@@ -221,59 +531,40 @@ font-weight:900;
 
 .hero-content h1{
 
-
-font-size:65px;
+font-size:58px;
 
 font-weight:900;
 
+margin:18px 0;
 
 }
+
 
 
 .hero-content p{
 
-
-font-size:22px;
-
+font-size:21px;
 
 }
 
 
 
-/* FOOTER */
 
 
-footer{
-
-background:#06241c;
-
-color:white;
-
-padding:60px 0 20px;
 
 
-}
+
+/* =========================
+   COMMON SECTION
+========================= */
 
 
-footer h3,
-footer h4{
+section{
 
-color:#ffc107;
-
+overflow:hidden;
 
 }
 
-
-/* SERVICES */
-
-
-.services-section{
-
-padding:90px 0;
-
-background:#f7faf9;
-
-}
 
 
 .section-title{
@@ -285,41 +576,68 @@ margin-bottom:50px;
 }
 
 
+
 .section-title h5{
 
-color:#0c7c3c;
+color:#00834d;
 
-font-weight:bold;
+font-weight:900;
 
 }
+
 
 
 .section-title h2{
 
 font-size:42px;
 
-font-weight:800;
+font-weight:900;
+
+color:#063b2d;
 
 }
 
 
 
 
-.service-card{
 
+
+
+
+
+/* =========================
+   SERVICES
+========================= */
+
+
+.services-section{
+
+padding:90px 0;
+
+background:#f7faf9;
+
+}
+
+
+
+.service-card{
 
 background:white;
 
 padding:40px 25px;
 
-border-radius:20px;
+border-radius:22px;
+
+height:100%;
 
 text-align:center;
 
-box-shadow:0 10px 30px #0001;
+box-shadow:
+
+0 12px 35px rgba(0,0,0,.08);
+
 
 transition:.4s;
-
 
 }
 
@@ -327,38 +645,48 @@ transition:.4s;
 
 .service-card:hover{
 
-transform:translateY(-15px);
+transform:translateY(-12px);
 
-box-shadow:0 20px 40px #0003;
+box-shadow:
 
+0 25px 50px rgba(0,0,0,.15);
 
 }
+
 
 
 
 .service-card i{
 
-
-font-size:55px;
+font-size:50px;
 
 color:#ffc107;
 
-margin-bottom:25px;
-
+margin-bottom:20px;
 
 }
+
 
 
 .service-card h3{
 
-font-weight:700;
+font-weight:900;
+
+color:#063b2d;
 
 }
 
 
 
 
-/* COUNTERS */
+
+
+
+
+
+/* =========================
+   COUNTERS
+========================= */
 
 
 .counter-area{
@@ -367,25 +695,34 @@ background:#063b2d;
 
 color:white;
 
-padding:60px;
+padding:60px 0;
+
+text-align:center;
 
 }
+
 
 
 .counter-area h2{
 
 font-size:45px;
 
-color:#ffc107;
-
 font-weight:900;
+
+color:#ffc107;
 
 }
 
 
 
 
-/* WHY */
+
+
+
+
+/* =========================
+   WHY SECTION
+========================= */
 
 
 .why-section{
@@ -395,7 +732,12 @@ padding:90px 0;
 }
 
 
-.why-img{
+
+.why-img,
+
+.subsidy-img,
+
+.about-img{
 
 width:100%;
 
@@ -405,24 +747,21 @@ object-fit:cover;
 
 border-radius:25px;
 
-}
+box-shadow:
 
-
-.why-section h5{
-
-color:#0c7c3c;
-
-font-weight:bold;
-
+0 15px 40px rgba(0,0,0,.2);
 
 }
+
 
 
 .why-section h2{
 
 font-size:42px;
 
-font-weight:800;
+font-weight:900;
+
+color:#063b2d;
 
 }
 
@@ -432,21 +771,25 @@ font-weight:800;
 
 list-style:none;
 
-font-size:18px;
-
 margin:15px 0;
 
+font-size:18px;
 
 }
 
-/* SUBSIDY */
 
 
-/* SUBSIDY SECTION */
+
+
+
+
+
+/* =========================
+   SUBSIDY
+========================= */
 
 
 .subsidy-section{
-
 
 padding:90px 0;
 
@@ -462,170 +805,67 @@ linear-gradient(
 
 );
 
-
 }
-
-
-
-.subsidy-section h5{
-
-color:#0c7c3c;
-
-font-weight:800;
-
-letter-spacing:1px;
-
-
-}
-
-
-
-.subsidy-section h2{
-
-
-font-size:42px;
-
-font-weight:900;
-
-color:#063b2d;
-
-
-}
-
-
-
-.subsidy-section p{
-
-
-font-size:17px;
-
-color:#555;
-
-
-}
-
-
-
-
-.subsidy-img{
-
-
-width:100%;
-
-height:430px;
-
-object-fit:cover;
-
-border-radius:25px;
-
-box-shadow:0 15px 40px #0003;
-
-
-}
-
-
-
 
 
 
 .subsidy-box{
 
-
 background:white;
 
 padding:35px;
 
-border-radius:20px;
+border-radius:22px;
 
-margin:30px 0;
+border-left:8px solid #ffc107;
 
 box-shadow:
 
-0 15px 40px #0002;
-
-
-border-left:
-
-8px solid #ffc107;
-
+0 15px 40px rgba(0,0,0,.1);
 
 }
-
-
 
 
 
 .subsidy-box h3{
 
-
-font-size:55px;
+font-size:50px;
 
 font-weight:900;
 
-color:#0c7c3c;
-
-
-}
-
-
-
-
-
-.subsidy-list{
-
-display:flex;
-
-flex-direction:column;
-
-gap:15px;
-
-margin-top:25px;
-
+color:#00834d;
 
 }
-
 
 
 
 .subsidy-list span{
 
+display:block;
 
 background:#f3fff8;
 
-padding:14px 18px;
+margin:12px 0;
 
-border-radius:12px;
+padding:14px;
 
-font-size:16px;
+border-radius:10px;
 
 font-weight:700;
 
-color:#063b2d;
-
-border:1px solid #d8f5e5;
-
-
-transition:.3s;
-
-
 }
 
 
 
-.subsidy-list span:hover{
 
 
-background:#0c7c3c;
-
-color:white;
-
-transform:translateX(10px);
 
 
-}
 
 
-/* EMI */
+/* =========================
+   EMI
+========================= */
 
 
 .emi-section{
@@ -634,507 +874,39 @@ background:
 
 linear-gradient(
 
-120deg,
+90deg,
 
 #063b2d,
 
-#0c7c3c
+#00834d
 
 );
 
+padding:70px;
 
 color:white;
 
-
-padding:70px;
-
+text-align:center;
 
 }
+
 
 
 .emi-section h2{
 
-
-font-size:42px;
-
-font-weight:800;
-
-
-}
-
-
-
-
-
-/* WHATSAPP */
-
-
-.whatsapp{
-
-
-position:fixed;
-
-right:25px;
-
-bottom:25px;
-
-width:60px;
-
-height:60px;
-
-
-background:#25d366;
-
-
-color:white;
-
-
-border-radius:50%;
-
-
-display:flex;
-
-align-items:center;
-
-justify-content:center;
-
-
-font-size:35px;
-
-text-decoration:none;
-
-
-z-index:999;
-
-
-box-shadow:0 10px 25px #0005;
-
-
-}
-
-/* SOLAR CALCULATOR */
-
-
-.calculator-section{
-
-
-padding:90px 0;
-
-background:#f7faf9;
-
-
-}
-
-
-
-.calculator-box{
-
-
-max-width:650px;
-
-margin:auto;
-
-background:white;
-
-padding:45px;
-
-border-radius:25px;
-
-box-shadow:0 15px 40px #0002;
-
-text-align:center;
-
-
-}
-
-
-
-
-
-.calculator-box input{
-
-
-width:100%;
-
-padding:18px;
-
-border-radius:50px;
-
-border:2px solid #ddd;
-
-font-size:18px;
-
-outline:none;
-
-
-}
-
-
-
-.calculator-box button{
-
-
-margin-top:25px;
-
-background:#ffc107;
-
-border:none;
-
-padding:15px 40px;
-
-border-radius:50px;
-
-font-size:18px;
-
-font-weight:800;
-
-
-}
-
-
-
-
-#solarResult{
-
-
-margin-top:30px;
-
-font-size:20px;
-
-font-weight:700;
-
-color:#063b2d;
-
-
-}
-
-.contact-page{
-
-padding:120px 0;
-
-background:#e8fff1;
-
-}
-
-
-
-.contact-page h2{
-
-text-align:center;
+font-size:40px;
 
 font-weight:900;
 
-margin-bottom:40px;
-
 }
-
-
-
-.contact-page form{
-
-max-width:600px;
-
-margin:auto;
-
-background:white;
-
-padding:40px;
-
-border-radius:25px;
-
-box-shadow:0 15px 40px #0002;
-
-
-}
-
-
-
-
-.contact-page input{
-
-width:100%;
-
-margin-bottom:20px;
-
-padding:15px;
-
-border-radius:10px;
-
-border:1px solid #ddd;
-
-
-}
-
-
-
-.contact-page button{
-
-
-width:100%;
-
-padding:15px;
-
-border:none;
-
-border-radius:50px;
-
-background:#ffc107;
-
-font-weight:800;
-
-
-}
-
-/* ADMIN DASHBOARD */
-
-
-.admin-section{
-
-padding:120px 0;
-
-background:#f7faf9;
-
-min-height:80vh;
-
-}
-
-
-
-.admin-header{
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
-margin-bottom:30px;
-
-
-}
-
-
-
-.admin-header h2{
-
-font-weight:900;
-
-color:#063b2d;
-
-}
-
-
-
-.table-box{
-
-background:white;
-
-padding:30px;
-
-border-radius:20px;
-
-box-shadow:0 15px 40px #0002;
-
-overflow:auto;
-
-}
-
-
-
-.table th{
-
-background:#063b2d !important;
-
-color:white !important;
-
-padding:15px;
-
-}
-
-
-
-.table td{
-
-padding:15px;
-
-font-weight:500;
-
-}
-
-
-.table a{
-
-text-decoration:none;
-
-font-weight:700;
-
-color:#0c7c3c;
-
-
-}
-
-/* PROJECTS */
-
-
-.projects-section{
-
-padding:90px 0;
-
-background:white;
-
-}
-
-
-
-.project-card{
-
-
-position:relative;
-
-overflow:hidden;
-
-border-radius:20px;
-
-box-shadow:0 15px 40px #0002;
-
-margin-bottom:30px;
-
-
-}
-
-
-
-.project-card img{
-
-
-width:100%;
-
-height:300px;
-
-object-fit:cover;
-
-transition:.5s;
-
-
-}
-
-
-
-.project-card:hover img{
-
-
-transform:scale(1.1);
-
-
-}
-
-
-
-
-.project-card div{
-
-
-position:absolute;
-
-bottom:0;
-
-left:0;
-
-right:0;
-
-padding:25px;
-
-
-background:
-
-linear-gradient(
-
-transparent,
-
-black
-
-);
-
-
-color:white;
-
-
-}
-
-
-
-
-/* REVIEWS */
-
-
-
-.review-section{
-
-padding:90px 0;
-
-background:#e8fff1;
-
-}
-
-
-
-.review-card{
-
-
-background:white;
-
-padding:35px;
-
-border-radius:20px;
-
-height:100%;
-
-box-shadow:0 15px 40px #0002;
-
-
-transition:.3s;
-
-}
-
-
-
-.review-card:hover{
-
-
-transform:translateY(-10px);
-
-
-}
-
-
-
-.review-card p{
-
-margin:20px 0;
-
-font-size:17px;
-
-
-}
-
-
-
-.review-card h4{
-
-color:#0c7c3c;
-
-font-weight:800;
-
-
-}
-
-/* PAGE BANNER */
+/* =========================
+   PAGE BANNER
+========================= */
 
 
 .page-banner{
 
-height:350px;
-
+height:320px;
 
 background:
 
@@ -1146,7 +918,7 @@ rgba(0,0,0,.6)
 
 ),
 
-url("https://images.unsplash.com/photo-1508514177221-188b1cf16e9d");
+url("../images/solar2.jpg");
 
 
 background-size:cover;
@@ -1156,15 +928,13 @@ background-position:center;
 
 display:flex;
 
-justify-content:center;
-
 align-items:center;
+
+justify-content:center;
 
 text-align:center;
 
-
 color:white;
-
 
 }
 
@@ -1172,11 +942,9 @@ color:white;
 
 .page-banner h1{
 
-
-font-size:55px;
+font-size:50px;
 
 font-weight:900;
-
 
 }
 
@@ -1186,7 +954,11 @@ font-weight:900;
 
 
 
-/* ABOUT */
+
+
+/* =========================
+   ABOUT
+========================= */
 
 
 .about-section{
@@ -1196,28 +968,12 @@ padding:90px 0;
 }
 
 
-.about-img{
-
-width:100%;
-
-height:430px;
-
-object-fit:cover;
-
-border-radius:25px;
-
-box-shadow:0 15px 40px #0003;
-
-}
-
-
 
 .about-section h5{
 
-color:#0c7c3c;
+color:#00834d;
 
-font-weight:bold;
-
+font-weight:900;
 
 }
 
@@ -1229,18 +985,19 @@ font-size:42px;
 
 font-weight:900;
 
+color:#063b2d;
 
 }
+
 
 
 .about-section li{
 
 list-style:none;
 
-margin:15px 0;
-
 font-size:18px;
 
+margin:15px 0;
 
 }
 
@@ -1248,16 +1005,19 @@ font-size:18px;
 
 
 
-/* MISSION */
+
+
+
+/* =========================
+   MISSION
+========================= */
 
 
 .mission-section{
 
-
 padding:80px 0;
 
 background:#e8fff1;
-
 
 }
 
@@ -1265,17 +1025,17 @@ background:#e8fff1;
 
 .mission-card{
 
-
 background:white;
 
-padding:45px;
-
-border-radius:25px;
+padding:40px;
 
 height:100%;
 
-box-shadow:0 15px 40px #0002;
+border-radius:22px;
 
+box-shadow:
+
+0 15px 40px rgba(0,0,0,.1);
 
 }
 
@@ -1283,60 +1043,136 @@ box-shadow:0 15px 40px #0002;
 
 .mission-card h3{
 
-color:#0c7c3c;
+color:#00834d;
 
 font-weight:900;
 
+}
+
+
+
+
+
+
+
+
+
+/* =========================
+   PROCESS
+========================= */
+
+
+.process-section{
+
+padding:90px 0;
+
+background:#f7faf9;
 
 }
 
-/* PACKAGES */
+
+
+.process-card{
+
+background:white;
+
+padding:35px;
+
+height:100%;
+
+text-align:center;
+
+border-radius:22px;
+
+box-shadow:
+
+0 15px 40px rgba(0,0,0,.08);
+
+transition:.3s;
+
+}
+
+
+
+.process-card:hover{
+
+transform:translateY(-10px);
+
+}
+
+
+
+.process-card h1{
+
+font-size:50px;
+
+font-weight:900;
+
+color:#ffc107;
+
+}
+
+
+
+.process-card h3{
+
+font-weight:900;
+
+color:#063b2d;
+
+}
+
+
+
+
+
+
+
+
+
+
+/* =========================
+   PACKAGES
+========================= */
 
 
 .package-section{
-
 
 padding:90px 0;
 
 background:#fff8df;
 
-
 }
-
 
 
 
 .package-card{
 
-
 background:white;
 
 padding:35px 25px;
 
-border-radius:25px;
-
 height:100%;
-
-box-shadow:0 15px 40px #0002;
 
 text-align:center;
 
+border-radius:22px;
+
+box-shadow:
+
+0 15px 40px rgba(0,0,0,.1);
+
 transition:.3s;
 
-
 }
-
 
 
 
 .package-card:hover{
 
-transform:translateY(-15px);
-
+transform:translateY(-12px);
 
 }
-
-
 
 
 
@@ -1346,8 +1182,7 @@ font-size:42px;
 
 font-weight:900;
 
-color:#0c7c3c;
-
+color:#00834d;
 
 }
 
@@ -1355,11 +1190,9 @@ color:#0c7c3c;
 
 .package-card ul{
 
-
 padding:0;
 
-margin:30px 0;
-
+margin:25px 0;
 
 }
 
@@ -1371,13 +1204,11 @@ list-style:none;
 
 margin:12px 0;
 
-
 }
 
 
 
 .package-card a{
-
 
 background:#ffc107;
 
@@ -1385,17 +1216,25 @@ padding:12px 25px;
 
 border-radius:30px;
 
-color:#111;
+font-weight:900;
 
-font-weight:800;
+color:#063b2d;
 
 text-decoration:none;
-
 
 }
 
 
-/* CONTACT INFO */
+
+
+
+
+
+
+
+/* =========================
+   CONTACT
+========================= */
 
 
 .contact-info-section{
@@ -1410,19 +1249,19 @@ background:#f7faf9;
 
 .info-card{
 
-
 background:white;
 
-padding:40px;
-
-border-radius:25px;
-
-text-align:center;
-
-box-shadow:0 15px 40px #0002;
+padding:35px;
 
 height:100%;
 
+text-align:center;
+
+border-radius:22px;
+
+box-shadow:
+
+0 15px 40px rgba(0,0,0,.1);
 
 }
 
@@ -1430,45 +1269,67 @@ height:100%;
 
 .info-card i{
 
-
-font-size:45px;
+font-size:42px;
 
 color:#ffc107;
 
 margin-bottom:20px;
 
+}
+
+
+
+.contact-page{
+
+padding:90px 0;
+
+background:#e8fff1;
 
 }
 
 
 
-.info-card h3{
+.contact-page input{
 
+width:100%;
+
+padding:15px;
+
+margin-bottom:18px;
+
+border-radius:12px;
+
+border:1px solid #ddd;
+
+}
+
+
+
+.contact-page button{
+
+width:100%;
+
+padding:15px;
+
+background:#ffc107;
+
+border:none;
+
+border-radius:50px;
 
 font-weight:900;
 
-color:#063b2d;
-
-
 }
 
-
-
-
-/* MAP */
 
 
 .map-box{
 
+height:450px;
 
-height:500px;
-
-border-radius:25px;
+border-radius:22px;
 
 overflow:hidden;
-
-box-shadow:0 15px 40px #0003;
-
 
 }
 
@@ -1480,115 +1341,6 @@ width:100%;
 
 height:100%;
 
-border:0;
-
-
-}
-
-
-
-.contact-page h5{
-
-
-color:#0c7c3c;
-
-font-weight:800;
-
-
-}
-
-
-
-.contact-page h2{
-
-
-font-size:40px;
-
-font-weight:900;
-
-
-}
-/* LOADER */
-
-
-#loader{
-
-
-position:fixed;
-
-top:0;
-
-left:0;
-
-
-width:100%;
-
-height:100%;
-
-
-background:#063b2d;
-
-
-z-index:99999;
-
-
-display:flex;
-
-flex-direction:column;
-
-align-items:center;
-
-justify-content:center;
-
-
-color:white;
-
-
-}
-
-
-
-.sun{
-
-
-font-size:70px;
-
-
-animation:spin 2s infinite linear;
-
-
-}
-
-
-
-
-#loader p{
-
-
-font-size:30px;
-
-font-weight:900;
-
-margin-top:20px;
-
-
-}
-
-
-
-
-@keyframes spin{
-
-
-100%{
-
-
-transform:rotate(360deg);
-
-
-}
-
-
 }
 
 
@@ -1596,130 +1348,613 @@ transform:rotate(360deg);
 
 
 
-html{
 
 
-scroll-behavior:smooth;
+
+/* =========================
+   ADMIN CRM
+========================= */
 
 
-}
-.govt-strip{
-
-
-background:#ffc107;
-
-color:#063b2d;
-
-font-weight:800;
-
-padding:8px;
-
-
-}
-/* GOV HEADER */
-
-
-.gov-header{
-
-
-background:#063b2d;
-
-color:white;
-
-padding:15px 0;
-
-border-bottom:5px solid #ffc107;
-
-
-}
-
-
-.gov-header h4{
-
-
-font-weight:900;
-
-margin:0;
-
-
-}
-
-
-.gov-header p{
-
-margin:0;
-
-font-size:14px;
-
-
-}
-/* PROCESS */
-
-
-.process-section{
-
+.admin-section{
 
 padding:90px 0;
 
 background:#f7faf9;
 
+}
+
+
+
+.admin-title{
+
+background:#063b2d;
+
+color:white;
+
+padding:30px;
+
+border-radius:22px;
+
+margin-bottom:40px;
 
 }
 
 
 
-.process-card{
-
+.dashboard-card{
 
 background:white;
 
 padding:35px;
 
+text-align:center;
+
+border-radius:22px;
+
+box-shadow:
+
+0 15px 40px rgba(0,0,0,.1);
+
+}
+
+
+
+.dashboard-card h1{
+
+font-size:45px;
+
+font-weight:900;
+
+color:#00834d;
+
+}
+
+
+
+.search-box{
+
+width:100%;
+
+padding:15px;
+
+border-radius:30px;
+
+border:2px solid #ddd;
+
+margin-bottom:30px;
+
+}
+
+
+
+.table-box{
+
+background:white;
+
+padding:25px;
+
 border-radius:20px;
 
-text-align:center;
+overflow:auto;
+
+box-shadow:
+
+0 15px 40px rgba(0,0,0,.1);
+
+}
+
+
+
+.table th{
+
+background:#063b2d !important;
+
+color:white !important;
+
+}
+/* =========================
+   PROJECTS
+========================= */
+
+
+.projects-section{
+
+padding:90px 0;
+
+background:white;
+
+}
+
+
+
+.project-card{
+
+position:relative;
+
+overflow:hidden;
+
+border-radius:22px;
+
+box-shadow:
+
+0 15px 40px rgba(0,0,0,.12);
+
+}
+
+
+
+.project-card img{
+
+width:100%;
+
+height:300px;
+
+object-fit:cover;
+
+transition:.5s;
+
+}
+
+
+
+.project-card:hover img{
+
+transform:scale(1.1);
+
+}
+
+
+
+.project-card div{
+
+position:absolute;
+
+bottom:0;
+
+left:0;
+
+right:0;
+
+padding:25px;
+
+color:white;
+
+background:
+
+linear-gradient(
+
+transparent,
+
+rgba(0,0,0,.9)
+
+);
+
+}
+
+
+
+
+
+
+
+
+/* =========================
+   REVIEWS
+========================= */
+
+
+.review-section{
+
+padding:90px 0;
+
+background:#e8fff1;
+
+}
+
+
+
+.review-card{
+
+background:white;
+
+padding:35px;
 
 height:100%;
 
-box-shadow:0 10px 30px #0002;
+border-radius:22px;
+
+box-shadow:
+
+0 15px 40px rgba(0,0,0,.1);
 
 transition:.3s;
 
-
 }
 
 
 
-.process-card:hover{
-
+.review-card:hover{
 
 transform:translateY(-10px);
 
+}
+
+
+
+
+
+
+
+
+
+/* =========================
+   FOOTER
+========================= */
+
+
+.premium-footer{
+
+background:
+
+linear-gradient(
+
+135deg,
+
+#052b20,
+
+#006b3c
+
+);
+
+
+color:white;
+
+padding:60px 0 20px;
 
 }
 
 
 
-.process-card h1{
+.premium-footer h3,
 
-
-font-size:55px;
-
-font-weight:900;
+.premium-footer h4{
 
 color:#ffc107;
 
+font-weight:900;
+
+margin-bottom:20px;
 
 }
 
 
 
-.process-card h3{
+.premium-footer p{
 
+color:#ddd;
+
+}
+
+
+
+.premium-footer a{
+
+display:block;
+
+color:#ddd;
+
+text-decoration:none;
+
+margin-bottom:10px;
+
+transition:.3s;
+
+}
+
+
+
+.premium-footer a:hover{
+
+color:#ffc107;
+
+padding-left:6px;
+
+}
+
+
+
+.footer-social i{
+
+width:40px;
+
+height:40px;
+
+background:#ffc107;
 
 color:#063b2d;
 
+border-radius:50%;
+
+line-height:40px;
+
+text-align:center;
+
+margin-right:8px;
+
+}
+
+
+
+.footer-bottom{
+
+text-align:center;
+
+color:#ddd;
+
+}
+
+
+
+
+
+
+
+
+
+/* =========================
+   FLOAT BUTTONS
+========================= */
+
+
+.quick-enquiry{
+
+position:fixed;
+
+left:20px;
+
+bottom:20px;
+
+background:#ffc107;
+
+color:#063b2d;
+
+padding:14px 25px;
+
+border-radius:40px;
+
 font-weight:900;
+
+text-decoration:none;
+
+z-index:999;
+
+box-shadow:
+
+0 10px 30px rgba(0,0,0,.3);
+
+animation:pulse 2s infinite;
+
+}
+
+
+
+@keyframes pulse{
+
+50%{
+
+transform:scale(1.08);
+
+}
+
+}
+
+
+
+.whatsapp{
+
+position:fixed;
+
+right:20px;
+
+bottom:20px;
+
+width:60px;
+
+height:60px;
+
+background:#25d366;
+
+color:white;
+
+border-radius:50%;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+font-size:35px;
+
+z-index:999;
+
+text-decoration:none;
+
+}
+
+
+
+
+
+
+
+
+
+
+/* =========================
+   MOBILE RESPONSIVE
+========================= */
+
+
+@media(max-width:768px){
+
+
+.gov-brand{
+
+justify-content:center;
+
+text-align:center;
+
+}
+
+
+
+.header-contact{
+
+margin-top:15px;
+
+justify-content:center;
+
+flex-direction:column;
+
+}
+
+
+
+.navbar-nav{
+
+gap:10px;
+
+text-align:center;
+
+padding-top:20px;
+
+}
+
+
+
+
+.site-logo{
+
+width:45px !important;
+
+height:45px !important;
+
+}
+
+
+
+.logo-text h3{
+
+font-size:20px;
+
+}
+
+
+
+.slide-img{
+
+height:70vh;
+
+}
+
+
+
+.hero-content{
+
+margin:0 25px;
+
+}
+
+
+
+.hero-content h1{
+
+font-size:36px;
+
+}
+
+
+
+.hero-content p{
+
+font-size:16px;
+
+}
+
+
+
+.section-title h2,
+
+.about-section h2,
+
+.why-section h2{
+
+font-size:30px;
+
+}
+
+
+
+.about-img,
+
+.why-img,
+
+.subsidy-img{
+
+height:280px;
+
+}
+
+
+
+.service-card,
+
+.package-card,
+
+.process-card,
+
+.review-card,
+
+.info-card{
+
+margin-bottom:25px;
+
+}
+
+
+
+.premium-footer{
+
+text-align:center;
+
+}
+
+
+
+.quick-enquiry{
+
+font-size:13px;
+
+padding:12px 18px;
+
+left:10px;
+
+}
+
+
+
+.whatsapp{
+
+width:50px;
+
+height:50px;
+
+font-size:28px;
+
+}
+
 
 
 }

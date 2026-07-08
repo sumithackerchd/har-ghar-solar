@@ -44,3 +44,39 @@ document.getElementById("loader").style.display="none";
 
 
 }
+
+function searchLead(){
+
+
+let input = document
+.getElementById("leadSearch")
+.value
+.toLowerCase();
+
+
+
+let rows = document
+.querySelectorAll("#leadTable tbody tr");
+
+
+
+rows.forEach(row=>{
+
+
+row.style.display =
+
+row.innerText.toLowerCase().includes(input)
+
+?
+
+""
+
+:
+
+"none";
+
+
+})
+
+
+}

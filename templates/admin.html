@@ -4,32 +4,26 @@
 {% block content %}
 
 
-
 <section class="admin-section">
 
 
 <div class="container">
 
 
-<div class="admin-header">
+<!-- DASHBOARD HEADER -->
 
 
-<div>
+<div class="admin-title">
 
 
 <h2>
-☀ Solar Customer Enquiries
+☀ Har Ghar Solar Dashboard
 </h2>
 
 
 <p>
-Manage all Har Ghar Solar customer leads
+Solar enquiry management portal
 </p>
-
-
-</div>
-
-
 
 
 <a href="/logout" class="btn btn-danger">
@@ -38,6 +32,109 @@ Logout
 
 </a>
 
+<a href="/download-leads"
+class="btn btn-warning">
+
+Download Excel
+
+</a>
+
+</div>
+
+
+
+
+
+<!-- STATS -->
+
+
+<div class="row mb-5">
+
+
+<div class="col-md-4">
+
+
+<div class="dashboard-card">
+
+
+<h1>
+
+{{ leads|length }}
+
+</h1>
+
+
+<p>
+
+Total Enquiries
+
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="col-md-4">
+
+
+<div class="dashboard-card">
+
+
+<h1>
+
+☀
+
+</h1>
+
+
+<p>
+
+Solar Leads
+
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="col-md-4">
+
+
+<div class="dashboard-card">
+
+
+<h1>
+
+UP
+
+</h1>
+
+
+<p>
+
+Service Area
+
+</p>
+
+
+</div>
+
+
+</div>
+
+
 
 
 </div>
@@ -47,10 +144,43 @@ Logout
 
 
 
+
+<!-- SEARCH -->
+
+
+<input
+
+type="text"
+
+id="leadSearch"
+
+placeholder="Search customer..."
+
+class="search-box"
+
+onkeyup="searchLead()"
+
+>
+
+
+
+
+
+
+
+
+<!-- TABLE -->
+
+
 <div class="table-box">
 
 
-<table class="table table-hover align-middle">
+<table 
+
+class="table table-hover"
+
+id="leadTable">
+
 
 
 <thead>
@@ -59,35 +189,18 @@ Logout
 <tr>
 
 
-<th>
-#
-</th>
+<th>ID</th>
 
+<th>Name</th>
 
-<th>
-Customer Name
-</th>
+<th>Phone</th>
 
+<th>City</th>
 
-<th>
-Mobile
-</th>
+<th>Bill</th>
 
+<th>Action</th>
 
-<th>
-City
-</th>
-
-
-<th>
-Monthly Bill
-</th>
-
-<th>
-
-Action
-
-</th>
 
 </tr>
 
@@ -98,7 +211,9 @@ Action
 
 
 
+
 <tbody>
+
 
 
 {% for lead in leads %}
@@ -125,15 +240,9 @@ Action
 
 <td>
 
-<a href="tel:{{lead[2]}}">
-
 {{lead[2]}}
 
-</a>
-
-
 </td>
-
 
 
 
@@ -145,12 +254,13 @@ Action
 
 
 
-
 <td>
 
-₹ {{lead[4]}}
+₹{{lead[4]}}
 
 </td>
+
+
 
 <td>
 
@@ -163,54 +273,60 @@ target="_blank"
 
 href="https://wa.me/91{{lead[2]}}">
 
+
 WhatsApp
+
 
 </a>
 
 
 
 
-<a
+<a 
 
 class="btn btn-danger btn-sm"
 
-href="/delete/{{lead[0]}}"
+href="/delete/{{lead[0]}}">
 
-onclick="return confirm('Delete this lead?')"
-
->
 
 Delete
 
+
 </a>
+
 
 
 
 </td>
 
+
+
 </tr>
+
 
 
 {% endfor %}
 
 
 
+
 </tbody>
+
 
 
 </table>
 
 
-</div>
-
-
 
 </div>
 
+
+
+
+</div>
 
 
 </section>
-
 
 
 

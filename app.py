@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, session
 import sqlite3
-
+from flask import send_file
+import csv
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = "harghar_solar_secret"
@@ -27,7 +29,8 @@ def create_database():
 
         city TEXT,
 
-        bill TEXT
+        bill TEXT,
+        created_at TEXT
 
     )
 
@@ -99,13 +102,14 @@ def contact():
         cur=conn.cursor()
 
 
+        date = datetime.now().strftime("%d-%m-%Y %I:%M %p")
+
+
         cur.execute(
 
-        "INSERT INTO leads(name,phone,city,bill) VALUES(?,?,?,?)",
+        "INSERT INTO leads(name,phone,city,bill,created_at) VALUES(?,?,?,?,?)",
 
-        (name,phone,city,bill)
-
-        )
+        (name,phone,city,bill,date))
 
 
         conn.commit()
@@ -135,7 +139,7 @@ def admin_login():
         password=request.form["password"]
 
 
-        if username=="admin" and password=="12345":
+        if username=="admin" and password=="Solar@2026":
 
             session["admin"]=True
 
@@ -210,6 +214,70 @@ def delete(id):
 
     return redirect("/admin")
 
+@app.route("/download-leads")
+
+
+def download_leads():
+
+
+    if "admin" not in session:
+
+        return redirect("/admin-login")
+
+
+    conn = sqlite3.connect("solar.db")
+
+    cur = conn.cursor()
+
+
+    cur.execute("SELECT * FROM leads")
+
+    leads = cur.fetchall()
+
+
+    conn.close()
+
+
+
+    with open("solar_leads.csv","w",newline="") as file:
+
+
+        writer = csv.writer(file)
+
+
+        writer.writerow(
+
+        [
+
+        "ID",
+
+        "Name",
+
+        "Phone",
+
+        "City",
+
+        "Bill",
+
+        "Date"
+
+        ]
+
+        )
+
+
+
+        writer.writerows(leads)
+
+
+
+    return send_file(
+
+    "solar_leads.csv",
+
+    as_attachment=True
+
+    )
 
 @app.route("/logout")
 
