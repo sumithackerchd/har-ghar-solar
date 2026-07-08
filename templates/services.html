@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+
+
+<!-- SERVICE HERO -->
+
+
+<section class="page-banner">
+
+
+<div>
+
+
+<h1>
+Our Solar Solutions
+</h1>
+
+
+<p>
+Smart Renewable Energy Solutions For Every Need
+</p>
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+
+<!-- SERVICES -->
+
+
+<section class="services-section">
+
+
+<div class="container">
+
+
+<div class="section-title">
+
+
+<h5>
+WHAT WE OFFER
+</h5>
+
+
+<h2>
+Our Professional Solar Services
+</h2>
+
+
+</div>
+
+
+
+
+
+<div class="row">
+
+
+
+<div class="col-md-4">
+
+
+<div class="service-card">
+
+
+<i class="fa-solid fa-house"></i>
+
+
+<h3>
+Home Rooftop Solar
+</h3>
+
+
+<p>
+Complete residential rooftop solar installation with subsidy support.
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<div class="col-md-4">
+
+
+<div class="service-card">
+
+
+<i class="fa-solid fa-building"></i>
+
+
+<h3>
+Commercial Solar
+</h3>
+
+
+<p>
+Solar power systems for offices, schools, hospitals and businesses.
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<div class="col-md-4">
+
+
+<div class="service-card">
+
+
+<i class="fa-solid fa-screwdriver-wrench"></i>
+
+
+<h3>
+Solar Maintenance
+</h3>
+
+
+<p>
+AMC, cleaning and maintenance solutions for better performance.
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+
+</div>
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+
+<!-- SOLAR PACKAGES -->
+
+
+<section class="package-section">
+
+
+<div class="container">
+
+
+<div class="section-title">
+
+
+<h5>
+SOLAR PACKAGES
+</h5>
+
+
+<h2>
+Choose Your Solar Plan
+</h2>
+
+
+</div>
+
+
+
+
+
+
+<div class="row">
+
+
+
+{% set packages = [
+
+("1 KW","Small Homes"),
+
+("2 KW","Medium Homes"),
+
+("3 KW","Family Homes"),
+
+("5 KW","Large Homes")
+
+] %}
+
+
+
+{% for p in packages %}
+
+
+
+<div class="col-md-3">
+
+
+<div class="package-card">
+
+
+<h3>
+
+{{p[0]}}
+
+</h3>
+
+
+<p>
+
+{{p[1]}}
+
+</p>
+
+
+
+<ul>
+
+
+<li>✔ Premium Solar Panels</li>
+
+<li>✔ Installation Included</li>
+
+<li>✔ Subsidy Assistance</li>
+
+<li>✔ 25 Years Warranty</li>
+
+
+
+</ul>
+
+
+
+<a href="/contact">
+
+Get Quote
+
+</a>
+
+
+
+</div>
+
+
+</div>
+
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+</section>
+
+
+
+
+
+{% endblock %}
