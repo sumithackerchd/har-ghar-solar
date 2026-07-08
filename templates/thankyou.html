@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+
+
+<section class="thank-section">
+
+
+<div class="thank-box">
+
+
+<div class="thank-icon">
+
+✓
+
+</div>
+
+
+
+<h1>
+
+Thank You {{name}}
+
+</h1>
+
+
+
+<p>
+
+Your solar enquiry has been submitted successfully.
+
+</p>
+
+
+
+
+<h4>
+
+Our solar expert will contact you shortly ☀️
+
+</h4>
+
+
+
+
+
+<a 
+
+href="https://wa.me/919876543210?text=Hello, I submitted solar enquiry. My name is {{name}} and city is {{city}}"
+
+class="whatsapp-btn"
+
+target="_blank">
+
+
+Chat On WhatsApp
+
+
+</a>
+
+
+
+
+<a href="/" class="home-btn">
+
+
+Back To Home
+
+
+</a>
+
+
+
+
+</div>
+
+
+</section>
+
+
+{% endblock %}

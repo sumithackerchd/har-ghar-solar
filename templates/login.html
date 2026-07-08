@@ -1,26 +1,70 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>
+Har Ghar Solar Admin
+</title>
 
 
-{% block content %}
+<link 
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+rel="stylesheet">
+
+
+<link 
+rel="stylesheet"
+href="{{ url_for('static', filename='css/style.css') }}">
+
+
+</head>
+
+
+<body>
 
 
 
-<section class="contact-page">
+<div class="login-page">
 
 
-<div class="container">
+
+<div class="login-box">
+
+
+
+<div class="login-logo">
+
+☀
+
+</div>
+
 
 
 <h2>
-Admin Login
+
+Har Ghar Solar CRM
+
 </h2>
+
+
+<p>
+
+Admin Management Portal
+
+</p>
+
 
 
 
 <form method="POST">
 
 
+
 <input
+
+type="text"
 
 name="username"
 
@@ -48,18 +92,25 @@ required
 
 <button>
 
-Login
+Login Dashboard
 
 </button>
+
 
 
 </form>
 
 
+
+
 </div>
 
 
-</section>
+</div>
 
 
-{% endblock %}
+
+</body>
+
+
+</html>

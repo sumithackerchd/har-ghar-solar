@@ -1,65 +1,33 @@
-{% extends 'base.html' %}
+{% extends 'admin_base.html' %}
 
 
-{% block content %}
+{% block admin %}
 
 
-<section class="admin-section">
 
+<h2 class="crm-title">
 
-<div class="container">
+Solar Lead Dashboard
 
-
-<!-- DASHBOARD HEADER -->
-
-
-<div class="admin-title">
-
-
-<h2>
-☀ Har Ghar Solar Dashboard
 </h2>
 
 
-<p>
-Solar enquiry management portal
-</p>
-
-
-<a href="/logout" class="btn btn-danger">
-
-Logout
-
-</a>
-
-<a href="/download-leads"
-class="btn btn-warning">
-
-Download Excel
-
-</a>
-
-</div>
 
 
 
+<div class="row mb-4">
 
-
-<!-- STATS -->
-
-
-<div class="row mb-5">
 
 
 <div class="col-md-4">
 
 
-<div class="dashboard-card">
+<div class="crm-card">
 
 
 <h1>
 
-{{ leads|length }}
+{{leads|length}}
 
 </h1>
 
@@ -83,7 +51,7 @@ Total Enquiries
 <div class="col-md-4">
 
 
-<div class="dashboard-card">
+<div class="crm-card">
 
 
 <h1>
@@ -112,7 +80,7 @@ Solar Leads
 <div class="col-md-4">
 
 
-<div class="dashboard-card">
+<div class="crm-card">
 
 
 <h1>
@@ -136,7 +104,6 @@ Service Area
 
 
 
-
 </div>
 
 
@@ -144,50 +111,52 @@ Service Area
 
 
 
+<input 
 
-<!-- SEARCH -->
 
-
-<input
-
-type="text"
+class="search-box"
 
 id="leadSearch"
 
-placeholder="Search customer..."
-
-class="search-box"
+placeholder="Search Lead..."
 
 onkeyup="searchLead()"
 
 >
 
 
+<!-- ANALYTICS CHART -->
 
 
+<div class="crm-chart">
 
 
+<h3>
+
+Monthly Solar Enquiries
+
+</h3>
 
 
-<!-- TABLE -->
+<canvas id="leadChart"></canvas>
+
+
+</div>
+
+
 
 
 <div class="table-box">
 
 
-<table 
-
-class="table table-hover"
-
+<table class="table"
 id="leadTable">
-
 
 
 <thead>
 
 
 <tr>
-
 
 <th>ID</th>
 
@@ -201,6 +170,10 @@ id="leadTable">
 
 <th>Date</th>
 
+<th>Status</th>
+
+<th>Notes</th>
+
 <th>Action</th>
 
 
@@ -212,8 +185,6 @@ id="leadTable">
 
 
 
-
-
 <tbody>
 
 
@@ -221,85 +192,115 @@ id="leadTable">
 {% for lead in leads %}
 
 
+
 <tr>
 
 
-<td>
-
-{{lead[0]}}
-
-</td>
+<td>{{lead[0]}}</td>
 
 
-
-<td>
-
-{{lead[1]}}
-
-</td>
+<td>{{lead[1]}}</td>
 
 
-
-<td>
-
-{{lead[2]}}
-
-</td>
+<td>{{lead[2]}}</td>
 
 
-
-<td>
-
-{{lead[3]}}
-
-</td>
+<td>{{lead[3]}}</td>
 
 
+<td>{{lead[4]}}</td>
 
-<td>
 
-₹{{lead[4]}}
-
-</td>
-
-<td>
-
-{{lead[5]}}
-
-</td>
-
+<td>{{lead[5]}}</td>
 <td>
 
 
-<a 
+<span class="status-badge">
 
-class="btn btn-success btn-sm"
+{{lead[6]}}
 
-target="_blank"
-
-href="https://wa.me/91{{lead[2]}}">
+</span>
 
 
-WhatsApp
+<br>
 
+
+<a href="/update-status/{{lead[0]}}/Contacted">
+
+Contacted
+
+</a>
+
+
+|
+
+<a href="/update-status/{{lead[0]}}/Installed">
+
+Installed
 
 </a>
 
 
 
+</td>
+<td>
+
+
+<form method="POST"
+action="/add-note/{{lead[0]}}">
+
+
+
+<input 
+
+class="note-input"
+
+name="note"
+
+value="{{lead[7]}}"
+
+placeholder="Add follow up note..."
+
+>
+
+
+
+<button class="note-btn">
+
+Save
+
+</button>
+
+
+
+
+</form>
+
+
+</td>
+
+<td>
+
 
 <a 
+class="btn btn-success btn-sm"
 
+href="https://wa.me/91{{lead[2]}}">
+
+WhatsApp
+
+</a>
+
+
+
+<a 
 class="btn btn-danger btn-sm"
 
 href="/delete/{{lead[0]}}">
 
-
 Delete
 
-
 </a>
-
 
 
 
@@ -315,7 +316,6 @@ Delete
 
 
 
-
 </tbody>
 
 
@@ -323,16 +323,7 @@ Delete
 </table>
 
 
-
 </div>
-
-
-
-
-</div>
-
-
-</section>
 
 
 

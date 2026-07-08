@@ -8,7 +8,6 @@ app = Flask(__name__)
 app.secret_key = "harghar_solar_secret"
 
 # DATABASE CREATE
-
 def create_database():
 
     conn = sqlite3.connect("solar.db")
@@ -17,8 +16,7 @@ def create_database():
 
 
     cur.execute("""
-
-
+    
     CREATE TABLE IF NOT EXISTS leads(
 
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,7 +28,12 @@ def create_database():
         city TEXT,
 
         bill TEXT,
-        created_at TEXT
+
+        created_at TEXT,
+
+        status TEXT DEFAULT 'New',
+
+        note TEXT DEFAULT ''
 
     )
 
@@ -80,9 +83,7 @@ def services():
 
 
 @app.route("/contact", methods=["GET","POST"])
-
 def contact():
-
 
     if request.method=="POST":
 
@@ -96,20 +97,19 @@ def contact():
         bill=request.form["bill"]
 
 
+        date=datetime.now().strftime("%d-%m-%Y %I:%M %p")
+
 
         conn=sqlite3.connect("solar.db")
 
         cur=conn.cursor()
 
 
-        date = datetime.now().strftime("%d-%m-%Y %I:%M %p")
-
-
         cur.execute(
 
-        "INSERT INTO leads(name,phone,city,bill,created_at) VALUES(?,?,?,?,?)",
+        "INSERT INTO leads(name,phone,city,bill,created_at,status) VALUES(?,?,?,?,?,?)",
 
-        (name,phone,city,bill,date))
+        (name,phone,city,bill,date,"New"))
 
 
         conn.commit()
@@ -117,9 +117,19 @@ def contact():
         conn.close()
 
 
+        return render_template(
 
-        return redirect("/")
+        "thankyou.html",
 
+        name=name,
+
+        phone=phone,
+
+        city=city,
+
+        bill=bill
+
+        )
 
 
     return render_template("contact.html")
@@ -180,7 +190,72 @@ def admin():
         leads=data
     )
 
+@app.route("/update-status/<int:id>/<status>")
 
+
+def update_status(id,status):
+
+
+    if "admin" not in session:
+
+        return redirect("/admin-login")
+
+
+    conn=sqlite3.connect("solar.db")
+
+    cur=conn.cursor()
+
+
+    cur.execute(
+
+    "UPDATE leads SET status=? WHERE id=?",
+
+    (status,id)
+
+    )
+
+
+    conn.commit()
+
+    conn.close()
+
+
+    return redirect("/admin")
+
+@app.route("/add-note/<int:id>", methods=["POST"])
+
+
+def add_note(id):
+
+
+    if "admin" not in session:
+
+        return redirect("/admin-login")
+
+
+    note=request.form["note"]
+
+
+    conn=sqlite3.connect("solar.db")
+
+    cur=conn.cursor()
+
+
+    cur.execute(
+
+    "UPDATE leads SET note=? WHERE id=?",
+
+    (note,id)
+
+    )
+
+
+    conn.commit()
+
+    conn.close()
+
+
+    return redirect("/admin")
 
 @app.route("/delete/<int:id>")
 

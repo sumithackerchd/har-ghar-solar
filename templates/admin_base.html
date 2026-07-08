@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+
+<title>
+
+Har Ghar Solar CRM
+
+</title>
+
+
+
+<link 
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+rel="stylesheet">
+
+
+<link
+rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
+
+
+
+<link 
+rel="stylesheet"
+href="{{ url_for('static', filename='css/style.css') }}">
+
+
+</head>
+
+
+
+<body>
+
+
+
+<div class="crm-layout">
+
+
+
+<!-- SIDEBAR -->
+
+
+<div class="crm-sidebar">
+
+
+<h3>
+
+☀ HGS CRM
+
+</h3>
+
+
+
+<a href="/admin">
+
+<i class="fa-solid fa-chart-line"></i>
+
+Dashboard
+
+</a>
+
+
+
+<a href="/download-leads">
+
+<i class="fa-solid fa-file-excel"></i>
+
+Export Leads
+
+</a>
+
+
+
+<a href="/logout">
+
+<i class="fa-solid fa-right-from-bracket"></i>
+
+Logout
+
+</a>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- CONTENT -->
+
+
+<div class="crm-content">
+
+
+{% block admin %}
+
+
+{% endblock %}
+
+
+</div>
+
+
+
+
+</div>
+
+
+<!-- CHART JS -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</body>
+
+
+</html>
