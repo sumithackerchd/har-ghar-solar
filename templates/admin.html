@@ -5,64 +5,157 @@
 
 
 
-<!-- DASHBOARD TITLE -->
+<!-- ==========================
+TITLE
+========================== -->
+
 
 <h1 class="crm-title">
 
-Solar Lead Dashboard
+☀ Solar Lead Dashboard
 
 </h1>
+
+
+
+
+
+
+
+<!-- ==========================
+STATUS CARDS
+========================== -->
+
+
+<div class="dashboard-grid">
+
+
+<div class="crm-card">
+
+<h1>{{leads|length}}</h1>
+
+<p>Total Leads</p>
+
+</div>
+
+
+
+
+<div class="crm-card">
+
+<h1>{{new_count}}</h1>
+
+<p>New Leads</p>
+
+</div>
+
+
+
+
+<div class="crm-card">
+
+<h1>{{contacted_count}}</h1>
+
+<p>Contacted</p>
+
+</div>
+
+
+
+
+
+<div class="crm-card">
+
+<h1>{{installed_count}}</h1>
+
+<p>Installed</p>
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- ==========================
+FOLLOW UP CRM ALERTS
+========================== -->
+
+
+<div class="follow-grid">
+
+
+
+<!-- TODAY -->
+
 
 {% if today_followups %}
 
 
-<div class="table-box">
+<div class="follow-card today-card">
 
 
 <h2>
+
 🔔 Today's Follow Ups
+
 </h2>
 
-
-<table class="table">
-
-
-<tr>
-
-<th>Name</th>
-
-<th>Phone</th>
-
-<th>Note</th>
-
-<th>Status</th>
-
-</tr>
 
 
 
 {% for f in today_followups %}
 
 
-<tr>
+
+<div class="follow-item">
 
 
-<td>
+<div>
+
+
+<h3>
+
 {{f.name}}
-</td>
+
+</h3>
 
 
-<td>
-{{f.phone}}
-</td>
+
+<p>
+
+📞 {{f.phone}}
+
+</p>
 
 
-<td>
-{{f.note}}
-</td>
+
+{% if f.note %}
+
+<p>
+
+📝 {{f.note}}
+
+</p>
+
+{% endif %}
 
 
-<td>
+
+
+</div>
+
+
+
+
+<div>
+
 
 <span class="status-badge {{f.status}}">
 
@@ -71,20 +164,21 @@ Solar Lead Dashboard
 </span>
 
 
-</td>
+</div>
 
 
 
-</tr>
+
+</div>
+
 
 
 {% endfor %}
 
 
-</table>
-
 
 </div>
+
 
 
 {% endif %}
@@ -92,88 +186,79 @@ Solar Lead Dashboard
 
 
 
-<!-- STATUS CARDS -->
-
-
-<div class="dashboard-grid">
 
 
 
-<div class="crm-card">
 
-<h1>
+<!-- OVERDUE -->
 
-{{leads|length}}
 
-</h1>
+{% if overdue_followups %}
+
+
+
+<div class="follow-card overdue-card">
+
+
+<h2>
+
+⚠️ Pending Follow Ups
+
+</h2>
+
+
+
+
+
+{% for f in overdue_followups %}
+
+
+
+
+<div class="follow-item">
+
+
+
+<div>
+
+
+
+<h3>
+
+{{f.name}}
+
+</h3>
+
+
 
 <p>
 
-Total Leads
+📅 {{f.follow_date}}
 
 </p>
 
-</div>
 
 
-
-
-
-<div class="crm-card">
-
-<h1>
-
-{{new_count}}
-
-</h1>
 
 <p>
 
-New Leads
+📞 {{f.phone}}
 
 </p>
 
-</div>
 
 
 
-
-
-<div class="crm-card">
-
-<h1>
-
-{{contacted_count}}
-
-</h1>
+{% if f.note %}
 
 <p>
 
-Contacted
+📝 {{f.note}}
 
 </p>
 
-</div>
+{% endif %}
 
-
-
-
-
-<div class="crm-card">
-
-<h1>
-
-{{installed_count}}
-
-</h1>
-
-<p>
-
-Installed
-
-</p>
-
-</div>
 
 
 
@@ -183,12 +268,51 @@ Installed
 
 
 
+<div>
+
+
+<span class="status-badge {{f.status}}">
+
+{{f.status}}
+
+</span>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+
+{% endif %}
+
+
+
+
+</div>
 
 
 
 
 
-<!-- CHART -->
+
+
+
+
+<!-- ==========================
+CHART
+========================== -->
 
 
 <div class="crm-chart">
@@ -196,15 +320,18 @@ Installed
 
 <h2>
 
-Monthly Solar Enquiries
+📈 Monthly Solar Enquiries
 
 </h2>
+
 
 
 <canvas id="leadChart"></canvas>
 
 
+
 </div>
+
 
 
 
@@ -223,21 +350,14 @@ class="search-box"
 
 id="leadSearch"
 
-placeholder="Search customer..."
+placeholder="🔍 Search customer..."
 
 onkeyup="searchLead()"
 
 >
-
-
-
-
-
-
-
-
-
-<!-- LEADS TABLE -->
+<!-- ==========================
+LEADS TABLE
+========================== -->
 
 
 <div class="table-box">
@@ -248,9 +368,7 @@ onkeyup="searchLead()"
 
 <thead>
 
-
 <tr>
-
 
 <th>ID</th>
 
@@ -268,12 +386,9 @@ onkeyup="searchLead()"
 
 <th>Action</th>
 
-
 </tr>
 
-
 </thead>
-
 
 
 
@@ -288,50 +403,19 @@ onkeyup="searchLead()"
 <tr>
 
 
-
-<td>
-
-{{lead.id}}
-
-</td>
+<td>{{lead.id}}</td>
 
 
+<td>{{lead.name}}</td>
 
 
-<td>
-
-{{lead.name}}
-
-</td>
+<td>{{lead.phone}}</td>
 
 
+<td>{{lead.city}}</td>
 
 
-<td>
-
-{{lead.phone}}
-
-</td>
-
-
-
-
-<td>
-
-{{lead.city}}
-
-</td>
-
-
-
-
-<td>
-
-{{lead.bill}}
-
-</td>
-
-
+<td>{{lead.bill}}</td>
 
 
 
@@ -359,8 +443,6 @@ onkeyup="searchLead()"
 
 
 
-
-
 <!-- FOLLOW UP -->
 
 
@@ -378,20 +460,15 @@ action="/add-note/{{lead.id}}"
 >
 
 
-
-
 <textarea
 
 class="note-input"
 
 name="note"
 
-placeholder="Customer follow up note"
+placeholder="Follow up note"
 
 >{{lead.note}}</textarea>
-
-
-
 
 
 
@@ -409,9 +486,6 @@ value="{{lead.follow_date}}"
 
 
 
-
-
-
 <button
 
 class="note-btn"
@@ -420,12 +494,9 @@ type="submit"
 
 >
 
-
-Save Follow Up
-
+💾 Save
 
 </button>
-
 
 
 
@@ -447,8 +518,6 @@ Save Follow Up
 <td>
 
 
-
-
 {% if lead.status != "Contacted" %}
 
 
@@ -460,17 +529,12 @@ href="/update-status/{{lead.id}}/Contacted"
 
 >
 
-
-Mark Contacted
-
+☎ Contacted
 
 </a>
 
 
 {% endif %}
-
-
-
 
 
 
@@ -487,17 +551,12 @@ href="/update-status/{{lead.id}}/Installed"
 
 >
 
-
-Mark Installed
-
+✅ Installed
 
 </a>
 
 
 {% endif %}
-
-
-
 
 
 
@@ -514,13 +573,9 @@ href="/delete/{{lead.id}}"
 
 >
 
-
-Delete
-
+🗑 Delete
 
 </a>
-
-
 
 
 
@@ -528,9 +583,8 @@ Delete
 
 
 
-
-
 </tr>
+
 
 
 {% endfor %}
@@ -538,7 +592,6 @@ Delete
 
 
 </tbody>
-
 
 
 </table>
@@ -554,27 +607,37 @@ Delete
 
 
 
-<!-- REAL CHART -->
+<!-- ==========================
+CHART SCRIPT
+========================== -->
 
 
 <script>
 
 
-let months=[];
+let months = [];
 
 
-let counts=[];
-
+let counts = [];
 
 
 
 {% for item in chart_data %}
 
 
-months.push("{{item[0]}}");
+months.push(
+
+"{{item[0]}}"
+
+);
 
 
-counts.push({{item[1]}});
+
+counts.push(
+
+{{item[1]}}
+
+);
 
 
 
@@ -585,7 +648,13 @@ counts.push({{item[1]}});
 
 
 
-let ctx = document.getElementById("leadChart");
+let ctx=document.getElementById(
+
+"leadChart"
+
+);
+
+
 
 
 
@@ -598,10 +667,12 @@ new Chart(ctx,{
 type:"line",
 
 
+
 data:{
 
 
 labels:months,
+
 
 
 datasets:[{
@@ -625,13 +696,16 @@ tension:.4
 }
 
 
+
 });
 
 
 }
 
 
+
 </script>
+
 
 
 

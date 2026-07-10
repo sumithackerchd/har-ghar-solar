@@ -4,13 +4,9 @@
 
 <head>
 
-
 <title>
-
 Har Ghar Solar CRM
-
 </title>
-
 
 
 <link 
@@ -23,33 +19,27 @@ rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
 
 
-
 <link 
 rel="stylesheet"
-href="{{ url_for('static', filename='css/admin.css') }}">
+href="{{ url_for('static', filename='css/admin.css') }}?v=20">
+
 
 </head>
-
 
 
 <body>
 
 
-
 <div class="crm-layout">
 
 
-
 <!-- SIDEBAR -->
-
 
 <div class="crm-sidebar">
 
 
 <h3>
-
 ☀ HGS CRM
-
 </h3>
 
 
@@ -63,7 +53,6 @@ Dashboard
 </a>
 
 
-
 <a href="/download-leads">
 
 <i class="fa-solid fa-file-excel"></i>
@@ -71,7 +60,6 @@ Dashboard
 Export Leads
 
 </a>
-
 
 
 <a href="/logout">
@@ -83,9 +71,7 @@ Logout
 </a>
 
 
-
 </div>
-
 
 
 
@@ -99,7 +85,6 @@ Logout
 
 {% block admin %}
 
-
 {% endblock %}
 
 
@@ -107,18 +92,17 @@ Logout
 
 
 
-
 </div>
 
 
-<!-- CHART JS -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
-</body>
 
+
+</body>
 
 </html>

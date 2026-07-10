@@ -8,7 +8,7 @@ from flask import (
 )
 
 from flask_sqlalchemy import SQLAlchemy
-
+from openpyxl.utils import get_column_letter
 from werkzeug.security import (
     generate_password_hash,
     check_password_hash
@@ -573,8 +573,16 @@ def admin():
 
     ).all()
 
+    overdue_followups = Lead.query.filter(
 
+        Lead.follow_date < today,
 
+        Lead.follow_date != "",
+
+        Lead.status != "Installed"
+
+    ).all()
+    
     users = User.query.all()
 
 
@@ -660,7 +668,9 @@ def admin():
 
         chart_data=chart_data,
 
-        today_followups=today_followups
+        today_followups=today_followups,
+
+        overdue_followups=overdue_followups
 
     )   
 
@@ -880,7 +890,6 @@ def delete(id):
 
 
 @app.route("/download-leads")
-
 def download():
 
 
@@ -896,7 +905,7 @@ def download():
 
 
 
-    data=[]
+    data = []
 
 
     for lead in leads:
@@ -904,37 +913,32 @@ def download():
 
         data.append({
 
-            "ID":lead.id,
+            "ID": lead.id,
 
-            "Customer Name":lead.name,
+            "Customer Name": lead.name,
 
-            "Mobile Number":lead.phone,
+            "Mobile Number": lead.phone,
 
-            "City":lead.city,
+            "City": lead.city,
 
-            "Monthly Bill":lead.bill,
+            "Monthly Bill": lead.bill,
 
-            "Status":lead.status,
+            "Status": lead.status,
 
-            "Follow Note":lead.note,
+            "Follow Note": lead.note,
 
-            "Follow Date":lead.follow_date,
+            "Follow Date": lead.follow_date,
 
-            "Updated By":lead.updated_by,
+            "Updated By": lead.updated_by,
 
-            "Created Date":lead.created_at
+            "Created Date": lead.created_at
 
         })
 
 
 
-    filename = os.path.join(
 
-        os.getcwd(),
-
-        f"Har_Ghar_Solar_CRM_{datetime.now().strftime('%d_%m_%Y')}.xlsx"
-
-    )
+    filename = "Har_Ghar_Solar_CRM.xlsx"
 
 
 
@@ -947,28 +951,34 @@ def download():
 
         index=False,
 
-        startrow=3,
-
-        engine="openpyxl"
+        startrow=3
 
     )
 
 
 
+
+
     wb = load_workbook(filename)
+
 
     ws = wb.active
 
 
-    ws.title="Solar Leads"
+    ws.title = "Solar Leads"
 
+
+
+
+    # =====================
+    # TITLE
+    # =====================
 
 
     ws.merge_cells("A1:J1")
 
 
-    ws["A1"]="☀ Har Ghar Solar CRM Report"
-
+    ws["A1"] = "☀ Har Ghar Solar CRM Report"
 
 
     ws["A1"].font = Font(
@@ -982,15 +992,13 @@ def download():
     )
 
 
-
     ws["A1"].fill = PatternFill(
 
-        fill_type="solid",
+        "solid",
 
-        fgColor="006B3F"
+        fgColor="007A3D"
 
     )
-
 
 
     ws["A1"].alignment = Alignment(
@@ -1000,6 +1008,12 @@ def download():
     )
 
 
+
+
+
+    # =====================
+    # HEADER STYLE
+    # =====================
 
 
     for cell in ws[4]:
@@ -1016,7 +1030,7 @@ def download():
 
         cell.fill = PatternFill(
 
-            fill_type="solid",
+            "solid",
 
             fgColor="008000"
 
@@ -1032,6 +1046,12 @@ def download():
 
 
 
+
+    # =====================
+    # BORDER
+    # =====================
+
+
     border = Border(
 
         left=Side(style="thin"),
@@ -1043,7 +1063,6 @@ def download():
         bottom=Side(style="thin")
 
     )
-
 
 
     for row in ws.iter_rows():
@@ -1058,35 +1077,113 @@ def download():
 
 
 
-    # AUTO WIDTH FIX
-
-    for column in ws.columns:
-
-
-        max_length=0
-
-
-        col_letter = column[-1].column_letter
 
 
 
-        for cell in column:
+# =====================
+# COLUMN WIDTH FIX
+# =====================
+
+    for col in range(1, ws.max_column + 1):
+
+        letter = get_column_letter(col)
+
+        # ID column fixed
+        if letter == "A":
+            ws.column_dimensions[letter].width = 8
+            continue
+
+    max_length = 0
+
+    for row in range(4, ws.max_row + 1):   # header row (4) se start
+
+        value = ws.cell(row=row, column=col).value
+
+        if value is not None:
+            max_length = max(max_length, len(str(value)))
+
+    ws.column_dimensions[letter].width = max_length + 5
 
 
-            if cell.value:
-
-
-                max_length=max(
-
-                    max_length,
-
-                    len(str(cell.value))
-
-                )
 
 
 
-        ws.column_dimensions[col_letter].width=max_length+5
+
+
+    # =====================
+    # EXCEL TABLE FILTER
+    # =====================
+
+
+    try:
+
+
+        last_row = ws.max_row
+
+
+        table_range = f"A4:J{last_row}"
+
+
+        excel_table = Table(
+
+            displayName="SolarLeads",
+
+            ref=table_range
+
+        )
+
+
+        style = TableStyleInfo(
+
+            name="TableStyleMedium4",
+
+            showFirstColumn=False,
+
+            showLastColumn=False,
+
+            showRowStripes=True,
+
+            showColumnStripes=False
+
+        )
+
+
+        excel_table.tableStyleInfo = style
+
+
+        ws.add_table(excel_table)
+
+
+
+    except Exception as e:
+
+
+        print("TABLE ERROR:", e)
+
+
+
+
+
+
+    ws.freeze_panes = "A5"
+
+
+
+    wb.save(filename)
+
+
+
+
+
+    return send_file(
+
+        filename,
+
+        as_attachment=True,
+
+        download_name=filename
+
+    )
 
 
 
@@ -1094,14 +1191,10 @@ def download():
     # REAL EXCEL TABLE
     # =====================
 
-
     last_row = ws.max_row
-
-    last_col = ws.max_column
 
 
     table_range = f"A4:J{last_row}"
-
 
 
     excel_table = Table(
@@ -1111,7 +1204,6 @@ def download():
         ref=table_range
 
     )
-
 
 
     style = TableStyleInfo(
@@ -1129,14 +1221,15 @@ def download():
     )
 
 
-
     excel_table.tableStyleInfo = style
-
 
 
     ws.add_table(excel_table)
 
-    ws.freeze_panes="A5"
+
+
+    ws.freeze_panes = "A5"
+
 
 
     wb.save(filename)
@@ -1152,7 +1245,6 @@ def download():
         download_name="Har_Ghar_Solar_CRM.xlsx"
 
     )
-
 
 
 # ==========================
