@@ -1348,82 +1348,208 @@ height:100%;
 
 
 
+/* ======================
+ MODERN ADMIN CRM FIX
+====================== */
 
-/* =========================
-   ADMIN CRM
-========================= */
 
+.crm-layout{
 
-.admin-section{
+display:flex;
 
-padding:90px 0;
+min-height:100vh;
 
-background:#f7faf9;
+background:#f4f7fa;
 
 }
 
 
+/* SIDEBAR */
 
-.admin-title{
+.crm-sidebar{
 
-background:#063b2d;
+width:240px;
+
+min-width:240px;
+
+background:#004b32;
+
+padding:30px 20px;
 
 color:white;
 
-padding:30px;
+}
 
-border-radius:22px;
 
-margin-bottom:40px;
+.crm-sidebar h3{
+
+font-size:28px;
+
+font-weight:900;
+
+color:#ffc107;
+
+margin-bottom:50px;
+
+}
+
+
+.crm-sidebar a{
+
+display:flex;
+
+gap:12px;
+
+align-items:center;
+
+color:white;
+
+text-decoration:none;
+
+font-weight:800;
+
+margin-bottom:30px;
 
 }
 
 
 
-.dashboard-card{
+/* MAIN */
 
-background:white;
+.crm-content{
+
+width:calc(100% - 240px);
 
 padding:35px;
 
-text-align:center;
-
-border-radius:22px;
-
-box-shadow:
-
-0 15px 40px rgba(0,0,0,.1);
+overflow-x:hidden;
 
 }
 
 
 
-.dashboard-card h1{
+.crm-title{
 
-font-size:45px;
+font-size:34px;
 
 font-weight:900;
+
+color:#063b2d;
+
+margin-bottom:30px;
+
+}
+
+
+
+
+
+/* CARDS */
+
+
+.crm-card{
+
+background:white;
+
+height:150px;
+
+border-radius:22px;
+
+padding:25px;
+
+box-shadow:
+
+0 15px 35px rgba(0,0,0,.08);
+
+
+display:flex;
+
+flex-direction:column;
+
+justify-content:center;
+
+align-items:center;
+
+}
+
+
+
+.crm-card h1{
+
+font-size:42px;
+
+font-weight:900;
+
+margin:0;
 
 color:#00834d;
 
 }
 
 
+.crm-card p{
+
+margin:0;
+
+font-weight:700;
+
+}
+
+
+
+
+
+
+/* CHART */
+
+
+.crm-chart{
+
+background:white;
+
+padding:30px;
+
+border-radius:22px;
+
+box-shadow:
+
+0 15px 35px rgba(0,0,0,.08);
+
+margin-bottom:35px;
+
+}
+
+
+.crm-chart canvas{
+
+max-height:300px;
+
+}
+
+
+
+
+/* SEARCH */
 
 .search-box{
 
 width:100%;
 
-padding:15px;
+padding:15px 25px;
 
 border-radius:30px;
 
-border:2px solid #ddd;
+border:1px solid #ddd;
 
-margin-bottom:30px;
+margin-bottom:25px;
 
 }
 
+
+
+
+
+/* TABLE */
 
 
 .table-box{
@@ -1432,23 +1558,38 @@ background:white;
 
 padding:25px;
 
-border-radius:20px;
-
-overflow:auto;
+border-radius:22px;
 
 box-shadow:
 
-0 15px 40px rgba(0,0,0,.1);
+0 15px 35px rgba(0,0,0,.08);
+
+overflow:auto;
 
 }
 
 
+.table{
+
+width:100%;
+
+}
+
 
 .table th{
 
-background:#063b2d !important;
+background:#004b32 !important;
 
 color:white !important;
+
+white-space:nowrap;
+
+}
+
+
+.table td{
+
+vertical-align:middle;
 
 }
 /* =========================
@@ -3011,5 +3152,28 @@ border-radius:20px;
 font-size:13px;
 
 font-weight:900;
+
+}
+
+/* CRM STATUS CARDS */
+
+
+.crm-card.yellow h1{
+
+color:#ff9800;
+
+}
+
+
+.crm-card.blue h1{
+
+color:#2196f3;
+
+}
+
+
+.crm-card.green h1{
+
+color:#00a651;
 
 }

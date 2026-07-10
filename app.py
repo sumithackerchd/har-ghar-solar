@@ -160,9 +160,9 @@ def admin_login():
 
 
 
+# Admin Dashboard
 
 @app.route("/admin")
-
 def admin():
 
 
@@ -171,23 +171,73 @@ def admin():
         return redirect("/admin-login")
 
 
-    conn=sqlite3.connect("solar.db")
 
-    cur=conn.cursor()
+    conn = sqlite3.connect("solar.db")
 
-
-    cur.execute("SELECT * FROM leads")
+    cur = conn.cursor()
 
 
-    data=cur.fetchall()
+
+    cur.execute(
+
+        "SELECT * FROM leads ORDER BY id DESC"
+
+    )
+
+    leads = cur.fetchall()
+
+
+
+
+    cur.execute(
+
+        "SELECT COUNT(*) FROM leads WHERE status='New'"
+
+    )
+
+    new_count = cur.fetchone()[0]
+
+
+
+
+    cur.execute(
+
+        "SELECT COUNT(*) FROM leads WHERE status='Contacted'"
+
+    )
+
+    contacted_count = cur.fetchone()[0]
+
+
+
+
+    cur.execute(
+
+        "SELECT COUNT(*) FROM leads WHERE status='Installed'"
+
+    )
+
+    installed_count = cur.fetchone()[0]
+
+
 
 
     conn.close()
 
 
+
     return render_template(
+
         "admin.html",
-        leads=data
+
+        leads=leads,
+
+        new_count=new_count,
+
+        contacted_count=contacted_count,
+
+        installed_count=installed_count
+
     )
 
 @app.route("/update-status/<int:id>/<status>")

@@ -4,22 +4,24 @@
 {% block admin %}
 
 
+<!-- DASHBOARD TITLE -->
 
-<h2 class="crm-title">
+<h1 class="crm-title">
 
 Solar Lead Dashboard
 
-</h2>
+</h1>
 
 
 
 
 
-<div class="row mb-4">
+
+<!-- STATUS CARDS -->
 
 
+<div class="dashboard-grid">
 
-<div class="col-md-4">
 
 
 <div class="crm-card">
@@ -34,7 +36,7 @@ Solar Lead Dashboard
 
 <p>
 
-Total Enquiries
+Total Leads
 
 </p>
 
@@ -42,13 +44,8 @@ Total Enquiries
 </div>
 
 
-</div>
 
 
-
-
-
-<div class="col-md-4">
 
 
 <div class="crm-card">
@@ -56,14 +53,14 @@ Total Enquiries
 
 <h1>
 
-☀
+{{new_count}}
 
 </h1>
 
 
 <p>
 
-Solar Leads
+New Leads
 
 </p>
 
@@ -71,13 +68,8 @@ Solar Leads
 </div>
 
 
-</div>
 
 
-
-
-
-<div class="col-md-4">
 
 
 <div class="crm-card">
@@ -85,14 +77,14 @@ Solar Leads
 
 <h1>
 
-UP
+{{contacted_count}}
 
 </h1>
 
 
 <p>
 
-Service Area
+Contacted
 
 </p>
 
@@ -100,10 +92,33 @@ Service Area
 </div>
 
 
+
+
+
+
+
+<div class="crm-card">
+
+
+<h1>
+
+{{installed_count}}
+
+</h1>
+
+
+<p>
+
+Installed
+
+</p>
+
+
 </div>
 
 
 
+
 </div>
 
 
@@ -111,46 +126,70 @@ Service Area
 
 
 
-<input 
 
+
+
+
+<!-- CHART -->
+
+
+<div class="crm-chart">
+
+
+<h2>
+
+Monthly Solar Enquiries
+
+</h2>
+
+
+
+<canvas id="leadChart"></canvas>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- SEARCH -->
+
+
+<input
 
 class="search-box"
 
 id="leadSearch"
 
-placeholder="Search Lead..."
+placeholder="Search customer..."
 
 onkeyup="searchLead()"
 
 >
 
 
-<!-- ANALYTICS CHART -->
 
 
-<div class="crm-chart">
 
 
-<h3>
-
-Monthly Solar Enquiries
-
-</h3>
 
 
-<canvas id="leadChart"></canvas>
 
-
-</div>
-
-
+<!-- LEAD TABLE -->
 
 
 <div class="table-box">
 
 
-<table class="table"
-id="leadTable">
+
+<table class="table" id="leadTable">
+
 
 
 <thead>
@@ -158,29 +197,39 @@ id="leadTable">
 
 <tr>
 
+
 <th>ID</th>
+
 
 <th>Name</th>
 
+
 <th>Phone</th>
+
 
 <th>City</th>
 
+
 <th>Bill</th>
 
-<th>Date</th>
 
 <th>Status</th>
 
-<th>Notes</th>
+
+<th>Note</th>
+
 
 <th>Action</th>
+
 
 
 </tr>
 
 
 </thead>
+
+
+
 
 
 
@@ -196,62 +245,101 @@ id="leadTable">
 <tr>
 
 
-<td>{{lead[0]}}</td>
+
+<td>
+
+{{lead[0]}}
+
+</td>
 
 
-<td>{{lead[1]}}</td>
 
 
-<td>{{lead[2]}}</td>
+
+<td>
+
+{{lead[1]}}
+
+</td>
 
 
-<td>{{lead[3]}}</td>
 
 
-<td>{{lead[4]}}</td>
+
+<td>
+
+{{lead[2]}}
+
+</td>
 
 
-<td>{{lead[5]}}</td>
+
+
+
+<td>
+
+{{lead[3]}}
+
+</td>
+
+
+
+
+
+<td>
+
+{{lead[4]}}
+
+</td>
+
+
+
+
+
+
+
+
+
+<!-- STATUS -->
+
+
 <td>
 
 
-<span class="status-badge">
+<span class="status-badge {{lead[6]}}">
+
 
 {{lead[6]}}
+
 
 </span>
 
 
-<br>
-
-
-<a href="/update-status/{{lead[0]}}/Contacted">
-
-Contacted
-
-</a>
-
-
-|
-
-<a href="/update-status/{{lead[0]}}/Installed">
-
-Installed
-
-</a>
-
-
-
 </td>
+
+
+
+
+
+
+
+
+
+<!-- NOTES -->
+
+
 <td>
 
 
-<form method="POST"
+<form 
+
+method="POST"
+
 action="/add-note/{{lead[0]}}">
 
 
 
-<input 
+<input
 
 class="note-input"
 
@@ -259,7 +347,7 @@ name="note"
 
 value="{{lead[7]}}"
 
-placeholder="Add follow up note..."
+placeholder="Follow up note"
 
 >
 
@@ -267,44 +355,104 @@ placeholder="Add follow up note..."
 
 <button class="note-btn">
 
+
 Save
 
-</button>
 
+</button>
 
 
 
 </form>
 
 
+
 </td>
+
+
+
+
+
+
+
+
+
+<!-- ACTION -->
+
 
 <td>
 
 
-<a 
-class="btn btn-success btn-sm"
 
-href="https://wa.me/91{{lead[2]}}">
 
-WhatsApp
+{% if lead[6] != "Contacted" %}
+
+
+<a
+
+class="action-btn contact"
+
+href="/update-status/{{lead[0]}}/Contacted">
+
+
+Mark Contacted
+
 
 </a>
 
 
+{% endif %}
 
-<a 
-class="btn btn-danger btn-sm"
+
+
+
+
+
+{% if lead[6] != "Installed" %}
+
+
+<a
+
+class="action-btn install"
+
+href="/update-status/{{lead[0]}}/Installed">
+
+
+Mark Installed
+
+
+</a>
+
+
+{% endif %}
+
+
+
+
+
+
+
+<a
+
+class="action-btn delete"
+
+onclick="return confirm('Delete this lead?')"
 
 href="/delete/{{lead[0]}}">
 
+
 Delete
 
+
 </a>
+
+
 
 
 
 </td>
+
+
 
 
 
@@ -316,14 +464,23 @@ Delete
 
 
 
+
 </tbody>
+
 
 
 
 </table>
 
 
+
+
 </div>
+
+
+
+
+
 
 
 
