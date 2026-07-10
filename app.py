@@ -2,17 +2,25 @@ from flask import Flask, render_template, request, redirect, session, send_file
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import pandas as pd
-from openpyxl import load_workbook
 import os
 from dotenv import load_dotenv
 
+
+# ==========================
+# APP CONFIG
+# ==========================
 
 load_dotenv()
 
 
 app = Flask(__name__)
 
-app.secret_key = os.getenv("SECRET_KEY")
+
+app.secret_key = os.getenv(
+    "SECRET_KEY",
+    "default_secret_key"
+)
+
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
     "DATABASE_URL",
@@ -27,28 +35,11 @@ db = SQLAlchemy(app)
 
 
 
+
+
 # ==========================
-# DATABASE
+# DATABASE MODEL
 # ==========================
-
-
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-
-    "DATABASE_URL",
-
-    "sqlite:///solar.db"
-
-)
-
-
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-
-
-db = SQLAlchemy(app)
-
-
-
 
 
 class Lead(db.Model):
@@ -106,13 +97,18 @@ class Lead(db.Model):
 
 
 
-
 with app.app_context():
 
-
     db.create_all()
+
+
+
+
+
+
+
 # ==========================
-# WEBSITE PAGES
+# WEBSITE ROUTES
 # ==========================
 
 
@@ -132,7 +128,6 @@ def about():
 
 
 
-
 @app.route("/services")
 def services():
 
@@ -145,8 +140,7 @@ def services():
 
 
 
-
-## ==========================
+# ==========================
 # CONTACT FORM
 # ==========================
 
@@ -156,7 +150,7 @@ def services():
 def contact():
 
 
-    if request.method=="POST":
+    if request.method == "POST":
 
 
         lead = Lead(
@@ -176,26 +170,31 @@ def contact():
         )
 
 
-        db.session.add(lead)
 
+        db.session.add(lead)
 
         db.session.commit()
 
 
 
         return render_template(
-
             "thankyou.html",
-
             name=lead.name,
-
             city=lead.city
-
         )
 
 
 
     return render_template("contact.html")
+
+
+
+
+
+
+
+
+
 
 # ==========================
 # ADMIN LOGIN
@@ -210,16 +209,20 @@ def admin_login():
     if request.method=="POST":
 
 
-        username = request.form["username"]
+        username=request.form["username"]
 
-        password = request.form["password"]
+        password=request.form["password"]
 
 
 
         if (
+
             username == os.getenv("ADMIN_USERNAME")
+
             and
+
             password == os.getenv("ADMIN_PASSWORD")
+
         ):
 
 
@@ -227,6 +230,7 @@ def admin_login():
 
 
             return redirect("/admin")
+
 
 
 
@@ -253,50 +257,58 @@ def admin():
 
     if "admin" not in session:
 
-
         return redirect("/admin-login")
 
 
 
-
     leads = Lead.query.order_by(
-
         Lead.id.desc()
-
     ).all()
 
 
 
-
     new_count = Lead.query.filter_by(
-
         status="New"
-
     ).count()
-
 
 
 
     contacted_count = Lead.query.filter_by(
-
         status="Contacted"
-
     ).count()
-
 
 
 
     installed_count = Lead.query.filter_by(
-
         status="Installed"
-
     ).count()
 
 
 
 
 
-    chart_data = []
+    chart_data = db.session.query(
+
+        db.func.substr(
+            Lead.created_at,
+            6,
+            2
+        ),
+
+        db.func.count(
+            Lead.id
+        )
+
+    ).group_by(
+
+        db.func.substr(
+            Lead.created_at,
+            6,
+            2
+        )
+
+    ).all()
+
 
 
 
@@ -319,6 +331,13 @@ def admin():
     )
 
 
+
+
+
+
+
+
+
 # ==========================
 # UPDATE STATUS
 # ==========================
@@ -336,25 +355,13 @@ def update_status(id,status):
 
 
 
-    conn=sqlite3.connect("solar.db")
-
-    cur=conn.cursor()
+    lead = Lead.query.get_or_404(id)
 
 
-
-    cur.execute(
-
-    "UPDATE leads SET status=? WHERE id=?",
-
-    (status,id)
-
-    )
+    lead.status = status
 
 
-
-    conn.commit()
-
-    conn.close()
+    db.session.commit()
 
 
 
@@ -369,9 +376,8 @@ def update_status(id,status):
 
 
 # ==========================
-# NOTES + FOLLOW DATE
+# FOLLOW UP NOTES
 # ==========================
-
 
 
 @app.route("/add-note/<int:id>", methods=["POST"])
@@ -382,61 +388,24 @@ def add_note(id):
 
     if "admin" not in session:
 
-
         return redirect("/admin-login")
 
 
 
-
-    note=request.form.get("note")
-
-
-    follow_date=request.form.get("follow_date")
+    lead = Lead.query.get_or_404(id)
 
 
 
+    lead.note = request.form.get("note")
 
 
-    conn=sqlite3.connect("solar.db")
-
-    cur=conn.cursor()
-
-
-
-
-    cur.execute(
-
-    """
-
-    UPDATE leads
-
-    SET note=?,
-
-    follow_date=?
-
-    WHERE id=?
-
-    """,
-
-    (
-
-    note,
-
-    follow_date,
-
-    id
-
-    )
-
+    lead.follow_date = request.form.get(
+        "follow_date"
     )
 
 
 
-    conn.commit()
-
-
-    conn.close()
-
+    db.session.commit()
 
 
 
@@ -470,7 +439,6 @@ def delete(id):
     lead = Lead.query.get_or_404(id)
 
 
-
     db.session.delete(lead)
 
 
@@ -484,8 +452,13 @@ def delete(id):
 
 
 
+
+
+
+
+
 # ==========================
-# EXCEL EXPORT
+# EXPORT EXCEL
 # ==========================
 
 
@@ -501,14 +474,11 @@ def download():
 
 
 
-
     leads = Lead.query.all()
 
 
 
-
     data=[]
-
 
 
 
@@ -517,35 +487,34 @@ def download():
 
         data.append({
 
-        "ID":lead.id,
+            "ID": lead.id,
 
-        "Customer Name":lead.name,
+            "Name": lead.name,
 
-        "Mobile":lead.phone,
+            "Phone": lead.phone,
 
-        "City":lead.city,
+            "City": lead.city,
 
-        "Bill":lead.bill,
+            "Bill": lead.bill,
 
-        "Status":lead.status,
+            "Status": lead.status,
 
-        "Note":lead.note,
+            "Note": lead.note,
 
-        "Follow Date":lead.follow_date,
+            "Follow Date": lead.follow_date,
 
-        "Created":lead.created_at
+            "Created": lead.created_at
 
         })
 
 
 
 
-    df=pd.DataFrame(data)
+
+    df = pd.DataFrame(data)
 
 
-
-    file="Har_Ghar_Solar_Leads.xlsx"
-
+    file = "Har_Ghar_Solar_Leads.xlsx"
 
 
     df.to_excel(
@@ -567,13 +536,19 @@ def download():
     )
 
 
+
+
+
+
+
+
+
 # ==========================
 # LOGOUT
 # ==========================
 
 
 @app.route("/logout")
-
 
 def logout():
 
@@ -591,8 +566,9 @@ def logout():
 
 
 
+
 # ==========================
-# RUN SERVER
+# RUN
 # ==========================
 
 
@@ -600,11 +576,17 @@ if __name__=="__main__":
 
 
     port = int(
+
         os.environ.get(
+
             "PORT",
+
             5002
+
         )
+
     )
+
 
 
     app.run(
