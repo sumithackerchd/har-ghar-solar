@@ -13,6 +13,81 @@ Solar Lead Dashboard
 
 </h1>
 
+{% if today_followups %}
+
+
+<div class="table-box">
+
+
+<h2>
+🔔 Today's Follow Ups
+</h2>
+
+
+<table class="table">
+
+
+<tr>
+
+<th>Name</th>
+
+<th>Phone</th>
+
+<th>Note</th>
+
+<th>Status</th>
+
+</tr>
+
+
+
+{% for f in today_followups %}
+
+
+<tr>
+
+
+<td>
+{{f.name}}
+</td>
+
+
+<td>
+{{f.phone}}
+</td>
+
+
+<td>
+{{f.note}}
+</td>
+
+
+<td>
+
+<span class="status-badge {{f.status}}">
+
+{{f.status}}
+
+</span>
+
+
+</td>
+
+
+
+</tr>
+
+
+{% endfor %}
+
+
+</table>
+
+
+</div>
+
+
+{% endif %}
 
 
 
