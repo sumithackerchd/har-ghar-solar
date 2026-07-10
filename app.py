@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, send_file
-import sqlite3
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import pandas as pd
 from openpyxl import load_workbook
@@ -14,6 +14,17 @@ app = Flask(__name__)
 
 app.secret_key = os.getenv("SECRET_KEY")
 
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+    "DATABASE_URL",
+    "sqlite:///solar.db"
+)
+
+
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+
+db = SQLAlchemy(app)
+
 
 
 # ==========================
@@ -21,57 +32,85 @@ app.secret_key = os.getenv("SECRET_KEY")
 # ==========================
 
 
-def create_database():
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+
+    "DATABASE_URL",
+
+    "sqlite:///solar.db"
+
+)
 
 
-    conn = sqlite3.connect("solar.db")
-
-    cur = conn.cursor()
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 
 
-    cur.execute("""
-    
-    CREATE TABLE IF NOT EXISTS leads(
+db = SQLAlchemy(app)
 
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        name TEXT,
 
-        phone TEXT,
 
-        city TEXT,
 
-        bill TEXT,
+class Lead(db.Model):
 
-        created_at TEXT,
 
-        status TEXT DEFAULT 'New',
-
-        note TEXT DEFAULT '',
-
-        follow_date TEXT DEFAULT ''
-
+    id = db.Column(
+        db.Integer,
+        primary_key=True
     )
 
-    """)
+
+    name = db.Column(
+        db.String(100)
+    )
+
+
+    phone = db.Column(
+        db.String(20)
+    )
+
+
+    city = db.Column(
+        db.String(100)
+    )
+
+
+    bill = db.Column(
+        db.String(100)
+    )
+
+
+    created_at = db.Column(
+        db.String(50)
+    )
+
+
+    status = db.Column(
+        db.String(50),
+        default="New"
+    )
+
+
+    note = db.Column(
+        db.Text,
+        default=""
+    )
+
+
+    follow_date = db.Column(
+        db.String(50),
+        default=""
+    )
 
 
 
-    conn.commit()
-
-    conn.close()
 
 
 
-create_database()
+with app.app_context():
 
 
-
-
-
-
-
+    db.create_all()
 # ==========================
 # WEBSITE PAGES
 # ==========================
@@ -107,7 +146,7 @@ def services():
 
 
 
-# ==========================
+## ==========================
 # CONTACT FORM
 # ==========================
 
@@ -120,72 +159,27 @@ def contact():
     if request.method=="POST":
 
 
-        name=request.form["name"]
+        lead = Lead(
 
-        phone=request.form["phone"]
+            name=request.form["name"],
 
-        city=request.form["city"]
+            phone=request.form["phone"],
 
-        bill=request.form["bill"]
+            city=request.form["city"],
 
+            bill=request.form["bill"],
 
-        date=datetime.now().strftime("%Y-%m-%d")
+            created_at=datetime.now().strftime("%Y-%m-%d"),
 
-
-
-        conn=sqlite3.connect("solar.db")
-
-        cur=conn.cursor()
-
-
-
-        cur.execute(
-
-        """
-
-        INSERT INTO leads(
-
-        name,
-
-        phone,
-
-        city,
-
-        bill,
-
-        created_at,
-
-        status
-
-        )
-
-        VALUES(?,?,?,?,?,?)
-
-        """,
-
-        (
-
-        name,
-
-        phone,
-
-        city,
-
-        bill,
-
-        date,
-
-        "New"
-
-        )
+            status="New"
 
         )
 
 
+        db.session.add(lead)
 
-        conn.commit()
 
-        conn.close()
+        db.session.commit()
 
 
 
@@ -193,24 +187,15 @@ def contact():
 
             "thankyou.html",
 
-            name=name,
+            name=lead.name,
 
-            city=city
+            city=lead.city
 
         )
 
 
 
-
     return render_template("contact.html")
-
-
-
-
-
-
-
-
 
 # ==========================
 # ADMIN LOGIN
@@ -274,112 +259,44 @@ def admin():
 
 
 
-    conn=sqlite3.connect("solar.db")
+    leads = Lead.query.order_by(
 
-    cur=conn.cursor()
+        Lead.id.desc()
 
+    ).all()
 
 
 
-    cur.execute("""
-    
-    SELECT
 
-    id,
+    new_count = Lead.query.filter_by(
 
-    name,
+        status="New"
 
-    phone,
+    ).count()
 
-    city,
 
-    bill,
 
-    created_at,
 
-    status,
+    contacted_count = Lead.query.filter_by(
 
-    note,
+        status="Contacted"
 
-    follow_date
+    ).count()
 
-    FROM leads
 
-    ORDER BY id DESC
-    
-    """)
 
 
+    installed_count = Lead.query.filter_by(
 
-    leads=cur.fetchall()
+        status="Installed"
 
+    ).count()
 
 
 
 
 
-
-    cur.execute(
-
-    "SELECT COUNT(*) FROM leads WHERE status='New'"
-
-    )
-
-    new_count=cur.fetchone()[0]
-
-
-
-
-
-    cur.execute(
-
-    "SELECT COUNT(*) FROM leads WHERE status='Contacted'"
-
-    )
-
-    contacted_count=cur.fetchone()[0]
-
-
-
-
-
-
-    cur.execute(
-
-    "SELECT COUNT(*) FROM leads WHERE status='Installed'"
-
-    )
-
-    installed_count=cur.fetchone()[0]
-
-
-
-
-
-
-    # CHART DATA
-
-    cur.execute("""
-    
-    SELECT
-
-    strftime('%m',created_at),
-
-    COUNT(*)
-
-    FROM leads
-
-    GROUP BY strftime('%m',created_at)
-
-    """)
-
-
-    chart_data=cur.fetchall()
-
-
-
-
-    conn.close()
+    chart_data = []
 
 
 
@@ -387,26 +304,19 @@ def admin():
 
     return render_template(
 
-    "admin.html",
+        "admin.html",
 
-    leads=leads,
+        leads=leads,
 
-    new_count=new_count,
+        new_count=new_count,
 
-    contacted_count=contacted_count,
+        contacted_count=contacted_count,
 
-    installed_count=installed_count,
+        installed_count=installed_count,
 
-    chart_data=chart_data
+        chart_data=chart_data
 
     )
-
-
-
-
-
-
-
 
 
 # ==========================
@@ -557,33 +467,18 @@ def delete(id):
 
 
 
-    conn=sqlite3.connect("solar.db")
-
-    cur=conn.cursor()
+    lead = Lead.query.get_or_404(id)
 
 
 
-    cur.execute(
-
-    "DELETE FROM leads WHERE id=?",
-
-    (id,)
-
-    )
+    db.session.delete(lead)
 
 
-
-    conn.commit()
-
-    conn.close()
+    db.session.commit()
 
 
 
     return redirect("/admin")
-
-
-
-
 
 
 
@@ -606,44 +501,51 @@ def download():
 
 
 
-    conn = sqlite3.connect("solar.db")
 
-
-    df = pd.read_sql_query(
-        
-        """
-
-        SELECT 
-
-        id as ID,
-
-        name as Customer_Name,
-
-        phone as Mobile,
-
-        city as City,
-
-        bill as Electricity_Bill,
-
-        status as Status,
-
-        note as Follow_Notes,
-
-        follow_date as Follow_Date,
-
-        created_at as Lead_Date
-
-        FROM leads
-
-        """,
-
-        conn
-
-    )
+    leads = Lead.query.all()
 
 
 
-    file = "Har_Ghar_Solar_Leads.xlsx"
+
+    data=[]
+
+
+
+
+    for lead in leads:
+
+
+        data.append({
+
+        "ID":lead.id,
+
+        "Customer Name":lead.name,
+
+        "Mobile":lead.phone,
+
+        "City":lead.city,
+
+        "Bill":lead.bill,
+
+        "Status":lead.status,
+
+        "Note":lead.note,
+
+        "Follow Date":lead.follow_date,
+
+        "Created":lead.created_at
+
+        })
+
+
+
+
+    df=pd.DataFrame(data)
+
+
+
+    file="Har_Ghar_Solar_Leads.xlsx"
+
 
 
     df.to_excel(
@@ -655,57 +557,6 @@ def download():
     )
 
 
-    conn.close()
-
-
-
-
-
-    # Excel Formatting
-
-    wb = load_workbook(file)
-
-    ws = wb.active
-
-
-
-    ws.auto_filter.ref = ws.dimensions
-
-
-
-    for column in ws.columns:
-
-
-        max_length = 0
-
-
-        col = column[0].column_letter
-
-
-
-        for cell in column:
-
-
-            if cell.value:
-
-
-                max_length = max(
-
-                    max_length,
-
-                    len(str(cell.value))
-
-                )
-
-
-        ws.column_dimensions[col].width = max_length + 5
-
-
-
-    wb.save(file)
-
-
-
 
     return send_file(
 
@@ -714,7 +565,6 @@ def download():
         as_attachment=True
 
     )
-
 
 
 # ==========================
@@ -749,10 +599,18 @@ def logout():
 if __name__=="__main__":
 
 
+    port = int(
+        os.environ.get(
+            "PORT",
+            5002
+        )
+    )
+
+
     app.run(
 
-    debug=True,
+        host="0.0.0.0",
 
-    port=5002
+        port=port
 
     )

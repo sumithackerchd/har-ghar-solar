@@ -4,6 +4,7 @@
 {% block admin %}
 
 
+
 <!-- DASHBOARD TITLE -->
 
 <h1 class="crm-title">
@@ -11,7 +12,6 @@
 Solar Lead Dashboard
 
 </h1>
-
 
 
 
@@ -26,13 +26,11 @@ Solar Lead Dashboard
 
 <div class="crm-card">
 
-
 <h1>
 
 {{leads|length}}
 
 </h1>
-
 
 <p>
 
@@ -40,16 +38,13 @@ Total Leads
 
 </p>
 
-
 </div>
 
 
 
 
 
-
 <div class="crm-card">
-
 
 <h1>
 
@@ -57,13 +52,11 @@ Total Leads
 
 </h1>
 
-
 <p>
 
 New Leads
 
 </p>
-
 
 </div>
 
@@ -71,9 +64,7 @@ New Leads
 
 
 
-
 <div class="crm-card">
-
 
 <h1>
 
@@ -81,17 +72,13 @@ New Leads
 
 </h1>
 
-
 <p>
 
 Contacted
 
 </p>
 
-
 </div>
-
-
 
 
 
@@ -99,13 +86,11 @@ Contacted
 
 <div class="crm-card">
 
-
 <h1>
 
 {{installed_count}}
 
 </h1>
-
 
 <p>
 
@@ -113,9 +98,7 @@ Installed
 
 </p>
 
-
 </div>
-
 
 
 
@@ -143,9 +126,7 @@ Monthly Solar Enquiries
 </h2>
 
 
-
 <canvas id="leadChart"></canvas>
-
 
 
 </div>
@@ -181,15 +162,13 @@ onkeyup="searchLead()"
 
 
 
-<!-- LEAD TABLE -->
+<!-- LEADS TABLE -->
 
 
 <div class="table-box">
 
 
-
 <table class="table" id="leadTable">
-
 
 
 <thead>
@@ -200,27 +179,19 @@ onkeyup="searchLead()"
 
 <th>ID</th>
 
-
 <th>Name</th>
-
 
 <th>Phone</th>
 
-
 <th>City</th>
-
 
 <th>Bill</th>
 
-
 <th>Status</th>
-
 
 <th>Follow Up</th>
 
-
 <th>Action</th>
-
 
 
 </tr>
@@ -233,13 +204,10 @@ onkeyup="searchLead()"
 
 
 
-
 <tbody>
 
 
-
 {% for lead in leads %}
-
 
 
 <tr>
@@ -248,51 +216,45 @@ onkeyup="searchLead()"
 
 <td>
 
-{{lead[0]}}
+{{lead.id}}
 
 </td>
-
 
 
 
 
 <td>
 
-{{lead[1]}}
+{{lead.name}}
 
 </td>
-
 
 
 
 
 <td>
 
-{{lead[2]}}
+{{lead.phone}}
 
 </td>
-
 
 
 
 
 <td>
 
-{{lead[3]}}
+{{lead.city}}
 
 </td>
-
 
 
 
 
 <td>
 
-{{lead[4]}}
+{{lead.bill}}
 
 </td>
-
-
 
 
 
@@ -306,10 +268,10 @@ onkeyup="searchLead()"
 <td>
 
 
-<span class="status-badge {{lead[6]}}">
+<span class="status-badge {{lead.status}}">
 
 
-{{lead[6]}}
+{{lead.status}}
 
 
 </span>
@@ -324,21 +286,21 @@ onkeyup="searchLead()"
 
 
 
-
-<!-- NOTES -->
+<!-- FOLLOW UP -->
 
 
 <td>
 
 
-<form 
+<form
 
 class="follow-form"
 
 method="POST"
 
-action="/add-note/{{lead[0]}}">
+action="/add-note/{{lead.id}}"
 
+>
 
 
 
@@ -351,7 +313,7 @@ name="note"
 
 placeholder="Customer follow up note"
 
->{{lead[7]}}</textarea>
+>{{lead.note}}</textarea>
 
 
 
@@ -366,7 +328,7 @@ class="note-date"
 
 name="follow_date"
 
-value="{{lead[8]}}"
+value="{{lead.follow_date}}"
 
 >
 
@@ -375,11 +337,13 @@ value="{{lead[8]}}"
 
 
 
-<button 
+<button
 
 class="note-btn"
 
-type="submit">
+type="submit"
+
+>
 
 
 Save Follow Up
@@ -390,12 +354,17 @@ Save Follow Up
 
 
 
-
 </form>
 
 
-
 </td>
+
+
+
+
+
+
+
 
 <!-- ACTION -->
 
@@ -405,14 +374,16 @@ Save Follow Up
 
 
 
-{% if lead[6] != "Contacted" %}
+{% if lead.status != "Contacted" %}
 
 
 <a
 
 class="action-btn contact"
 
-href="/update-status/{{lead[0]}}/Contacted">
+href="/update-status/{{lead.id}}/Contacted"
+
+>
 
 
 Mark Contacted
@@ -428,14 +399,18 @@ Mark Contacted
 
 
 
-{% if lead[6] != "Installed" %}
+
+
+{% if lead.status != "Installed" %}
 
 
 <a
 
 class="action-btn install"
 
-href="/update-status/{{lead[0]}}/Installed">
+href="/update-status/{{lead.id}}/Installed"
+
+>
 
 
 Mark Installed
@@ -452,13 +427,17 @@ Mark Installed
 
 
 
+
+
 <a
 
 class="action-btn delete"
 
 onclick="return confirm('Delete this lead?')"
 
-href="/delete/{{lead[0]}}">
+href="/delete/{{lead.id}}"
+
+>
 
 
 Delete
@@ -479,9 +458,7 @@ Delete
 </tr>
 
 
-
 {% endfor %}
-
 
 
 
@@ -489,15 +466,97 @@ Delete
 
 
 
-
 </table>
-
-
 
 
 </div>
 
 
+
+
+
+
+
+
+
+<!-- REAL CHART -->
+
+
+<script>
+
+
+let months=[];
+
+
+let counts=[];
+
+
+
+
+{% for item in chart_data %}
+
+
+months.push("{{item[0]}}");
+
+
+counts.push({{item[1]}});
+
+
+
+{% endfor %}
+
+
+
+
+
+
+let ctx = document.getElementById("leadChart");
+
+
+
+if(ctx){
+
+
+new Chart(ctx,{
+
+
+type:"line",
+
+
+data:{
+
+
+labels:months,
+
+
+datasets:[{
+
+
+label:"Solar Leads",
+
+
+data:counts,
+
+
+borderWidth:3,
+
+
+tension:.4
+
+
+}]
+
+
+}
+
+
+});
+
+
+}
+
+
+</script>
 
 
 
