@@ -216,7 +216,7 @@ onkeyup="searchLead()"
 <th>Status</th>
 
 
-<th>Note</th>
+<th>Follow Up</th>
 
 
 <th>Action</th>
@@ -333,33 +333,61 @@ onkeyup="searchLead()"
 
 <form 
 
+class="follow-form"
+
 method="POST"
 
 action="/add-note/{{lead[0]}}">
 
 
 
-<input
+
+
+<textarea
 
 class="note-input"
 
 name="note"
 
-value="{{lead[7]}}"
+placeholder="Customer follow up note"
 
-placeholder="Follow up note"
+>{{lead[7]}}</textarea>
+
+
+
+
+
+
+<input
+
+type="date"
+
+class="note-date"
+
+name="follow_date"
+
+value="{{lead[8]}}"
 
 >
 
 
 
-<button class="note-btn">
 
 
-Save
+
+<button 
+
+class="note-btn"
+
+type="submit">
+
+
+Save Follow Up
 
 
 </button>
+
+
 
 
 
@@ -368,14 +396,6 @@ Save
 
 
 </td>
-
-
-
-
-
-
-
-
 
 <!-- ACTION -->
 

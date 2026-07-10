@@ -1,18 +1,30 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, send_file
 import sqlite3
-from flask import send_file
-import csv
 from datetime import datetime
+import pandas as pd
+from openpyxl import load_workbook
+import os
+
+
 
 app = Flask(__name__)
-app.secret_key = "harghar_solar_secret"
 
-# DATABASE CREATE
+app.secret_key = "har_ghar_solar_secret"
+
+
+
+# ==========================
+# DATABASE
+# ==========================
+
+
 def create_database():
+
 
     conn = sqlite3.connect("solar.db")
 
     cur = conn.cursor()
+
 
 
     cur.execute("""
@@ -33,11 +45,14 @@ def create_database():
 
         status TEXT DEFAULT 'New',
 
-        note TEXT DEFAULT ''
+        note TEXT DEFAULT '',
+
+        follow_date TEXT DEFAULT ''
 
     )
 
     """)
+
 
 
     conn.commit()
@@ -52,8 +67,14 @@ create_database()
 
 
 
-@app.route("/")
 
+
+# ==========================
+# WEBSITE PAGES
+# ==========================
+
+
+@app.route("/")
 def home():
 
     return render_template("index.html")
@@ -61,9 +82,7 @@ def home():
 
 
 
-
 @app.route("/about")
-
 def about():
 
     return render_template("about.html")
@@ -73,7 +92,6 @@ def about():
 
 
 @app.route("/services")
-
 def services():
 
     return render_template("services.html")
@@ -82,8 +100,19 @@ def services():
 
 
 
+
+
+
+
+# ==========================
+# CONTACT FORM
+# ==========================
+
+
 @app.route("/contact", methods=["GET","POST"])
+
 def contact():
+
 
     if request.method=="POST":
 
@@ -97,7 +126,8 @@ def contact():
         bill=request.form["bill"]
 
 
-        date=datetime.now().strftime("%d-%m-%Y %I:%M %p")
+        date=datetime.now().strftime("%Y-%m-%d")
+
 
 
         conn=sqlite3.connect("solar.db")
@@ -105,11 +135,49 @@ def contact():
         cur=conn.cursor()
 
 
+
         cur.execute(
 
-        "INSERT INTO leads(name,phone,city,bill,created_at,status) VALUES(?,?,?,?,?,?)",
+        """
 
-        (name,phone,city,bill,date,"New"))
+        INSERT INTO leads(
+
+        name,
+
+        phone,
+
+        city,
+
+        bill,
+
+        created_at,
+
+        status
+
+        )
+
+        VALUES(?,?,?,?,?,?)
+
+        """,
+
+        (
+
+        name,
+
+        phone,
+
+        city,
+
+        bill,
+
+        date,
+
+        "New"
+
+        )
+
+        )
+
 
 
         conn.commit()
@@ -117,19 +185,18 @@ def contact():
         conn.close()
 
 
+
         return render_template(
 
-        "thankyou.html",
+            "thankyou.html",
 
-        name=name,
+            name=name,
 
-        phone=phone,
-
-        city=city,
-
-        bill=bill
+            city=city
 
         )
+
+
 
 
     return render_template("contact.html")
@@ -139,85 +206,169 @@ def contact():
 
 
 
+
+
+
+# ==========================
+# ADMIN LOGIN
+# ==========================
+
+
 @app.route("/admin-login", methods=["GET","POST"])
+
 def admin_login():
 
+
     if request.method=="POST":
+
 
         username=request.form["username"]
 
         password=request.form["password"]
 
 
+
         if username=="admin" and password=="Solar@2026":
+
 
             session["admin"]=True
 
+
             return redirect("/admin")
+
+
 
 
     return render_template("login.html")
 
 
 
-# Admin Dashboard
+
+
+
+
+
+
+
+# ==========================
+# ADMIN DASHBOARD
+# ==========================
+
 
 @app.route("/admin")
+
 def admin():
 
 
     if "admin" not in session:
 
+
         return redirect("/admin-login")
 
 
 
-    conn = sqlite3.connect("solar.db")
 
-    cur = conn.cursor()
+    conn=sqlite3.connect("solar.db")
+
+    cur=conn.cursor()
+
+
+
+
+    cur.execute("""
+    
+    SELECT
+
+    id,
+
+    name,
+
+    phone,
+
+    city,
+
+    bill,
+
+    created_at,
+
+    status,
+
+    note,
+
+    follow_date
+
+    FROM leads
+
+    ORDER BY id DESC
+    
+    """)
+
+
+
+    leads=cur.fetchall()
+
+
+
+
 
 
 
     cur.execute(
 
-        "SELECT * FROM leads ORDER BY id DESC"
+    "SELECT COUNT(*) FROM leads WHERE status='New'"
 
     )
 
-    leads = cur.fetchall()
+    new_count=cur.fetchone()[0]
+
 
 
 
 
     cur.execute(
 
-        "SELECT COUNT(*) FROM leads WHERE status='New'"
+    "SELECT COUNT(*) FROM leads WHERE status='Contacted'"
 
     )
 
-    new_count = cur.fetchone()[0]
+    contacted_count=cur.fetchone()[0]
+
+
 
 
 
 
     cur.execute(
 
-        "SELECT COUNT(*) FROM leads WHERE status='Contacted'"
+    "SELECT COUNT(*) FROM leads WHERE status='Installed'"
 
     )
 
-    contacted_count = cur.fetchone()[0]
+    installed_count=cur.fetchone()[0]
 
 
 
 
-    cur.execute(
 
-        "SELECT COUNT(*) FROM leads WHERE status='Installed'"
 
-    )
+    # CHART DATA
 
-    installed_count = cur.fetchone()[0]
+    cur.execute("""
+    
+    SELECT
+
+    strftime('%m',created_at),
+
+    COUNT(*)
+
+    FROM leads
+
+    GROUP BY strftime('%m',created_at)
+
+    """)
+
+
+    chart_data=cur.fetchall()
 
 
 
@@ -226,19 +377,36 @@ def admin():
 
 
 
+
+
     return render_template(
 
-        "admin.html",
+    "admin.html",
 
-        leads=leads,
+    leads=leads,
 
-        new_count=new_count,
+    new_count=new_count,
 
-        contacted_count=contacted_count,
+    contacted_count=contacted_count,
 
-        installed_count=installed_count
+    installed_count=installed_count,
+
+    chart_data=chart_data
 
     )
+
+
+
+
+
+
+
+
+
+# ==========================
+# UPDATE STATUS
+# ==========================
+
 
 @app.route("/update-status/<int:id>/<status>")
 
@@ -251,9 +419,11 @@ def update_status(id,status):
         return redirect("/admin-login")
 
 
+
     conn=sqlite3.connect("solar.db")
 
     cur=conn.cursor()
+
 
 
     cur.execute(
@@ -265,12 +435,28 @@ def update_status(id,status):
     )
 
 
+
     conn.commit()
 
     conn.close()
 
 
+
     return redirect("/admin")
+
+
+
+
+
+
+
+
+
+# ==========================
+# NOTES + FOLLOW DATE
+# ==========================
+
+
 
 @app.route("/add-note/<int:id>", methods=["POST"])
 
@@ -280,10 +466,19 @@ def add_note(id):
 
     if "admin" not in session:
 
+
         return redirect("/admin-login")
 
 
-    note=request.form["note"]
+
+
+    note=request.form.get("note")
+
+
+    follow_date=request.form.get("follow_date")
+
+
+
 
 
     conn=sqlite3.connect("solar.db")
@@ -291,23 +486,61 @@ def add_note(id):
     cur=conn.cursor()
 
 
+
+
     cur.execute(
 
-    "UPDATE leads SET note=? WHERE id=?",
+    """
 
-    (note,id)
+    UPDATE leads
+
+    SET note=?,
+
+    follow_date=?
+
+    WHERE id=?
+
+    """,
+
+    (
+
+    note,
+
+    follow_date,
+
+    id
+
+    )
 
     )
 
 
+
     conn.commit()
+
 
     conn.close()
 
 
+
+
     return redirect("/admin")
 
+
+
+
+
+
+
+
+
+# ==========================
+# DELETE LEAD
+# ==========================
+
+
 @app.route("/delete/<int:id>")
+
 
 def delete(id):
 
@@ -323,13 +556,15 @@ def delete(id):
     cur=conn.cursor()
 
 
+
     cur.execute(
 
-        "DELETE FROM leads WHERE id=?",
+    "DELETE FROM leads WHERE id=?",
 
-        (id,)
+    (id,)
 
     )
+
 
 
     conn.commit()
@@ -337,12 +572,26 @@ def delete(id):
     conn.close()
 
 
+
     return redirect("/admin")
+
+
+
+
+
+
+
+
+
+# ==========================
+# EXCEL EXPORT
+# ==========================
+
 
 @app.route("/download-leads")
 
 
-def download_leads():
+def download():
 
 
     if "admin" not in session:
@@ -350,72 +599,154 @@ def download_leads():
         return redirect("/admin-login")
 
 
+
     conn = sqlite3.connect("solar.db")
 
-    cur = conn.cursor()
+
+    df = pd.read_sql_query(
+        
+        """
+
+        SELECT 
+
+        id as ID,
+
+        name as Customer_Name,
+
+        phone as Mobile,
+
+        city as City,
+
+        bill as Electricity_Bill,
+
+        status as Status,
+
+        note as Follow_Notes,
+
+        follow_date as Follow_Date,
+
+        created_at as Lead_Date
+
+        FROM leads
+
+        """,
+
+        conn
+
+    )
 
 
-    cur.execute("SELECT * FROM leads")
 
-    leads = cur.fetchall()
+    file = "Har_Ghar_Solar_Leads.xlsx"
+
+
+    df.to_excel(
+
+        file,
+
+        index=False
+
+    )
 
 
     conn.close()
 
 
 
-    with open("solar_leads.csv","w",newline="") as file:
 
 
-        writer = csv.writer(file)
+    # Excel Formatting
 
+    wb = load_workbook(file)
 
-        writer.writerow(
-
-        [
-
-        "ID",
-
-        "Name",
-
-        "Phone",
-
-        "City",
-
-        "Bill",
-
-        "Date"
-
-        ]
-
-        )
+    ws = wb.active
 
 
 
-        writer.writerows(leads)
+    ws.auto_filter.ref = ws.dimensions
+
+
+
+    for column in ws.columns:
+
+
+        max_length = 0
+
+
+        col = column[0].column_letter
+
+
+
+        for cell in column:
+
+
+            if cell.value:
+
+
+                max_length = max(
+
+                    max_length,
+
+                    len(str(cell.value))
+
+                )
+
+
+        ws.column_dimensions[col].width = max_length + 5
+
+
+
+    wb.save(file)
+
 
 
 
     return send_file(
 
-    "solar_leads.csv",
+        file,
 
-    as_attachment=True
+        as_attachment=True
 
     )
 
+
+
+# ==========================
+# LOGOUT
+# ==========================
+
+
 @app.route("/logout")
+
 
 def logout():
 
+
     session.clear()
 
-    return redirect("/")
+
+    return redirect("/admin-login")
 
 
 
+
+
+
+
+
+
+# ==========================
+# RUN SERVER
+# ==========================
 
 
 if __name__=="__main__":
 
-    app.run(debug=True, port=5002)
+
+    app.run(
+
+    debug=True,
+
+    port=5002
+
+    )

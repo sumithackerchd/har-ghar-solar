@@ -3177,3 +3177,37 @@ color:#2196f3;
 color:#00a651;
 
 }
+.note-input{
+
+display:block;
+
+width:200px;
+
+height:38px;
+
+padding:8px 12px;
+
+margin-bottom:8px;
+
+border-radius:10px;
+
+border:1px solid #ccc;
+
+}
+
+
+.note-btn{
+
+background:#ffc107;
+
+color:#004b32;
+
+border:none;
+
+padding:8px 20px;
+
+border-radius:20px;
+
+font-weight:900;
+
+}
