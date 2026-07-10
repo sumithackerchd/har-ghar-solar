@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, redirect, session, send_file
 from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail, Message
 from datetime import datetime
 import pandas as pd
 import os
 from dotenv import load_dotenv
+from flask_mail import Mail, Message
 
 
 # ==========================
@@ -12,9 +14,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 app = Flask(__name__)
-
 
 app.secret_key = os.getenv(
     "SECRET_KEY",
@@ -22,18 +22,37 @@ app.secret_key = os.getenv(
 )
 
 
+# ==========================
+# DATABASE CONFIG
+# ==========================
+
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
     "DATABASE_URL",
     "sqlite:///solar.db"
 )
 
-
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
 
 db = SQLAlchemy(app)
 
 
+# ==========================
+# MAIL CONFIG
+# ==========================
+
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USE_TLS"] = True
+
+app.config["MAIL_USERNAME"] = os.getenv(
+    "MAIL_USERNAME"
+)
+
+app.config["MAIL_PASSWORD"] = os.getenv(
+    "MAIL_PASSWORD"
+)
+
+mail = Mail(app)
 
 
 
@@ -44,49 +63,40 @@ db = SQLAlchemy(app)
 
 class Lead(db.Model):
 
-
     id = db.Column(
         db.Integer,
         primary_key=True
     )
 
-
     name = db.Column(
         db.String(100)
     )
-
 
     phone = db.Column(
         db.String(20)
     )
 
-
     city = db.Column(
         db.String(100)
     )
-
 
     bill = db.Column(
         db.String(100)
     )
 
-
     created_at = db.Column(
         db.String(50)
     )
-
 
     status = db.Column(
         db.String(50),
         default="New"
     )
 
-
     note = db.Column(
         db.Text,
         default=""
     )
-
 
     follow_date = db.Column(
         db.String(50),
@@ -94,17 +104,8 @@ class Lead(db.Model):
     )
 
 
-
-
-
 with app.app_context():
-
     db.create_all()
-
-
-
-
-
 
 
 # ==========================
@@ -114,44 +115,28 @@ with app.app_context():
 
 @app.route("/")
 def home():
-
     return render_template("index.html")
-
-
 
 
 @app.route("/about")
 def about():
-
     return render_template("about.html")
-
-
 
 
 @app.route("/services")
 def services():
-
     return render_template("services.html")
 
 
-
-
-
-
-
-
 # ==========================
-# CONTACT FORM
+# CONTACT FORM + EMAIL
 # ==========================
 
 
-@app.route("/contact", methods=["GET","POST"])
-
+@app.route("/contact", methods=["GET", "POST"])
 def contact():
 
-
     if request.method == "POST":
-
 
         lead = Lead(
 
@@ -163,12 +148,13 @@ def contact():
 
             bill=request.form["bill"],
 
-            created_at=datetime.now().strftime("%Y-%m-%d"),
+            created_at=datetime.now().strftime(
+                "%Y-%m-%d"
+            ),
 
             status="New"
 
         )
-
 
 
         db.session.add(lead)
@@ -176,43 +162,89 @@ def contact():
         db.session.commit()
 
 
+        # EMAIL NOTIFICATION
+
+        try:
+
+            msg = Message(
+
+                "☀️ New Solar Lead - Har Ghar Solar",
+
+                sender=os.getenv(
+                    "MAIL_USERNAME"
+                ),
+
+                recipients=[
+                    os.getenv(
+                        "ADMIN_EMAIL"
+                    )
+                ]
+
+            )
+
+
+            msg.body = f"""
+
+New Customer Lead Received
+
+
+Name: {lead.name}
+
+Phone: {lead.phone}
+
+City: {lead.city}
+
+Bill: {lead.bill}
+
+
+Admin Panel:
+https://hargharsolar.duckdns.org/admin
+
+
+"""
+
+
+            mail.send(msg)
+
+
+        except Exception as e:
+
+            print(
+                "Email Error:",
+                e
+            )
+
+
 
         return render_template(
+
             "thankyou.html",
+
             name=lead.name,
+
             city=lead.city
+
         )
 
 
-
-    return render_template("contact.html")
-
-
-
-
-
-
-
-
-
-
+    return render_template(
+        "contact.html"
+    )
 # ==========================
 # ADMIN LOGIN
 # ==========================
 
 
-@app.route("/admin-login", methods=["GET","POST"])
-
+@app.route("/admin-login", methods=["GET", "POST"])
 def admin_login():
 
 
-    if request.method=="POST":
+    if request.method == "POST":
 
 
-        username=request.form["username"]
+        username = request.form["username"]
 
-        password=request.form["password"]
-
+        password = request.form["password"]
 
 
         if (
@@ -232,14 +264,7 @@ def admin_login():
             return redirect("/admin")
 
 
-
-
     return render_template("login.html")
-
-
-
-
-
 
 
 
@@ -251,7 +276,6 @@ def admin_login():
 
 
 @app.route("/admin")
-
 def admin():
 
 
@@ -272,18 +296,14 @@ def admin():
     ).count()
 
 
-
     contacted_count = Lead.query.filter_by(
         status="Contacted"
     ).count()
 
 
-
     installed_count = Lead.query.filter_by(
         status="Installed"
     ).count()
-
-
 
 
 
@@ -311,9 +331,6 @@ def admin():
 
 
 
-
-
-
     return render_template(
 
         "admin.html",
@@ -334,19 +351,13 @@ def admin():
 
 
 
-
-
-
-
 # ==========================
 # UPDATE STATUS
 # ==========================
 
 
 @app.route("/update-status/<int:id>/<status>")
-
-
-def update_status(id,status):
+def update_status(id, status):
 
 
     if "admin" not in session:
@@ -364,25 +375,18 @@ def update_status(id,status):
     db.session.commit()
 
 
-
     return redirect("/admin")
 
 
 
 
 
-
-
-
-
 # ==========================
-# FOLLOW UP NOTES
+# ADD NOTE
 # ==========================
 
 
 @app.route("/add-note/<int:id>", methods=["POST"])
-
-
 def add_note(id):
 
 
@@ -395,7 +399,6 @@ def add_note(id):
     lead = Lead.query.get_or_404(id)
 
 
-
     lead.note = request.form.get("note")
 
 
@@ -404,16 +407,10 @@ def add_note(id):
     )
 
 
-
     db.session.commit()
 
 
-
     return redirect("/admin")
-
-
-
-
 
 
 
@@ -425,15 +422,12 @@ def add_note(id):
 
 
 @app.route("/delete/<int:id>")
-
-
 def delete(id):
 
 
     if "admin" not in session:
 
         return redirect("/admin-login")
-
 
 
     lead = Lead.query.get_or_404(id)
@@ -445,26 +439,18 @@ def delete(id):
     db.session.commit()
 
 
-
     return redirect("/admin")
 
 
 
 
 
-
-
-
-
-
 # ==========================
-# EXPORT EXCEL
+# DOWNLOAD EXCEL
 # ==========================
 
 
 @app.route("/download-leads")
-
-
 def download():
 
 
@@ -477,9 +463,7 @@ def download():
     leads = Lead.query.all()
 
 
-
-    data=[]
-
+    data = []
 
 
     for lead in leads:
@@ -509,8 +493,6 @@ def download():
 
 
 
-
-
     df = pd.DataFrame(data)
 
 
@@ -518,13 +500,9 @@ def download():
 
 
     df.to_excel(
-
         file,
-
         index=False
-
     )
-
 
 
     return send_file(
@@ -539,17 +517,12 @@ def download():
 
 
 
-
-
-
-
 # ==========================
 # LOGOUT
 # ==========================
 
 
 @app.route("/logout")
-
 def logout():
 
 
@@ -562,17 +535,12 @@ def logout():
 
 
 
-
-
-
-
-
 # ==========================
-# RUN
+# RUN APP
 # ==========================
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
 
 
     port = int(
@@ -586,7 +554,6 @@ if __name__=="__main__":
         )
 
     )
-
 
 
     app.run(
