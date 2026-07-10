@@ -4,12 +4,15 @@ from datetime import datetime
 import pandas as pd
 from openpyxl import load_workbook
 import os
+from dotenv import load_dotenv
 
+
+load_dotenv()
 
 
 app = Flask(__name__)
 
-app.secret_key = "har_ghar_solar_secret"
+app.secret_key = os.getenv("SECRET_KEY")
 
 
 
@@ -222,20 +225,23 @@ def admin_login():
     if request.method=="POST":
 
 
-        username=request.form["username"]
+        username = request.form["username"]
 
-        password=request.form["password"]
-
-
-
-        if username=="admin" and password=="Solar@2026":
+        password = request.form["password"]
 
 
-            session["admin"]=True
+
+        if (
+            username == os.getenv("ADMIN_USERNAME")
+            and
+            password == os.getenv("ADMIN_PASSWORD")
+        ):
+
+
+            session["admin"] = True
 
 
             return redirect("/admin")
-
 
 
 
