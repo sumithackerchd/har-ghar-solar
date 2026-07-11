@@ -1,9 +1,9 @@
 {% extends 'admin_base.html' %}
 
-{% block page_title %}Admin Management{% endblock %}
+{% block page_title %}User Management{% endblock %}
 {% block breadcrumb %}
   <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
-  <li class="breadcrumb-item active">Admin Management</li>
+  <li class="breadcrumb-item active">User Management</li>
 {% endblock %}
 
 {% block admin %}
@@ -22,182 +22,275 @@
   {% endif %}
 {% endwith %}
 
-<!-- HEADER ROW -->
+<!-- PAGE HEADER -->
 <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
   <div>
-    <h4 class="fw-bold mb-0"><i class="bi bi-shield-lock-fill text-success me-2"></i>Admin Management</h4>
-    <small class="text-muted">Only Super Admin can create, edit or delete admin accounts</small>
+    <h4 class="fw-bold mb-0"><i class="bi bi-shield-lock-fill text-success me-2"></i>User Management</h4>
+    <small class="text-muted">Super Admin — Manage Admins and Vendors</small>
   </div>
-  <button class="btn btn-success fw-bold px-4" data-bs-toggle="modal" data-bs-target="#createAdminModal">
-    <i class="bi bi-person-plus me-1"></i> Create Admin
-  </button>
+  <div class="d-flex gap-2">
+    <button class="btn btn-success fw-bold" data-bs-toggle="modal" data-bs-target="#createAdminModal">
+      <i class="bi bi-person-plus me-1"></i> Create Admin
+    </button>
+    <button class="btn btn-outline-success fw-bold" data-bs-toggle="modal" data-bs-target="#createVendorModal">
+      <i class="bi bi-shop me-1"></i> Create Vendor
+    </button>
+  </div>
 </div>
 
-<!-- ADMIN TABLE CARD -->
-<div class="crm-card">
-  <div class="crm-card-body p-0">
-    <div class="table-responsive">
-      <table class="crm-table w-100" id="adminTable">
-        <thead>
-          <tr>
-            <th style="width:40px">#</th>
-            <th>Name</th>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th>Created</th>
-            <th style="width:200px">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-        {% for u in users %}
-        <tr id="row-{{ u.id }}" class="{{ 'opacity-60' if u.role == 'disabled' else '' }}">
-          <td>{{ loop.index }}</td>
-          <td>
-            <span class="fw-semibold">{{ u.name or '—' }}</span>
-            {% if u.is_super %}<span class="badge bg-warning text-dark ms-1 small"><i class="bi bi-star-fill"></i> Super</span>{% endif %}
-          </td>
-          <td><code>{{ u.username }}</code></td>
-          <td class="text-muted small">{{ u.email or '—' }}</td>
-          <td>
-            {% if u.is_super %}
-              <span class="badge bg-warning text-dark">Super Admin</span>
-            {% elif u.role == 'disabled' %}
-              <span class="badge bg-secondary">Disabled</span>
-            {% else %}
-              <span class="badge bg-success">{{ u.role | capitalize }}</span>
-            {% endif %}
-          </td>
-          <td>
-            {% if u.role == 'disabled' %}
-              <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Disabled</span>
-            {% else %}
-              <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Active</span>
-            {% endif %}
-          </td>
-          <td class="text-muted small">{{ u.created_at or '—' }}</td>
-          <td>
-            {% if not u.is_super %}
-            <div class="d-flex gap-1 flex-wrap">
-              <!-- Edit -->
-              <button class="btn btn-xs btn-outline-primary"
-                title="Edit"
-                onclick="openEditModal({{ u.id }}, '{{ u.name|e }}', '{{ u.email|e }}', '{{ u.role }}')">
-                <i class="bi bi-pencil-square"></i>
-              </button>
-              <!-- Reset Password -->
-              <button class="btn btn-xs btn-outline-warning"
-                title="Reset Password"
-                onclick="openResetModal({{ u.id }}, '{{ u.username|e }}')">
-                <i class="bi bi-key"></i>
-              </button>
-              <!-- Toggle Enable/Disable -->
-              {% if u.role == 'disabled' %}
-              <a href="/admin-mgmt/toggle/{{ u.id }}"
-                class="btn btn-xs btn-outline-success"
-                title="Enable"
-                onclick="return confirm('Enable user {{ u.username }}?')">
-                <i class="bi bi-person-check"></i>
-              </a>
-              {% else %}
-              <a href="/admin-mgmt/toggle/{{ u.id }}"
-                class="btn btn-xs btn-outline-secondary"
-                title="Disable"
-                onclick="return confirm('Disable user {{ u.username }}?')">
-                <i class="bi bi-person-dash"></i>
-              </a>
-              {% endif %}
-              <!-- Delete -->
-              <button class="btn btn-xs btn-outline-danger"
-                title="Delete"
-                onclick="openDeleteModal({{ u.id }}, '{{ u.username|e }}')">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-            {% else %}
-            <span class="text-muted small fst-italic">Protected</span>
-            {% endif %}
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="8" class="text-center text-muted py-4">
-            <i class="bi bi-people" style="font-size:2rem;opacity:.3"></i>
-            <p class="mt-2 mb-0">No admin users found.</p>
-          </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-      </table>
+<!-- TABS -->
+<ul class="nav nav-tabs mb-4" id="umTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active fw-semibold" id="admins-tab" data-bs-toggle="tab"
+      data-bs-target="#adminsPane" type="button" role="tab">
+      <i class="bi bi-person-gear me-1"></i> Admins
+      <span class="badge bg-success ms-1">{{ users|length }}</span>
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link fw-semibold" id="vendors-tab" data-bs-toggle="tab"
+      data-bs-target="#vendorsPane" type="button" role="tab" id="vendors-tab-btn">
+      <i class="bi bi-building me-1"></i> Vendors
+      <span class="badge bg-success ms-1">{{ vendors|length }}</span>
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content" id="umTabContent">
+
+  <!-- ================================================
+       TAB 1: ADMINS
+  ================================================= -->
+  <div class="tab-pane fade show active" id="adminsPane" role="tabpanel">
+
+    <!-- Search -->
+    <div class="mb-3 d-flex gap-2 flex-wrap">
+      <input type="text" id="adminSearch" class="crm-input" style="max-width:300px"
+        placeholder="Search name or username…" oninput="filterAdmins()">
     </div>
-  </div>
-</div>
 
-<!-- ===================================================
+    <div class="crm-card">
+      <div class="crm-card-body p-0">
+        <div class="table-responsive">
+          <table class="crm-table w-100" id="adminTable">
+            <thead>
+              <tr>
+                <th style="width:40px">#</th>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th style="width:180px">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminTbody">
+            {% for u in users %}
+            <tr class="{{ 'opacity-60' if u.role == 'disabled' else '' }}">
+              <td>{{ loop.index }}</td>
+              <td>
+                <span class="fw-semibold">{{ u.name or '—' }}</span>
+                {% if u.is_super %}<span class="badge bg-warning text-dark ms-1 small"><i class="bi bi-star-fill"></i> Super</span>{% endif %}
+              </td>
+              <td><code>{{ u.username }}</code></td>
+              <td class="text-muted small">{{ u.email or '—' }}</td>
+              <td>
+                {% if u.is_super %}<span class="badge bg-warning text-dark">Super Admin</span>
+                {% elif u.role == 'disabled' %}<span class="badge bg-secondary">Disabled</span>
+                {% else %}<span class="badge bg-success">{{ u.role|capitalize }}</span>{% endif %}
+              </td>
+              <td>
+                {% if u.role == 'disabled' %}<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Disabled</span>
+                {% else %}<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Active</span>{% endif %}
+              </td>
+              <td class="text-muted small">{{ u.created_at or '—' }}</td>
+              <td>
+                {% if not u.is_super %}
+                <div class="d-flex gap-1 flex-wrap">
+                  <button class="btn btn-xs btn-outline-primary" title="Edit"
+                    onclick="openEditAdminModal({{ u.id }}, '{{ u.name|e }}', '{{ u.email|e }}', '{{ u.role }}')">
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+                  <button class="btn btn-xs btn-outline-warning" title="Reset Password"
+                    onclick="openResetAdminModal({{ u.id }}, '{{ u.username|e }}')">
+                    <i class="bi bi-key"></i>
+                  </button>
+                  {% if u.role == 'disabled' %}
+                  <a href="/admin-mgmt/toggle/{{ u.id }}" class="btn btn-xs btn-outline-success" title="Enable"
+                    onclick="return confirm('Enable {{ u.username }}?')"><i class="bi bi-person-check"></i></a>
+                  {% else %}
+                  <a href="/admin-mgmt/toggle/{{ u.id }}" class="btn btn-xs btn-outline-secondary" title="Disable"
+                    onclick="return confirm('Disable {{ u.username }}?')"><i class="bi bi-person-dash"></i></a>
+                  {% endif %}
+                  <button class="btn btn-xs btn-outline-danger" title="Delete"
+                    onclick="openDeleteAdminModal({{ u.id }}, '{{ u.username|e }}')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+                {% else %}
+                <span class="text-muted small fst-italic">Protected</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="text-center text-muted py-4">No admin users found.</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- Admin Pagination -->
+    <div id="adminPagination" class="d-flex gap-1 justify-content-end mt-3 flex-wrap"></div>
+  </div>
+
+  <!-- ================================================
+       TAB 2: VENDORS
+  ================================================= -->
+  <div class="tab-pane fade" id="vendorsPane" role="tabpanel">
+
+    <!-- Filters -->
+    <div class="mb-3 d-flex gap-2 flex-wrap">
+      <input type="text" id="vendorSearch" class="crm-input" style="max-width:260px"
+        placeholder="Search name, company, phone…" oninput="filterVendors()">
+      <select id="vendorDistrictFilter" class="crm-select" style="max-width:200px" onchange="filterVendors()">
+        <option value="">All Districts</option>
+        {% for d in districts %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+      </select>
+      <select id="vendorStatusFilter" class="crm-select" style="max-width:160px" onchange="filterVendors()">
+        <option value="">All Status</option>
+        <option value="active">Active</option>
+        <option value="disabled">Disabled</option>
+      </select>
+    </div>
+
+    <div class="crm-card">
+      <div class="crm-card-body p-0">
+        <div class="table-responsive">
+          <table class="crm-table w-100" id="vendorTable">
+            <thead>
+              <tr>
+                <th style="width:40px">#</th>
+                <th>Vendor Name</th>
+                <th>Company</th>
+                <th>District</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Username</th>
+                <th>Status</th>
+                <th>Leads</th>
+                <th>Done</th>
+                <th style="width:200px">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="vendorTbody">
+            {% for v in vendors %}
+            <tr class="{{ '' if v.is_active else 'opacity-60' }}"
+              data-district="{{ v.district }}"
+              data-status="{{ 'active' if v.is_active else 'disabled' }}">
+              <td>{{ loop.index }}</td>
+              <td class="fw-semibold">{{ v.owner_name }}</td>
+              <td>{{ v.company_name }}</td>
+              <td><span class="badge bg-light text-dark border">{{ v.district }}</span></td>
+              <td class="text-muted small">{{ v.mobile }}</td>
+              <td class="text-muted small">{{ v.email or '—' }}</td>
+              <td><code>{{ v.username }}</code></td>
+              <td>
+                {% if v.is_active %}<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Active</span>
+                {% else %}<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Disabled</span>{% endif %}
+              </td>
+              <td><span class="badge bg-primary">{{ v._total_leads }}</span></td>
+              <td><span class="badge bg-success">{{ v._completed_leads }}</span></td>
+              <td>
+                <div class="d-flex gap-1 flex-wrap">
+                  <button class="btn btn-xs btn-outline-primary" title="Edit"
+                    onclick="openEditVendorModal({{ v.id }}, '{{ v.company_name|e }}', '{{ v.owner_name|e }}', '{{ v.district|e }}', '{{ v.mobile|e }}', '{{ v.email|e }}')">
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+                  <button class="btn btn-xs btn-outline-warning" title="Reset Password"
+                    onclick="openResetVendorModal({{ v.id }}, '{{ v.username|e }}')">
+                    <i class="bi bi-key"></i>
+                  </button>
+                  {% if v.is_active %}
+                  <a href="/admin-mgmt/vendor/toggle/{{ v.id }}" class="btn btn-xs btn-outline-secondary" title="Disable"
+                    onclick="return confirm('Disable vendor {{ v.company_name }}?')"><i class="bi bi-toggle-off"></i></a>
+                  {% else %}
+                  <a href="/admin-mgmt/vendor/toggle/{{ v.id }}" class="btn btn-xs btn-outline-success" title="Enable"
+                    onclick="return confirm('Enable vendor {{ v.company_name }}?')"><i class="bi bi-toggle-on"></i></a>
+                  {% endif %}
+                  <button class="btn btn-xs btn-outline-danger" title="Delete"
+                    onclick="openDeleteVendorModal({{ v.id }}, '{{ v.company_name|e }}')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="11" class="text-center text-muted py-4">No vendors found.</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- Vendor Pagination -->
+    <div id="vendorPagination" class="d-flex gap-1 justify-content-end mt-3 flex-wrap"></div>
+  </div>
+
+</div><!-- /.tab-content -->
+
+
+<!-- =======================================================
      MODAL: CREATE ADMIN
-==================================================== -->
+======================================================== -->
 <div class="modal fade" id="createAdminModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content crm-modal">
       <div class="modal-header crm-modal-header">
         <div class="modal-title-wrap">
           <div class="modal-icon-wrap"><i class="bi bi-person-plus-fill"></i></div>
-          <div>
-            <h5 class="modal-title">Create Admin Account</h5>
-            <small class="text-white-50">Password is stored hashed — shown only once</small>
-          </div>
+          <div><h5 class="modal-title">Create Admin Account</h5><small class="text-white-50">Password stored as hash — shown once</small></div>
         </div>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
-
-        <!-- STEP 1: Form -->
         <div id="caStep1">
           <div class="row g-3">
             <div class="col-md-6">
               <label class="crm-label">Full Name <span class="text-danger">*</span></label>
-              <input type="text" id="caName" class="crm-input" placeholder="Rahul Sharma" required>
+              <input type="text" id="caName" class="crm-input" placeholder="Rahul Sharma">
             </div>
             <div class="col-md-6">
               <label class="crm-label">Username <span class="text-danger">*</span></label>
-              <input type="text" id="caUsername" class="crm-input" placeholder="rahul.sharma" required>
+              <input type="text" id="caUsername" class="crm-input" placeholder="rahul.sharma">
             </div>
             <div class="col-md-6">
               <label class="crm-label">Email</label>
-              <input type="email" id="caEmail" class="crm-input" placeholder="rahul@hargharsolar.in">
+              <input type="email" id="caEmail" class="crm-input" placeholder="rahul@example.com">
             </div>
             <div class="col-md-6">
               <label class="crm-label">Role</label>
-              <select id="caRole" class="crm-select">
-                <option value="admin">Admin</option>
-              </select>
+              <select id="caRole" class="crm-select"><option value="admin">Admin</option></select>
             </div>
             <div class="col-12">
               <label class="crm-label">Temporary Password</label>
               <div class="input-group">
-                <input type="text" id="caPassword" class="crm-input" placeholder="Auto-generated if left blank">
-                <button type="button" class="btn btn-outline-success" id="caGenPwBtn" style="border-radius:0 8px 8px 0;border:1px solid rgba(0,91,56,.25)">
+                <input type="text" id="caPassword" class="crm-input" placeholder="Auto-generated if blank">
+                <button type="button" class="btn btn-outline-success" id="caGenPwBtn"
+                  style="border-radius:0 8px 8px 0;border:1px solid rgba(0,91,56,.25)">
                   <i class="bi bi-magic me-1"></i> Generate
                 </button>
               </div>
-              <small class="text-muted">Example: HGS@8392XZ — stored as hash, shown once</small>
             </div>
           </div>
           <div class="mt-4 d-flex gap-2 justify-content-end">
             <button type="button" class="btn-crm-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn-crm-primary" id="caCreateBtn">
-              <i class="bi bi-check-lg me-1"></i> Create Account
-            </button>
+            <button type="button" class="btn-crm-primary" id="caCreateBtn"><i class="bi bi-check-lg me-1"></i> Create Account</button>
           </div>
         </div>
-
-        <!-- STEP 2: Credentials display -->
         <div id="caStep2" style="display:none">
-          <div class="alert alert-success border-0">
-            <i class="bi bi-check-circle-fill me-2"></i>
-            <strong>Account created successfully!</strong> Share these credentials securely.
-          </div>
+          <div class="alert alert-success border-0"><i class="bi bi-check-circle-fill me-2"></i><strong>Admin created!</strong> Share credentials securely.</div>
           <div class="p-3 rounded-3 mb-3" style="background:#f8f9fa;border:1px solid #dee2e6">
             <div class="row g-2">
               <div class="col-6 small"><span class="text-muted">Name:</span> <strong id="caCrName"></strong></div>
@@ -207,11 +300,8 @@
               <div class="col-12 small"><span class="text-muted">Email:</span> <span id="caCrEmail"></span></div>
             </div>
           </div>
-
-          <!-- Email Template -->
           <label class="crm-label mb-1">Ready-to-send Email</label>
-          <pre id="caEmailTpl" class="p-3 rounded-3 small" style="background:#fff;border:1px solid #dee2e6;white-space:pre-wrap;max-height:220px;overflow:auto"></pre>
-
+          <pre id="caEmailTpl" class="p-3 rounded-3 small" style="background:#fff;border:1px solid #dee2e6;white-space:pre-wrap;max-height:200px;overflow:auto"></pre>
           <div class="d-flex flex-wrap gap-2 mt-3">
             <button class="btn btn-sm btn-outline-success" id="caCopyEmailBtn"><i class="bi bi-clipboard me-1"></i> Copy Email</button>
             <button class="btn btn-sm btn-outline-primary" id="caCopyCredsBtn"><i class="bi bi-person-badge me-1"></i> Copy Credentials</button>
@@ -219,20 +309,103 @@
             <button class="btn btn-sm btn-outline-danger" id="caCopyPwBtn"><i class="bi bi-key me-1"></i> Copy Password</button>
             <button class="btn btn-sm btn-outline-dark ms-auto" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print</button>
           </div>
-          <div class="mt-3">
-            <button class="btn btn-success w-100" onclick="window.location.reload()">
-              <i class="bi bi-arrow-clockwise me-1"></i> Done — Reload Page
-            </button>
-          </div>
+          <div class="mt-3"><button class="btn btn-success w-100" onclick="window.location.reload()"><i class="bi bi-arrow-clockwise me-1"></i> Done — Reload</button></div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===================================================
+<!-- =======================================================
+     MODAL: CREATE VENDOR
+======================================================== -->
+<div class="modal fade" id="createVendorModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content crm-modal">
+      <div class="modal-header crm-modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-wrap"><i class="bi bi-shop"></i></div>
+          <div><h5 class="modal-title">Create Vendor Account</h5><small class="text-white-50">Password stored as hash — shown once</small></div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div id="cvStep1">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="crm-label">Vendor Name <span class="text-danger">*</span></label>
+              <input type="text" id="cvOwner" class="crm-input" placeholder="Ramesh Kumar">
+            </div>
+            <div class="col-md-6">
+              <label class="crm-label">Company Name <span class="text-danger">*</span></label>
+              <input type="text" id="cvCompany" class="crm-input" placeholder="Solar Solutions Pvt Ltd">
+            </div>
+            <div class="col-md-6">
+              <label class="crm-label">District <span class="text-danger">*</span></label>
+              <select id="cvDistrict" class="crm-select">
+                <option value="">Select District</option>
+                {% for d in districts %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="crm-label">Phone <span class="text-danger">*</span></label>
+              <input type="tel" id="cvMobile" class="crm-input" placeholder="+91 9876543210">
+            </div>
+            <div class="col-md-6">
+              <label class="crm-label">Email</label>
+              <input type="email" id="cvEmail" class="crm-input" placeholder="vendor@example.com">
+            </div>
+            <div class="col-md-6">
+              <label class="crm-label">Username <span class="text-muted small">(auto if blank)</span></label>
+              <input type="text" id="cvUsername" class="crm-input" placeholder="Auto-generated">
+            </div>
+            <div class="col-12">
+              <label class="crm-label">Temporary Password</label>
+              <div class="input-group">
+                <input type="text" id="cvPassword" class="crm-input" placeholder="Auto-generated if blank">
+                <button type="button" class="btn btn-outline-success" id="cvGenPwBtn"
+                  style="border-radius:0 8px 8px 0;border:1px solid rgba(0,91,56,.25)">
+                  <i class="bi bi-magic me-1"></i> Generate
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 d-flex gap-2 justify-content-end">
+            <button type="button" class="btn-crm-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn-crm-primary" id="cvCreateBtn"><i class="bi bi-check-lg me-1"></i> Create Vendor</button>
+          </div>
+        </div>
+        <div id="cvStep2" style="display:none">
+          <div class="alert alert-success border-0"><i class="bi bi-check-circle-fill me-2"></i><strong>Vendor created!</strong> Share credentials securely.</div>
+          <div class="p-3 rounded-3 mb-3" style="background:#f8f9fa;border:1px solid #dee2e6">
+            <div class="row g-2">
+              <div class="col-6 small"><span class="text-muted">Vendor Name:</span> <strong id="cvCrOwner"></strong></div>
+              <div class="col-6 small"><span class="text-muted">Company:</span> <strong id="cvCrCompany"></strong></div>
+              <div class="col-6 small"><span class="text-muted">Username:</span> <code id="cvCrUsername" class="text-primary fw-bold"></code></div>
+              <div class="col-6 small"><span class="text-muted">Password:</span> <code id="cvCrPassword" class="text-danger fw-bold"></code></div>
+              <div class="col-6 small"><span class="text-muted">District:</span> <span id="cvCrDistrict"></span></div>
+              <div class="col-6 small"><span class="text-muted">Phone:</span> <span id="cvCrMobile"></span></div>
+            </div>
+          </div>
+          <label class="crm-label mb-1">Ready-to-send Email</label>
+          <pre id="cvEmailTpl" class="p-3 rounded-3 small" style="background:#fff;border:1px solid #dee2e6;white-space:pre-wrap;max-height:200px;overflow:auto"></pre>
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <button class="btn btn-sm btn-outline-success" id="cvCopyEmailBtn"><i class="bi bi-clipboard me-1"></i> Copy Email</button>
+            <button class="btn btn-sm btn-outline-primary" id="cvCopyCredsBtn"><i class="bi bi-person-badge me-1"></i> Copy Credentials</button>
+            <button class="btn btn-sm btn-outline-secondary" id="cvCopyUsernameBtn"><i class="bi bi-at me-1"></i> Copy Username</button>
+            <button class="btn btn-sm btn-outline-danger" id="cvCopyPwBtn"><i class="bi bi-key me-1"></i> Copy Password</button>
+            <button class="btn btn-sm btn-outline-dark" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print</button>
+          </div>
+          <div class="mt-3"><button class="btn btn-success w-100" onclick="window.location.reload()"><i class="bi bi-arrow-clockwise me-1"></i> Done — Reload</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =======================================================
      MODAL: EDIT ADMIN
-==================================================== -->
+======================================================== -->
 <div class="modal fade" id="editAdminModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content crm-modal">
@@ -244,82 +417,137 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
-        <input type="hidden" id="editUserId">
+        <input type="hidden" id="editAdminId">
         <div class="row g-3">
-          <div class="col-12">
-            <label class="crm-label">Full Name</label>
-            <input type="text" id="editName" class="crm-input">
-          </div>
-          <div class="col-12">
-            <label class="crm-label">Email</label>
-            <input type="email" id="editEmail" class="crm-input">
-          </div>
-          <div class="col-12">
-            <label class="crm-label">Role</label>
-            <select id="editRole" class="crm-select">
-              <option value="admin">Admin</option>
-            </select>
-          </div>
+          <div class="col-12"><label class="crm-label">Full Name</label><input type="text" id="editAdminName" class="crm-input"></div>
+          <div class="col-12"><label class="crm-label">Email</label><input type="email" id="editAdminEmail" class="crm-input"></div>
+          <div class="col-12"><label class="crm-label">Role</label><select id="editAdminRole" class="crm-select"><option value="admin">Admin</option></select></div>
         </div>
       </div>
       <div class="modal-footer crm-modal-footer">
         <button type="button" class="btn-crm-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn-crm-primary" id="editSaveBtn"><i class="bi bi-save me-1"></i> Save Changes</button>
+        <button type="button" class="btn-crm-primary" id="editAdminSaveBtn"><i class="bi bi-save me-1"></i> Save</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===================================================
-     MODAL: RESET PASSWORD
-==================================================== -->
-<div class="modal fade" id="resetPwModal" tabindex="-1" aria-hidden="true">
+<!-- =======================================================
+     MODAL: EDIT VENDOR
+======================================================== -->
+<div class="modal fade" id="editVendorModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content crm-modal">
+      <div class="modal-header crm-modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-wrap"><i class="bi bi-pencil-square"></i></div>
+          <div><h5 class="modal-title">Edit Vendor</h5></div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="editVendorId">
+        <div class="row g-3">
+          <div class="col-md-6"><label class="crm-label">Company Name</label><input type="text" id="editVendorCompany" class="crm-input"></div>
+          <div class="col-md-6"><label class="crm-label">Vendor Name</label><input type="text" id="editVendorOwner" class="crm-input"></div>
+          <div class="col-md-6">
+            <label class="crm-label">District</label>
+            <select id="editVendorDistrict" class="crm-select">
+              {% for d in districts %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6"><label class="crm-label">Phone</label><input type="tel" id="editVendorMobile" class="crm-input"></div>
+          <div class="col-md-6"><label class="crm-label">Email</label><input type="email" id="editVendorEmail" class="crm-input"></div>
+        </div>
+      </div>
+      <div class="modal-footer crm-modal-footer">
+        <button type="button" class="btn-crm-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn-crm-primary" id="editVendorSaveBtn"><i class="bi bi-save me-1"></i> Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =======================================================
+     MODAL: RESET ADMIN PASSWORD
+======================================================== -->
+<div class="modal fade" id="resetAdminModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content crm-modal">
       <div class="modal-header crm-modal-header">
         <div class="modal-title-wrap">
           <div class="modal-icon-wrap"><i class="bi bi-key-fill"></i></div>
-          <div>
-            <h5 class="modal-title">Reset Password</h5>
-            <small id="rpUserLabel" class="text-white-50"></small>
-          </div>
+          <div><h5 class="modal-title">Reset Admin Password</h5><small id="raUserLabel" class="text-white-50"></small></div>
         </div>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
-        <div id="rpStep1">
-          <p class="text-muted small">A new strong temporary password will be auto-generated and shown once. It is stored hashed.</p>
-          <div class="d-flex gap-2 justify-content-end mt-3">
+        <div id="raStep1">
+          <p class="text-muted small">A new strong temporary password will be auto-generated and shown once.</p>
+          <div class="d-flex gap-2 justify-content-end">
             <button type="button" class="btn-crm-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn-crm-primary" id="rpGenerateBtn"><i class="bi bi-magic me-1"></i> Generate & Reset</button>
+            <button type="button" class="btn-crm-primary" id="raGenerateBtn"><i class="bi bi-magic me-1"></i> Generate & Reset</button>
           </div>
         </div>
-        <div id="rpStep2" style="display:none">
-          <div class="alert alert-warning border-0">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <strong>Show this password once only.</strong> It cannot be recovered after closing.
-          </div>
+        <div id="raStep2" style="display:none">
+          <div class="alert alert-warning border-0"><i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Shown once only.</strong></div>
           <div class="p-3 rounded-3 mb-3" style="background:#f8f9fa;border:1px solid #dee2e6">
-            <div class="small"><span class="text-muted">Username:</span> <code id="rpUsername" class="text-primary fw-bold"></code></div>
-            <div class="small mt-1"><span class="text-muted">New Password:</span> <code id="rpNewPassword" class="text-danger fw-bold fs-6"></code></div>
+            <div class="small"><span class="text-muted">Username:</span> <code id="raUsername" class="text-primary fw-bold"></code></div>
+            <div class="small mt-1"><span class="text-muted">New Password:</span> <code id="raNewPassword" class="text-danger fw-bold fs-6"></code></div>
           </div>
           <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-danger" id="rpCopyPwBtn"><i class="bi bi-clipboard me-1"></i> Copy Password</button>
+            <button class="btn btn-sm btn-outline-danger" id="raCopyPwBtn"><i class="bi bi-clipboard me-1"></i> Copy Password</button>
             <button class="btn btn-sm btn-outline-dark" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print</button>
           </div>
-          <div class="mt-3">
-            <button class="btn btn-success w-100" data-bs-dismiss="modal" onclick="window.location.reload()">Done</button>
-          </div>
+          <div class="mt-3"><button class="btn btn-success w-100" data-bs-dismiss="modal" onclick="window.location.reload()">Done</button></div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===================================================
-     MODAL: DELETE CONFIRM
-==================================================== -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+<!-- =======================================================
+     MODAL: RESET VENDOR PASSWORD
+======================================================== -->
+<div class="modal fade" id="resetVendorModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content crm-modal">
+      <div class="modal-header crm-modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-wrap"><i class="bi bi-key-fill"></i></div>
+          <div><h5 class="modal-title">Reset Vendor Password</h5><small id="rvUserLabel" class="text-white-50"></small></div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div id="rvStep1">
+          <p class="text-muted small">A new strong temporary password will be auto-generated and shown once.</p>
+          <div class="d-flex gap-2 justify-content-end">
+            <button type="button" class="btn-crm-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn-crm-primary" id="rvGenerateBtn"><i class="bi bi-magic me-1"></i> Generate & Reset</button>
+          </div>
+        </div>
+        <div id="rvStep2" style="display:none">
+          <div class="alert alert-warning border-0"><i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Shown once only.</strong></div>
+          <div class="p-3 rounded-3 mb-3" style="background:#f8f9fa;border:1px solid #dee2e6">
+            <div class="small"><span class="text-muted">Username:</span> <code id="rvUsername" class="text-primary fw-bold"></code></div>
+            <div class="small mt-1"><span class="text-muted">New Password:</span> <code id="rvNewPassword" class="text-danger fw-bold fs-6"></code></div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-danger" id="rvCopyPwBtn"><i class="bi bi-clipboard me-1"></i> Copy Password</button>
+            <button class="btn btn-sm btn-outline-dark" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print</button>
+          </div>
+          <div class="mt-3"><button class="btn btn-success w-100" data-bs-dismiss="modal" onclick="window.location.reload()">Done</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =======================================================
+     MODAL: DELETE ADMIN
+======================================================== -->
+<div class="modal fade" id="deleteAdminModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content crm-modal">
       <div class="modal-header crm-modal-header" style="background:linear-gradient(135deg,#dc3545,#c82333)">
@@ -330,14 +558,37 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
-        <p>Are you sure you want to permanently delete <strong id="delUsername"></strong>? This action cannot be undone.</p>
-        <input type="hidden" id="delUserId">
+        <p>Permanently delete admin <strong id="delAdminUsername"></strong>? This cannot be undone.</p>
+        <input type="hidden" id="delAdminId">
       </div>
       <div class="modal-footer crm-modal-footer">
         <button type="button" class="btn-crm-secondary" data-bs-dismiss="modal">Cancel</button>
-        <a href="#" id="delConfirmBtn" class="btn btn-danger fw-bold">
-          <i class="bi bi-trash me-1"></i> Delete Permanently
-        </a>
+        <a href="#" id="delAdminConfirmBtn" class="btn btn-danger fw-bold"><i class="bi bi-trash me-1"></i> Delete</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =======================================================
+     MODAL: DELETE VENDOR
+======================================================== -->
+<div class="modal fade" id="deleteVendorModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content crm-modal">
+      <div class="modal-header crm-modal-header" style="background:linear-gradient(135deg,#dc3545,#c82333)">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-wrap" style="background:rgba(255,255,255,.15)"><i class="bi bi-trash-fill"></i></div>
+          <div><h5 class="modal-title">Delete Vendor</h5></div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p>Permanently delete vendor <strong id="delVendorName"></strong>? All their leads will be unassigned. This cannot be undone.</p>
+        <input type="hidden" id="delVendorId">
+      </div>
+      <div class="modal-footer crm-modal-footer">
+        <button type="button" class="btn-crm-secondary" data-bs-dismiss="modal">Cancel</button>
+        <a href="#" id="delVendorConfirmBtn" class="btn btn-danger fw-bold"><i class="bi bi-trash me-1"></i> Delete</a>
       </div>
     </div>
   </div>
@@ -349,10 +600,7 @@
 <style>
   .btn-xs { padding: 3px 8px; font-size: 12px; border-radius: 6px; }
   .opacity-60 { opacity: 0.6; }
-  @media print {
-    .crm-sidebar, .crm-header, .btn, button { display: none !important; }
-    .modal-content { box-shadow: none !important; }
-  }
+  @media print { .crm-sidebar, .crm-header, .btn, button, .nav-tabs { display: none !important; } }
 </style>
 <script>
 (function () {
@@ -367,162 +615,285 @@
     });
   }
 
-  /* ---- CREATE ADMIN ---- */
-  var caModal = document.getElementById('createAdminModal');
+  function genPassword() {
+    var digits = '';
+    for (var i = 0; i < 4; i++) digits += Math.floor(Math.random() * 10);
+    var alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    var letters = alpha[Math.floor(Math.random() * 26)] + alpha[Math.floor(Math.random() * 26)];
+    return 'HGS@' + digits + letters;
+  }
 
-  // Reset form when modal closes
-  caModal.addEventListener('hidden.bs.modal', function () {
+  /* ---- Tab restore from hash ---- */
+  if (window.location.hash === '#vendors') {
+    var vTab = document.getElementById('vendors-tab-btn') || document.getElementById('vendors-tab');
+    if (vTab) new bootstrap.Tab(vTab).show();
+  }
+
+  /* ================================================
+     ADMIN SEARCH + PAGINATION
+  ================================================ */
+  var ADMIN_PER_PAGE = 10;
+  var adminCurrentPage = 1;
+
+  window.filterAdmins = function () {
+    adminCurrentPage = 1;
+    renderAdminTable();
+  };
+
+  function getVisibleAdminRows() {
+    var q = (document.getElementById('adminSearch').value || '').toLowerCase();
+    var rows = Array.from(document.querySelectorAll('#adminTbody tr'));
+    return rows.filter(function (r) {
+      if (!q) return true;
+      return r.textContent.toLowerCase().includes(q);
+    });
+  }
+
+  function renderAdminTable() {
+    var visible = getVisibleAdminRows();
+    var total = visible.length;
+    var pages = Math.ceil(total / ADMIN_PER_PAGE) || 1;
+    var start = (adminCurrentPage - 1) * ADMIN_PER_PAGE;
+    Array.from(document.querySelectorAll('#adminTbody tr')).forEach(function (r) { r.style.display = 'none'; });
+    visible.slice(start, start + ADMIN_PER_PAGE).forEach(function (r) { r.style.display = ''; });
+    renderPagination('adminPagination', pages, adminCurrentPage, function (p) { adminCurrentPage = p; renderAdminTable(); });
+  }
+
+  /* ================================================
+     VENDOR SEARCH + FILTER + PAGINATION
+  ================================================ */
+  var VENDOR_PER_PAGE = 10;
+  var vendorCurrentPage = 1;
+
+  window.filterVendors = function () {
+    vendorCurrentPage = 1;
+    renderVendorTable();
+  };
+
+  function getVisibleVendorRows() {
+    var q        = (document.getElementById('vendorSearch').value || '').toLowerCase();
+    var district = document.getElementById('vendorDistrictFilter').value;
+    var status   = document.getElementById('vendorStatusFilter').value;
+    var rows = Array.from(document.querySelectorAll('#vendorTbody tr'));
+    return rows.filter(function (r) {
+      var matchQ = !q || r.textContent.toLowerCase().includes(q);
+      var matchD = !district || r.dataset.district === district;
+      var matchS = !status || r.dataset.status === status;
+      return matchQ && matchD && matchS;
+    });
+  }
+
+  function renderVendorTable() {
+    var visible = getVisibleVendorRows();
+    var total = visible.length;
+    var pages = Math.ceil(total / VENDOR_PER_PAGE) || 1;
+    var start = (vendorCurrentPage - 1) * VENDOR_PER_PAGE;
+    Array.from(document.querySelectorAll('#vendorTbody tr')).forEach(function (r) { r.style.display = 'none'; });
+    visible.slice(start, start + VENDOR_PER_PAGE).forEach(function (r) { r.style.display = ''; });
+    renderPagination('vendorPagination', pages, vendorCurrentPage, function (p) { vendorCurrentPage = p; renderVendorTable(); });
+  }
+
+  function renderPagination(containerId, pages, current, onClick) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    if (pages <= 1) { el.innerHTML = ''; return; }
+    var html = '';
+    for (var i = 1; i <= pages; i++) {
+      html += '<button class="btn btn-sm ' + (i === current ? 'btn-success' : 'btn-outline-secondary') + ' btn-xs" data-p="' + i + '">' + i + '</button>';
+    }
+    el.innerHTML = html;
+    el.querySelectorAll('button').forEach(function (b) {
+      b.addEventListener('click', function () { onClick(parseInt(this.dataset.p)); });
+    });
+  }
+
+  // Init tables on load
+  renderAdminTable();
+  renderVendorTable();
+
+  /* ================================================
+     CREATE ADMIN
+  ================================================ */
+  document.getElementById('createAdminModal').addEventListener('hidden.bs.modal', function () {
     document.getElementById('caStep1').style.display = 'block';
     document.getElementById('caStep2').style.display = 'none';
-    document.getElementById('caName').value     = '';
-    document.getElementById('caUsername').value = '';
-    document.getElementById('caEmail').value    = '';
-    document.getElementById('caPassword').value = '';
+    ['caName','caUsername','caEmail','caPassword'].forEach(function (id) { document.getElementById(id).value = ''; });
   });
 
-  // Generate password button
   document.getElementById('caGenPwBtn').addEventListener('click', function () {
-    var chars   = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    var digits  = '';
-    for (var i = 0; i < 4; i++) digits += Math.floor(Math.random() * 10);
-    var letters = '';
-    for (var i = 0; i < 2; i++) letters += chars[Math.floor(Math.random() * 26)];
-    document.getElementById('caPassword').value = 'HGS@' + digits + letters;
+    document.getElementById('caPassword').value = genPassword();
   });
 
-  // Create account
   document.getElementById('caCreateBtn').addEventListener('click', function () {
     var name     = document.getElementById('caName').value.trim();
     var username = document.getElementById('caUsername').value.trim();
     var email    = document.getElementById('caEmail').value.trim();
     var role     = document.getElementById('caRole').value;
     var pw       = document.getElementById('caPassword').value.trim();
-
     if (!name || !username) { alert('Full name and username are required.'); return; }
+    var btn = this; btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Creating…';
+    var fd = new FormData(); fd.append('name',name); fd.append('username',username); fd.append('email',email); fd.append('role',role); fd.append('password',pw);
+    fetch('/admin-mgmt/create', { method:'POST', body:fd })
+      .then(function(r){return r.json();})
+      .then(function(d){
+        btn.disabled=false; btn.innerHTML='<i class="bi bi-check-lg me-1"></i> Create Account';
+        if(!d.ok){alert(d.error||'Error');return;}
+        document.getElementById('caCrName').textContent=d.name;
+        document.getElementById('caCrUsername').textContent=d.username;
+        document.getElementById('caCrPassword').textContent=d.password;
+        document.getElementById('caCrRole').textContent=d.role;
+        document.getElementById('caCrEmail').textContent=d.email||'—';
+        var portal=window.location.origin+'/admin-login';
+        document.getElementById('caEmailTpl').textContent=
+          'Subject: Har Ghar Solar CRM Login Credentials\n\nHello '+d.name+',\n\nYour CRM account has been created.\n\nPortal    : '+portal+'\nUsername  : '+d.username+'\nPassword  : '+d.password+'\n\nPlease change your password after first login.\n\nRegards,\nHar Ghar Solar CRM';
+        document.getElementById('caStep1').style.display='none';
+        document.getElementById('caStep2').style.display='block';
+      }).catch(function(){btn.disabled=false;btn.innerHTML='<i class="bi bi-check-lg me-1"></i> Create Account';alert('Server error.');});
+  });
+  document.getElementById('caCopyEmailBtn').addEventListener('click',function(){copyText(document.getElementById('caEmailTpl').textContent,this);});
+  document.getElementById('caCopyCredsBtn').addEventListener('click',function(){copyText('Username: '+document.getElementById('caCrUsername').textContent+'\nPassword: '+document.getElementById('caCrPassword').textContent,this);});
+  document.getElementById('caCopyUsernameBtn').addEventListener('click',function(){copyText(document.getElementById('caCrUsername').textContent,this);});
+  document.getElementById('caCopyPwBtn').addEventListener('click',function(){copyText(document.getElementById('caCrPassword').textContent,this);});
 
-    var fd = new FormData();
-    fd.append('name', name); fd.append('username', username);
-    fd.append('email', email); fd.append('role', role); fd.append('password', pw);
-
-    var btn = document.getElementById('caCreateBtn');
-    btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Creating...';
-
-    fetch('/admin-mgmt/create', { method: 'POST', body: fd })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Create Account';
-        if (!d.ok) { alert(d.error || 'Error creating admin.'); return; }
-
-        document.getElementById('caCrName').textContent     = d.name;
-        document.getElementById('caCrUsername').textContent = d.username;
-        document.getElementById('caCrPassword').textContent = d.password;
-        document.getElementById('caCrRole').textContent     = d.role;
-        document.getElementById('caCrEmail').textContent    = d.email || '—';
-
-        var portal = window.location.origin + '/admin-login';
-        var tpl =
-'Subject: Har Ghar Solar CRM Login Credentials\n\n' +
-'Hello ' + d.name + ',\n\n' +
-'Your CRM account has been created.\n\n' +
-'Portal    : ' + portal + '\n' +
-'Username  : ' + d.username + '\n' +
-'Password  : ' + d.password + '\n\n' +
-'Please change your password after your first login.\n\n' +
-'Regards,\nHar Ghar Solar CRM';
-        document.getElementById('caEmailTpl').textContent = tpl;
-
-        document.getElementById('caStep1').style.display = 'none';
-        document.getElementById('caStep2').style.display = 'block';
-      })
-      .catch(function () {
-        btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Create Account';
-        alert('Server error. Please try again.');
-      });
+  /* ================================================
+     CREATE VENDOR
+  ================================================ */
+  document.getElementById('createVendorModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('cvStep1').style.display = 'block';
+    document.getElementById('cvStep2').style.display = 'none';
+    ['cvOwner','cvCompany','cvMobile','cvEmail','cvUsername','cvPassword'].forEach(function(id){document.getElementById(id).value='';});
+    document.getElementById('cvDistrict').value='';
   });
 
-  document.getElementById('caCopyEmailBtn').addEventListener('click', function () {
-    copyText(document.getElementById('caEmailTpl').textContent, this);
-  });
-  document.getElementById('caCopyCredsBtn').addEventListener('click', function () {
-    var u = document.getElementById('caCrUsername').textContent;
-    var p = document.getElementById('caCrPassword').textContent;
-    copyText('Username: ' + u + '\nPassword: ' + p, this);
-  });
-  document.getElementById('caCopyUsernameBtn').addEventListener('click', function () {
-    copyText(document.getElementById('caCrUsername').textContent, this);
-  });
-  document.getElementById('caCopyPwBtn').addEventListener('click', function () {
-    copyText(document.getElementById('caCrPassword').textContent, this);
+  document.getElementById('cvGenPwBtn').addEventListener('click', function () {
+    document.getElementById('cvPassword').value = genPassword();
   });
 
-  /* ---- EDIT ADMIN ---- */
-  window.openEditModal = function (id, name, email, role) {
-    document.getElementById('editUserId').value = id;
-    document.getElementById('editName').value   = name;
-    document.getElementById('editEmail').value  = email;
-    document.getElementById('editRole').value   = role === 'disabled' ? 'admin' : role;
+  document.getElementById('cvCreateBtn').addEventListener('click', function () {
+    var owner    = document.getElementById('cvOwner').value.trim();
+    var company  = document.getElementById('cvCompany').value.trim();
+    var district = document.getElementById('cvDistrict').value;
+    var mobile   = document.getElementById('cvMobile').value.trim();
+    var email    = document.getElementById('cvEmail').value.trim();
+    var username = document.getElementById('cvUsername').value.trim();
+    var pw       = document.getElementById('cvPassword').value.trim();
+    if (!owner||!company||!district||!mobile){alert('Vendor name, company, district and phone are required.');return;}
+    var btn=this; btn.disabled=true; btn.innerHTML='<span class="spinner-border spinner-border-sm"></span> Creating…';
+    var fd=new FormData(); fd.append('owner_name',owner); fd.append('company_name',company); fd.append('district',district); fd.append('mobile',mobile); fd.append('email',email); fd.append('username',username); fd.append('password',pw);
+    fetch('/admin-mgmt/vendor/create',{method:'POST',body:fd})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        btn.disabled=false; btn.innerHTML='<i class="bi bi-check-lg me-1"></i> Create Vendor';
+        if(!d.ok){alert(d.error||'Error');return;}
+        document.getElementById('cvCrOwner').textContent=d.owner_name;
+        document.getElementById('cvCrCompany').textContent=d.company_name;
+        document.getElementById('cvCrUsername').textContent=d.username;
+        document.getElementById('cvCrPassword').textContent=d.password;
+        document.getElementById('cvCrDistrict').textContent=d.district;
+        document.getElementById('cvCrMobile').textContent=d.mobile;
+        var portal=window.location.origin+'/vendor-login';
+        document.getElementById('cvEmailTpl').textContent=
+          'Subject: Har Ghar Solar CRM Vendor Login\n\nHello '+d.owner_name+',\n\nYour Vendor account has been created.\n\nVendor Portal : '+portal+'\nUsername      : '+d.username+'\nPassword      : '+d.password+'\nDistrict      : '+d.district+'\n\nPlease change your password after first login.\n\nRegards,\nHar Ghar Solar CRM';
+        document.getElementById('cvStep1').style.display='none';
+        document.getElementById('cvStep2').style.display='block';
+      }).catch(function(){btn.disabled=false;btn.innerHTML='<i class="bi bi-check-lg me-1"></i> Create Vendor';alert('Server error.');});
+  });
+  document.getElementById('cvCopyEmailBtn').addEventListener('click',function(){copyText(document.getElementById('cvEmailTpl').textContent,this);});
+  document.getElementById('cvCopyCredsBtn').addEventListener('click',function(){copyText('Username: '+document.getElementById('cvCrUsername').textContent+'\nPassword: '+document.getElementById('cvCrPassword').textContent,this);});
+  document.getElementById('cvCopyUsernameBtn').addEventListener('click',function(){copyText(document.getElementById('cvCrUsername').textContent,this);});
+  document.getElementById('cvCopyPwBtn').addEventListener('click',function(){copyText(document.getElementById('cvCrPassword').textContent,this);});
+
+  /* ================================================
+     EDIT ADMIN
+  ================================================ */
+  window.openEditAdminModal = function(id,name,email,role){
+    document.getElementById('editAdminId').value=id;
+    document.getElementById('editAdminName').value=name;
+    document.getElementById('editAdminEmail').value=email;
+    document.getElementById('editAdminRole').value=role==='disabled'?'admin':role;
     new bootstrap.Modal(document.getElementById('editAdminModal')).show();
   };
-
-  document.getElementById('editSaveBtn').addEventListener('click', function () {
-    var id    = document.getElementById('editUserId').value;
-    var fd    = new FormData();
-    fd.append('name',  document.getElementById('editName').value.trim());
-    fd.append('email', document.getElementById('editEmail').value.trim());
-    fd.append('role',  document.getElementById('editRole').value);
-
-    var btn = this;
-    btn.disabled = true;
-
-    fetch('/admin-mgmt/edit/' + id, { method: 'POST', body: fd })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        btn.disabled = false;
-        if (!d.ok) { alert(d.error || 'Error saving.'); return; }
-        bootstrap.Modal.getInstance(document.getElementById('editAdminModal')).hide();
-        window.location.reload();
-      })
-      .catch(function () { btn.disabled = false; alert('Server error.'); });
+  document.getElementById('editAdminSaveBtn').addEventListener('click',function(){
+    var id=document.getElementById('editAdminId').value;
+    var fd=new FormData(); fd.append('name',document.getElementById('editAdminName').value.trim()); fd.append('email',document.getElementById('editAdminEmail').value.trim()); fd.append('role',document.getElementById('editAdminRole').value);
+    var btn=this; btn.disabled=true;
+    fetch('/admin-mgmt/edit/'+id,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(d){btn.disabled=false;if(!d.ok){alert(d.error||'Error');return;}bootstrap.Modal.getInstance(document.getElementById('editAdminModal')).hide();window.location.reload();}).catch(function(){btn.disabled=false;alert('Server error.');});
   });
 
-  /* ---- RESET PASSWORD ---- */
-  var rpUid = null;
-  window.openResetModal = function (id, username) {
-    rpUid = id;
-    document.getElementById('rpUserLabel').textContent = '@' + username;
-    document.getElementById('rpStep1').style.display = 'block';
-    document.getElementById('rpStep2').style.display = 'none';
-    new bootstrap.Modal(document.getElementById('resetPwModal')).show();
+  /* ================================================
+     EDIT VENDOR
+  ================================================ */
+  window.openEditVendorModal = function(id,company,owner,district,mobile,email){
+    document.getElementById('editVendorId').value=id;
+    document.getElementById('editVendorCompany').value=company;
+    document.getElementById('editVendorOwner').value=owner;
+    document.getElementById('editVendorDistrict').value=district;
+    document.getElementById('editVendorMobile').value=mobile;
+    document.getElementById('editVendorEmail').value=email;
+    new bootstrap.Modal(document.getElementById('editVendorModal')).show();
+  };
+  document.getElementById('editVendorSaveBtn').addEventListener('click',function(){
+    var id=document.getElementById('editVendorId').value;
+    var fd=new FormData(); fd.append('company_name',document.getElementById('editVendorCompany').value.trim()); fd.append('owner_name',document.getElementById('editVendorOwner').value.trim()); fd.append('district',document.getElementById('editVendorDistrict').value); fd.append('mobile',document.getElementById('editVendorMobile').value.trim()); fd.append('email',document.getElementById('editVendorEmail').value.trim());
+    var btn=this; btn.disabled=true;
+    fetch('/admin-mgmt/vendor/edit/'+id,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(d){btn.disabled=false;if(!d.ok){alert(d.error||'Error');return;}bootstrap.Modal.getInstance(document.getElementById('editVendorModal')).hide();window.location.reload();}).catch(function(){btn.disabled=false;alert('Server error.');});
+  });
+
+  /* ================================================
+     RESET ADMIN PASSWORD
+  ================================================ */
+  var raUid=null;
+  window.openResetAdminModal=function(id,username){
+    raUid=id;
+    document.getElementById('raUserLabel').textContent='@'+username;
+    document.getElementById('raStep1').style.display='block';
+    document.getElementById('raStep2').style.display='none';
+    new bootstrap.Modal(document.getElementById('resetAdminModal')).show();
+  };
+  document.getElementById('raGenerateBtn').addEventListener('click',function(){
+    if(!raUid)return; var btn=this; btn.disabled=true;
+    fetch('/admin-mgmt/reset/'+raUid,{method:'POST'}).then(function(r){return r.json();}).then(function(d){btn.disabled=false;if(!d.ok){alert(d.error||'Error');return;}document.getElementById('raUsername').textContent=d.username;document.getElementById('raNewPassword').textContent=d.password;document.getElementById('raStep1').style.display='none';document.getElementById('raStep2').style.display='block';}).catch(function(){btn.disabled=false;alert('Server error.');});
+  });
+  document.getElementById('raCopyPwBtn').addEventListener('click',function(){copyText(document.getElementById('raNewPassword').textContent,this);});
+
+  /* ================================================
+     RESET VENDOR PASSWORD
+  ================================================ */
+  var rvUid=null;
+  window.openResetVendorModal=function(id,username){
+    rvUid=id;
+    document.getElementById('rvUserLabel').textContent='@'+username;
+    document.getElementById('rvStep1').style.display='block';
+    document.getElementById('rvStep2').style.display='none';
+    new bootstrap.Modal(document.getElementById('resetVendorModal')).show();
+  };
+  document.getElementById('rvGenerateBtn').addEventListener('click',function(){
+    if(!rvUid)return; var btn=this; btn.disabled=true;
+    fetch('/admin-mgmt/vendor/reset/'+rvUid,{method:'POST'}).then(function(r){return r.json();}).then(function(d){btn.disabled=false;if(!d.ok){alert(d.error||'Error');return;}document.getElementById('rvUsername').textContent=d.username;document.getElementById('rvNewPassword').textContent=d.password;document.getElementById('rvStep1').style.display='none';document.getElementById('rvStep2').style.display='block';}).catch(function(){btn.disabled=false;alert('Server error.');});
+  });
+  document.getElementById('rvCopyPwBtn').addEventListener('click',function(){copyText(document.getElementById('rvNewPassword').textContent,this);});
+
+  /* ================================================
+     DELETE ADMIN
+  ================================================ */
+  window.openDeleteAdminModal=function(id,username){
+    document.getElementById('delAdminId').value=id;
+    document.getElementById('delAdminUsername').textContent=username;
+    document.getElementById('delAdminConfirmBtn').href='/admin-mgmt/delete/'+id;
+    new bootstrap.Modal(document.getElementById('deleteAdminModal')).show();
   };
 
-  document.getElementById('rpGenerateBtn').addEventListener('click', function () {
-    if (!rpUid) return;
-    var btn = this; btn.disabled = true;
-    fetch('/admin-mgmt/reset/' + rpUid, { method: 'POST' })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        btn.disabled = false;
-        if (!d.ok) { alert(d.error || 'Error resetting password.'); return; }
-        document.getElementById('rpUsername').textContent   = d.username;
-        document.getElementById('rpNewPassword').textContent = d.password;
-        document.getElementById('rpStep1').style.display = 'none';
-        document.getElementById('rpStep2').style.display = 'block';
-      })
-      .catch(function () { btn.disabled = false; alert('Server error.'); });
-  });
-
-  document.getElementById('rpCopyPwBtn').addEventListener('click', function () {
-    copyText(document.getElementById('rpNewPassword').textContent, this);
-  });
-
-  /* ---- DELETE ---- */
-  window.openDeleteModal = function (id, username) {
-    document.getElementById('delUserId').value     = id;
-    document.getElementById('delUsername').textContent = username;
-    document.getElementById('delConfirmBtn').href  = '/admin-mgmt/delete/' + id;
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+  /* ================================================
+     DELETE VENDOR
+  ================================================ */
+  window.openDeleteVendorModal=function(id,name){
+    document.getElementById('delVendorId').value=id;
+    document.getElementById('delVendorName').textContent=name;
+    document.getElementById('delVendorConfirmBtn').href='/admin-mgmt/vendor/delete/'+id;
+    new bootstrap.Modal(document.getElementById('deleteVendorModal')).show();
   };
 
 }());
 </script>
 {% endblock %}
+

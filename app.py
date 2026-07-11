@@ -496,9 +496,8 @@ def admin():
 
     return render_template(
         "admin.html",
-        leads=leads, users=users, vendors=vendors,
+        leads=leads, vendors=vendors,
         districts=UP_DISTRICTS, STATUSES=LEAD_STATUSES,
-        is_super=session.get("is_super", False),
         # stat cards
         status_counts=status_counts,
         total_leads=total_leads,
@@ -1236,12 +1235,21 @@ def _generate_strong_password():
 @app.route("/admin-management")
 @super_admin_required
 def admin_management():
-    users = User.query.order_by(User.id.asc()).all()
+    users   = User.query.order_by(User.id.asc()).all()
+    vendors = Vendor.query.order_by(Vendor.id.asc()).all()
+    # Annotate vendors with lead counts
+    for v in vendors:
+        v._total_leads     = Lead.query.filter_by(vendor_id=v.id).count()
+        v._completed_leads = Lead.query.filter_by(vendor_id=v.id, status="Completed").count()
     return render_template(
         "admin_management.html",
         users=users,
+        vendors=vendors,
+        districts=UP_DISTRICTS,
         is_super=True
     )
+
+# ---- Admin CRUD ----
 
 @app.route("/admin-mgmt/create", methods=["POST"])
 @super_admin_required
@@ -1288,13 +1296,11 @@ def admin_mgmt_edit(user_id):
     user = User.query.get_or_404(user_id)
     if user.is_super and user.id != session["user_id"]:
         return jsonify({"ok": False, "error": "Cannot edit another Super Admin."}), 403
-
     user.name  = request.form.get("name", user.name).strip()
     user.email = request.form.get("email", user.email).strip()
     role       = request.form.get("role", user.role).strip()
     if not user.is_super:
         user.role = role
-
     db.session.commit()
     logger.info("Super admin edited user: %s", user.username)
     return jsonify({"ok": True, "message": f"User '{user.username}' updated."})
@@ -1344,6 +1350,105 @@ def admin_mgmt_delete(user_id):
     logger.info("Super admin deleted user: %s", uname)
     flash(f"User '{uname}' deleted.", "success")
     return redirect(url_for("admin_management"))
+
+# ---- Vendor CRUD (Super Admin) ----
+
+@app.route("/admin-mgmt/vendor/create", methods=["POST"])
+@super_admin_required
+def admin_mgmt_vendor_create():
+    company  = request.form.get("company_name", "").strip()
+    owner    = request.form.get("owner_name", "").strip()
+    district = request.form.get("district", "").strip()
+    mobile   = request.form.get("mobile", "").strip()
+    email    = request.form.get("email", "").strip()
+    username = request.form.get("username", "").strip()
+    raw_pw   = request.form.get("password", "").strip()
+
+    if not company or not owner or not district or not mobile:
+        return jsonify({"ok": False, "error": "Company name, owner name, district and mobile are required."}), 400
+
+    if not username:
+        base = owner.lower().replace(" ", ".")[:10]
+        username = f"{base}.{secrets.token_hex(3)}"
+        while Vendor.query.filter_by(username=username).first():
+            username = f"{base}.{secrets.token_hex(3)}"
+    elif Vendor.query.filter_by(username=username).first():
+        return jsonify({"ok": False, "error": "Username already exists."}), 400
+
+    if not raw_pw:
+        raw_pw = _generate_strong_password()
+
+    vendor = Vendor(
+        company_name=company,
+        owner_name=owner,
+        mobile=mobile,
+        email=email,
+        username=username,
+        password=generate_password_hash(raw_pw),
+        district=district,
+        is_active=True,
+        created_at=datetime.now().strftime("%d-%m-%Y")
+    )
+    db.session.add(vendor)
+    db.session.commit()
+    logger.info("Super admin created vendor: %s", username)
+
+    return jsonify({
+        "ok":           True,
+        "company_name": company,
+        "owner_name":   owner,
+        "username":     username,
+        "password":     raw_pw,
+        "district":     district,
+        "email":        email,
+        "mobile":       mobile
+    })
+
+@app.route("/admin-mgmt/vendor/edit/<int:vendor_id>", methods=["POST"])
+@super_admin_required
+def admin_mgmt_vendor_edit(vendor_id):
+    vendor = Vendor.query.get_or_404(vendor_id)
+    vendor.company_name = request.form.get("company_name", vendor.company_name).strip()
+    vendor.owner_name   = request.form.get("owner_name", vendor.owner_name).strip()
+    vendor.district     = request.form.get("district", vendor.district).strip()
+    vendor.mobile       = request.form.get("mobile", vendor.mobile).strip()
+    vendor.email        = request.form.get("email", vendor.email).strip()
+    db.session.commit()
+    logger.info("Super admin edited vendor: %s", vendor.username)
+    return jsonify({"ok": True, "message": f"Vendor '{vendor.company_name}' updated."})
+
+@app.route("/admin-mgmt/vendor/reset/<int:vendor_id>", methods=["POST"])
+@super_admin_required
+def admin_mgmt_vendor_reset(vendor_id):
+    vendor = Vendor.query.get_or_404(vendor_id)
+    raw_pw = _generate_strong_password()
+    vendor.password = generate_password_hash(raw_pw)
+    db.session.commit()
+    logger.info("Super admin reset vendor password: %s", vendor.username)
+    return jsonify({"ok": True, "username": vendor.username, "password": raw_pw})
+
+@app.route("/admin-mgmt/vendor/toggle/<int:vendor_id>")
+@super_admin_required
+def admin_mgmt_vendor_toggle(vendor_id):
+    vendor = Vendor.query.get_or_404(vendor_id)
+    vendor.is_active = not vendor.is_active
+    status = "enabled" if vendor.is_active else "disabled"
+    db.session.commit()
+    flash(f"Vendor '{vendor.company_name}' has been {status}.", "success")
+    return redirect(url_for("admin_management") + "#vendors")
+
+@app.route("/admin-mgmt/vendor/delete/<int:vendor_id>")
+@super_admin_required
+def admin_mgmt_vendor_delete(vendor_id):
+    vendor = Vendor.query.get_or_404(vendor_id)
+    # Unlink leads
+    Lead.query.filter_by(vendor_id=vendor.id).update({"vendor_id": None})
+    name = vendor.company_name
+    db.session.delete(vendor)
+    db.session.commit()
+    logger.info("Super admin deleted vendor: %s", name)
+    flash(f"Vendor '{name}' deleted.", "success")
+    return redirect(url_for("admin_management") + "#vendors")
 
 # ==========================
 # LOGOUT (Admin)

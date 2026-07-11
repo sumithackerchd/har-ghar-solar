@@ -56,9 +56,9 @@
 
       {% if session.get('is_super') %}
       <div class="nav-section-label nav-divider">SUPER ADMIN</div>
-      <a href="/admin-management" class="sidebar-link {% if request.path == '/admin-management' %}active{% endif %}" title="Admin Management">
+      <a href="/admin-management" class="sidebar-link {% if request.path == '/admin-management' %}active{% endif %}" title="User Management">
         <span class="link-icon"><i class="bi bi-shield-lock-fill"></i></span>
-        <span class="link-text">Admin Management</span>
+        <span class="link-text">User Management</span>
       </a>
       {% endif %}
 
