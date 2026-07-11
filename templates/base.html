@@ -48,33 +48,42 @@
   </div>
 </div>
 
-<!-- TOP GOVERNMENT HEADER -->
+<!-- TOP PREMIUM HEADER BAR -->
 <header class="gov-header" role="banner">
   <div class="container">
-    <div class="row align-items-center gy-1">
-      <div class="col-lg-7 col-md-6">
-        <div class="gov-brand">
-          <div class="gov-icon" aria-hidden="true"><i class="fas fa-sun"></i></div>
-          <div class="gov-brand-text">
-            <h1 class="gov-title">Har Ghar Solar Mission</h1>
-            <p class="gov-subtitle">Clean Energy Initiative | Rooftop Solar Assistance Portal | Uttar Pradesh</p>
-          </div>
+    <div class="gov-header-inner">
+      <!-- Brand side -->
+      <div class="gov-brand">
+        <div class="gov-icon-wrap">
+          <i class="fas fa-solar-panel"></i>
+        </div>
+        <div class="gov-brand-text">
+          <span class="gov-title">Har Ghar Solar Mission</span>
+          <span class="gov-subtitle">PM Surya Ghar Yojana &nbsp;·&nbsp; Rooftop Solar Portal &nbsp;·&nbsp; Uttar Pradesh</span>
         </div>
       </div>
-      <div class="col-lg-5 col-md-6">
-        <div class="header-contact">
-          <a href="tel:+918077181038" class="hc-item" aria-label="Call us">
-            <span class="hc-icon"><i class="fas fa-phone-alt"></i></span>
-            <span class="hc-info"><small>Helpline</small><strong>+91 8077181038</strong></span>
-          </a>
-          <a href="https://wa.me/918077181038" class="hc-item" target="_blank" rel="noopener" aria-label="WhatsApp">
-            <span class="hc-icon hc-wa"><i class="fab fa-whatsapp"></i></span>
-            <span class="hc-info"><small>WhatsApp</small><strong>Chat Now</strong></span>
-          </a>
-          <div class="hc-item hc-loc">
-            <span class="hc-icon"><i class="fas fa-map-marker-alt"></i></span>
-            <span class="hc-info"><small>Service Area</small><strong>Uttar Pradesh</strong></span>
-          </div>
+      <!-- Contact side -->
+      <div class="header-contact">
+        <a href="tel:+918077181038" class="hc-item" aria-label="Call helpline">
+          <span class="hc-icon-circle"><i class="fas fa-phone-alt"></i></span>
+          <span class="hc-info">
+            <span class="hc-label">Helpline</span>
+            <span class="hc-value">+91 80771 81038</span>
+          </span>
+        </a>
+        <a href="https://wa.me/918077181038" class="hc-item hc-whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp us">
+          <span class="hc-icon-circle hc-icon-wa"><i class="fab fa-whatsapp"></i></span>
+          <span class="hc-info">
+            <span class="hc-label">WhatsApp</span>
+            <span class="hc-value">Chat Now</span>
+          </span>
+        </a>
+        <div class="hc-item hc-location">
+          <span class="hc-icon-circle hc-icon-loc"><i class="fas fa-map-marker-alt"></i></span>
+          <span class="hc-info">
+            <span class="hc-label">Service Area</span>
+            <span class="hc-value">Uttar Pradesh</span>
+          </span>
         </div>
       </div>
     </div>
@@ -101,29 +110,16 @@
         <li class="nav-item"><a class="nav-link" href="/services">Services</a></li>
         <li class="nav-item"><a class="nav-link" href="/#projects">Projects</a></li>
         <li class="nav-item"><a class="nav-link" href="/#subsidy">Subsidy</a></li>
+        <li class="nav-item"><a class="nav-link nav-calc" href="/#calculator">Calculator</a></li>
         <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
       </ul>
       <div class="nav-actions">
-        <div class="dropdown login-dropdown">
-          <button class="btn btn-login-admin dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="fas fa-user-shield me-1"></i> Admin
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end login-menu">
-            <li><a class="dropdown-item" href="/admin-login"><i class="fas fa-sign-in-alt me-2"></i>Admin Login</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="/admin"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
-          </ul>
-        </div>
-        <div class="dropdown login-dropdown">
-          <button class="btn btn-login-vendor dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="fas fa-store me-1"></i> Vendor
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end login-menu">
-            <li><a class="dropdown-item" href="/vendor-login"><i class="fas fa-sign-in-alt me-2"></i>Vendor Login</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="/vendor-dashboard"><i class="fas fa-chart-bar me-2"></i>Vendor Panel</a></li>
-          </ul>
-        </div>
+        <a href="/admin-login" class="btn btn-login-admin">
+          <i class="fas fa-user-shield me-1"></i> Admin
+        </a>
+        <a href="/vendor-login" class="btn btn-login-vendor">
+          <i class="fas fa-store me-1"></i> Vendor
+        </a>
         <a href="/contact" class="btn quote-btn" aria-label="Get Free Quote">
           <i class="fas fa-solar-panel me-1"></i> Get Quote
         </a>

@@ -121,6 +121,19 @@ def admin_required(f):
         return f(*args, **kwargs)
     return wrapped
 
+def super_admin_required(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("admin_login"))
+        if session.get("role") != "admin":
+            abort(403)
+        user = User.query.get(session["user_id"])
+        if not user or not user.is_super:
+            abort(403)
+        return f(*args, **kwargs)
+    return wrapped
+
 def vendor_required(f):
     @wraps(f)
     def wrapped(*args, **kwargs):
@@ -204,6 +217,8 @@ class User(db.Model):
     username   = db.Column(db.String(50), unique=True)
     password   = db.Column(db.String(300))
     role       = db.Column(db.String(50), default="employee")
+    email      = db.Column(db.String(150), default="")
+    is_super   = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.String(50))
 
 
@@ -228,18 +243,32 @@ with app.app_context():
             cur.execute("ALTER TABLE lead ADD COLUMN district VARCHAR(100) DEFAULT ''")
         if "vendor_id" not in existing:
             cur.execute("ALTER TABLE lead ADD COLUMN vendor_id INTEGER")
+        # User table migrations
+        cur.execute("PRAGMA table_info(user)")
+        user_cols = [r[1] for r in cur.fetchall()]
+        if "is_super" not in user_cols:
+            cur.execute("ALTER TABLE user ADD COLUMN is_super BOOLEAN DEFAULT 0")
+        if "email" not in user_cols:
+            cur.execute("ALTER TABLE user ADD COLUMN email VARCHAR(150) DEFAULT ''")
         conn.commit()
         conn.close()
 
     if not User.query.filter_by(username="admin").first():
         db.session.add(User(
-            name="Administrator",
+            name="Super Administrator",
             username="admin",
             password=generate_password_hash("admin123"),
             role="admin",
+            is_super=True,
             created_at=datetime.now().strftime("%d-%m-%Y")
         ))
         db.session.commit()
+    else:
+        # Ensure the admin account always has super flag set
+        admin_user = User.query.filter_by(username="admin").first()
+        if not admin_user.is_super:
+            admin_user.is_super = True
+            db.session.commit()
 
     if not VisitorCount.query.first():
         db.session.add(VisitorCount(count=0))
@@ -329,6 +358,7 @@ def admin_login():
             session["user_id"]  = user.id
             session["username"] = user.username
             session["role"]     = user.role
+            session["is_super"] = user.is_super
             logger.info("Admin login: %s", username)
             return redirect(url_for("admin"))
         flash("Invalid credentials.", "danger")
@@ -468,6 +498,7 @@ def admin():
         "admin.html",
         leads=leads, users=users, vendors=vendors,
         districts=UP_DISTRICTS, STATUSES=LEAD_STATUSES,
+        is_super=session.get("is_super", False),
         # stat cards
         status_counts=status_counts,
         total_leads=total_leads,
@@ -500,38 +531,90 @@ def admin():
 # ==========================
 # ADD EMPLOYEE
 # ==========================
+# ==========================
+# ADD ADMIN USER (Super Admin only)
+# ==========================
 @app.route("/add-user", methods=["POST"])
-@admin_required
+@super_admin_required
 def add_user():
+    name     = request.form.get("name", "").strip()
     username = request.form.get("username", "").strip()
+    email    = request.form.get("email", "").strip()
+    role     = request.form.get("role", "admin")
+    password = request.form.get("password", "").strip()
+
+    if not username or not password:
+        flash("Username and password are required.", "danger")
+        return redirect(url_for("admin"))
     if User.query.filter_by(username=username).first():
         flash("Username already exists.", "danger")
         return redirect(url_for("admin"))
+
     user = User(
-        name=request.form.get("name", "").strip(),
+        name=name,
         username=username,
-        password=generate_password_hash(request.form["password"]),
-        role=request.form.get("role", "employee"),
+        email=email,
+        password=generate_password_hash(password),
+        role=role,
+        is_super=False,
         created_at=datetime.now().strftime("%d-%m-%Y")
     )
     db.session.add(user)
     db.session.commit()
-    flash("User added successfully.", "success")
+    flash(f"Admin '{username}' created successfully.", "success")
     return redirect(url_for("admin"))
 
 # ==========================
-# DISABLE / ENABLE ADMIN USER
+# CREATE ADMIN — JSON (returns credentials for modal)
+# ==========================
+@app.route("/create-admin", methods=["POST"])
+@super_admin_required
+def create_admin():
+    import json
+    name     = request.form.get("name", "").strip() or "New Admin"
+    role     = request.form.get("role", "admin")
+    email    = request.form.get("email", "").strip()
+
+    base     = name.lower().replace(" ", ".")[:12]
+    suffix   = secrets.token_hex(3)
+    username = f"{base}.{suffix}"
+    while User.query.filter_by(username=username).first():
+        username = f"{base}.{secrets.token_hex(3)}"
+
+    raw_pw = secrets.token_urlsafe(10)
+    user   = User(
+        name=name,
+        username=username,
+        email=email,
+        password=generate_password_hash(raw_pw),
+        role=role,
+        is_super=False,
+        created_at=datetime.now().strftime("%d-%m-%Y")
+    )
+    db.session.add(user)
+    db.session.commit()
+    logger.info("Super admin created new admin user: %s", username)
+    return json.dumps({
+        "ok":       True,
+        "name":     name,
+        "username": username,
+        "password": raw_pw,
+        "email":    email,
+        "role":     role
+    }), 200, {"Content-Type": "application/json"}
+
+# ==========================
+# DISABLE / ENABLE ADMIN USER (Super Admin only)
 # ==========================
 @app.route("/toggle-user/<int:user_id>")
-@admin_required
+@super_admin_required
 def toggle_user(user_id):
     user = User.query.get_or_404(user_id)
     if user.id == session["user_id"]:
         flash("You cannot disable your own account.", "warning")
         return redirect(url_for("admin"))
-    # Toggle role between active role and "disabled"
     if user.role == "disabled":
-        user.role = "employee"
+        user.role = "admin"
         flash(f"User '{user.username}' enabled.", "success")
     else:
         user.role = "disabled"
@@ -540,10 +623,10 @@ def toggle_user(user_id):
     return redirect(url_for("admin"))
 
 # ==========================
-# RESET USER PASSWORD (admin)
+# RESET USER PASSWORD (Super Admin only)
 # ==========================
 @app.route("/reset-password/<int:user_id>", methods=["POST"])
-@admin_required
+@super_admin_required
 def reset_password(user_id):
     user = User.query.get_or_404(user_id)
     new_pw = request.form.get("new_password", "").strip()
@@ -556,17 +639,17 @@ def reset_password(user_id):
     return redirect(url_for("admin"))
 
 # ==========================
-# DELETE ADMIN USER
+# DELETE ADMIN USER (Super Admin only)
 # ==========================
 @app.route("/delete-user/<int:user_id>")
-@admin_required
+@super_admin_required
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
     if user.id == session["user_id"]:
         flash("You cannot delete your own account.", "warning")
         return redirect(url_for("admin"))
-    if user.username == "admin":
-        flash("Cannot delete the super-admin account.", "danger")
+    if user.is_super:
+        flash("Cannot delete the Super Admin account.", "danger")
         return redirect(url_for("admin"))
     db.session.delete(user)
     db.session.commit()
@@ -792,24 +875,57 @@ def vendor_list():
 @login_required
 def vendor_add():
     if request.method == "POST":
+        company_name = request.form.get("company_name", "").strip()
+        owner_name   = request.form.get("owner_name", "").strip()
+        mobile       = request.form.get("mobile", "").strip()
+        email        = request.form.get("email", "").strip()
+        district     = request.form.get("district", "").strip()
+
+        # Auto-generate username & password if not provided
+        base     = owner_name.lower().replace(" ", ".")[:12] or "vendor"
         username = request.form.get("username", "").strip()
+        if not username:
+            username = f"{base}.{secrets.token_hex(3)}"
+            while Vendor.query.filter_by(username=username).first():
+                username = f"{base}.{secrets.token_hex(3)}"
+
+        raw_pw = request.form.get("password", "").strip()
+        if not raw_pw:
+            raw_pw = secrets.token_urlsafe(10)
+
         if Vendor.query.filter_by(username=username).first():
             flash("Username already exists.", "danger")
             return render_template("vendor_add.html", districts=UP_DISTRICTS)
+
         vendor = Vendor(
-            company_name=request.form["company_name"],
-            owner_name=request.form["owner_name"],
-            mobile=request.form["mobile"],
-            email=request.form.get("email", ""),
+            company_name=company_name,
+            owner_name=owner_name,
+            mobile=mobile,
+            email=email,
             username=username,
-            password=generate_password_hash(request.form["password"]),
-            district=request.form["district"],
+            password=generate_password_hash(raw_pw),
+            district=district,
             is_active=True,
             created_at=datetime.now().strftime("%d-%m-%Y")
         )
         db.session.add(vendor)
         db.session.commit()
-        flash("Vendor added successfully.", "success")
+
+        # Check if this is an AJAX/JSON request (from credential modal)
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            import json
+            return json.dumps({
+                "ok":           True,
+                "company_name": company_name,
+                "owner_name":   owner_name,
+                "username":     username,
+                "password":     raw_pw,
+                "district":     district,
+                "email":        email,
+                "mobile":       mobile
+            }), 200, {"Content-Type": "application/json"}
+
+        flash(f"Vendor '{company_name}' added successfully.", "success")
         return redirect(url_for("vendor_list"))
     return render_template("vendor_add.html", districts=UP_DISTRICTS)
 
@@ -1104,6 +1220,130 @@ def lead_edit(lead_id):
         add_timeline(lead.id, f"Status Changed: {old_status} → {lead.status}", "", actor)
     add_timeline(lead.id, "Lead Updated via Edit", "", actor)
     return jsonify({"success": True, "message": "Lead updated successfully."})
+
+# ============================================================
+# SUPER ADMIN — ADMIN MANAGEMENT
+# ============================================================
+
+def _generate_strong_password():
+    """Generate a strong temporary password like HGS@8392XZ."""
+    import random, string
+    prefix    = "HGS@"
+    digits    = ''.join(random.choices(string.digits, k=4))
+    letters   = ''.join(random.choices(string.ascii_uppercase, k=2))
+    return prefix + digits + letters
+
+@app.route("/admin-management")
+@super_admin_required
+def admin_management():
+    users = User.query.order_by(User.id.asc()).all()
+    return render_template(
+        "admin_management.html",
+        users=users,
+        is_super=True
+    )
+
+@app.route("/admin-mgmt/create", methods=["POST"])
+@super_admin_required
+def admin_mgmt_create():
+    name      = request.form.get("name", "").strip()
+    username  = request.form.get("username", "").strip()
+    email     = request.form.get("email", "").strip()
+    role      = request.form.get("role", "admin").strip()
+    raw_pw    = request.form.get("password", "").strip()
+
+    if not name or not username:
+        return jsonify({"ok": False, "error": "Name and username are required."}), 400
+    if User.query.filter_by(username=username).first():
+        return jsonify({"ok": False, "error": "Username already exists."}), 400
+
+    if not raw_pw:
+        raw_pw = _generate_strong_password()
+
+    user = User(
+        name=name,
+        username=username,
+        email=email,
+        password=generate_password_hash(raw_pw),
+        role=role,
+        is_super=False,
+        created_at=datetime.now().strftime("%d-%m-%Y")
+    )
+    db.session.add(user)
+    db.session.commit()
+    logger.info("Super admin created admin user: %s (role=%s)", username, role)
+
+    return jsonify({
+        "ok":       True,
+        "name":     name,
+        "username": username,
+        "email":    email,
+        "role":     role,
+        "password": raw_pw
+    })
+
+@app.route("/admin-mgmt/edit/<int:user_id>", methods=["POST"])
+@super_admin_required
+def admin_mgmt_edit(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.is_super and user.id != session["user_id"]:
+        return jsonify({"ok": False, "error": "Cannot edit another Super Admin."}), 403
+
+    user.name  = request.form.get("name", user.name).strip()
+    user.email = request.form.get("email", user.email).strip()
+    role       = request.form.get("role", user.role).strip()
+    if not user.is_super:
+        user.role = role
+
+    db.session.commit()
+    logger.info("Super admin edited user: %s", user.username)
+    return jsonify({"ok": True, "message": f"User '{user.username}' updated."})
+
+@app.route("/admin-mgmt/reset/<int:user_id>", methods=["POST"])
+@super_admin_required
+def admin_mgmt_reset(user_id):
+    user   = User.query.get_or_404(user_id)
+    raw_pw = _generate_strong_password()
+    user.password = generate_password_hash(raw_pw)
+    db.session.commit()
+    logger.info("Super admin reset password for: %s", user.username)
+    return jsonify({"ok": True, "username": user.username, "password": raw_pw})
+
+@app.route("/admin-mgmt/toggle/<int:user_id>")
+@super_admin_required
+def admin_mgmt_toggle(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.id == session["user_id"]:
+        flash("You cannot disable your own account.", "warning")
+        return redirect(url_for("admin_management"))
+    if user.is_super:
+        flash("Cannot disable the Super Admin account.", "danger")
+        return redirect(url_for("admin_management"))
+    if user.role == "disabled":
+        user.role = "admin"
+        flash(f"'{user.username}' has been enabled.", "success")
+    else:
+        user.role = "disabled"
+        flash(f"'{user.username}' has been disabled.", "warning")
+    db.session.commit()
+    return redirect(url_for("admin_management"))
+
+@app.route("/admin-mgmt/delete/<int:user_id>")
+@super_admin_required
+def admin_mgmt_delete(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.id == session["user_id"]:
+        flash("You cannot delete your own account.", "warning")
+        return redirect(url_for("admin_management"))
+    if user.is_super:
+        flash("Cannot delete the Super Admin account.", "danger")
+        return redirect(url_for("admin_management"))
+    uname = user.username
+    db.session.delete(user)
+    db.session.commit()
+    logger.info("Super admin deleted user: %s", uname)
+    flash(f"User '{uname}' deleted.", "success")
+    return redirect(url_for("admin_management"))
 
 # ==========================
 # LOGOUT (Admin)

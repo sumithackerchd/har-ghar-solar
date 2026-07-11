@@ -54,6 +54,14 @@
         <span class="link-text">Import Vendors</span>
       </a>
 
+      {% if session.get('is_super') %}
+      <div class="nav-section-label nav-divider">SUPER ADMIN</div>
+      <a href="/admin-management" class="sidebar-link {% if request.path == '/admin-management' %}active{% endif %}" title="Admin Management">
+        <span class="link-icon"><i class="bi bi-shield-lock-fill"></i></span>
+        <span class="link-text">Admin Management</span>
+      </a>
+      {% endif %}
+
       <div class="nav-section-label nav-divider">ACTIONS</div>
 
       <a href="/download-leads" class="sidebar-link" title="Export Excel">
