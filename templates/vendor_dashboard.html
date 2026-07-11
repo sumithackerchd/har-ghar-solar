@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vendor Dashboard — {{ vendor.company_name }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #eef4f2; font-family: 'Segoe UI', sans-serif; margin: 0; }
+    .v-sidebar {
+      width: 220px; height: 100vh; position: fixed; left: 0; top: 0;
+      background: #1a3c2f; padding: 28px 18px; color: white; overflow-y: auto;
+    }
+    .v-sidebar .brand { font-size: 22px; font-weight: 900; color: #ffc107; margin-bottom: 10px; }
+    .v-sidebar .vendor-info { font-size: 12px; color: #a5d6a7; margin-bottom: 28px; line-height: 1.6; }
+    .v-sidebar a {
+      display: flex; align-items: center; gap: 10px;
+      color: white; text-decoration: none; font-weight: 700; font-size: 14px;
+      padding: 11px 12px; border-radius: 12px; margin-bottom: 6px; transition: .2s;
+    }
+    .v-sidebar a:hover, .v-sidebar a.active { background: rgba(255,255,255,.15); }
+    .v-sidebar a.logout { margin-top: 30px; background: rgba(255,50,50,.15); }
+    .v-content { margin-left: 220px; padding: 28px; }
+    .page-title { font-size: 28px; font-weight: 900; color: #005b38; margin-bottom: 24px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: white; border-radius: 18px; padding: 20px 16px;
+      text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    }
+    .stat-card .num { font-size: 32px; font-weight: 900; }
+    .stat-card .lbl { font-size: 12px; font-weight: 700; color: #666; margin-top: 4px; }
+    .stat-card.c-total .num  { color: #005b38; }
+    .stat-card.c-comp  .num  { color: #00a651; }
+    .stat-card.c-pend  .num  { color: #f57c00; }
+    .stat-card.c-canc  .num  { color: #e53935; }
+    .stat-card.c-pct   .num  { color: #1565c0; }
+    .section-card {
+      background: white; border-radius: 18px; padding: 22px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.08); margin-bottom: 24px;
+    }
+    .section-card h5 { font-weight: 900; color: #005b38; margin-bottom: 16px; }
+    .filter-bar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+    .filter-bar select, .filter-bar input {
+      height: 42px; border: 2px solid #e0e0e0; border-radius: 12px;
+      padding: 0 14px; font-weight: 600; outline: none; background: white;
+    }
+    .filter-bar select:focus, .filter-bar input:focus { border-color: #00a651; }
+    .filter-bar button {
+      height: 42px; padding: 0 20px; border-radius: 12px;
+      background: #005b38; color: white; border: none; font-weight: 700;
+    }
+    .filter-bar a.btn-clear {
+      height: 42px; line-height: 42px; padding: 0 18px; border-radius: 12px;
+      background: #f44336; color: white; text-decoration: none; font-weight: 700; display: inline-block;
+    }
+    table { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
+    thead th {
+      background: #005b38; color: white; padding: 12px 14px;
+      font-size: 13px; font-weight: 800;
+    }
+    tbody td {
+      background: #f9fbfa; padding: 12px 14px;
+      font-size: 13px; font-weight: 600; vertical-align: middle;
+    }
+    .sbadge {
+      padding: 5px 14px; border-radius: 30px;
+      font-size: 11px; font-weight: 900; white-space: nowrap;
+    }
+    .sbadge.New            { background:#FFF9C4; color:#856404; }
+    .sbadge.Assigned       { background:#E3F2FD; color:#1565C0; }
+    .sbadge.Contacted      { background:#E8EAF6; color:#3949AB; }
+    .sbadge.Site\ Visit    { background:#F3E5F5; color:#7B1FA2; }
+    .sbadge.Quotation\ Sent{ background:#FFF3E0; color:#E65100; }
+    .sbadge.Installation   { background:#E0F2F1; color:#00695C; }
+    .sbadge.Completed      { background:#C8E6C9; color:#1B5E20; }
+    .sbadge.Cancelled      { background:#FFCDD2; color:#B71C1C; }
+    .action-select {
+      height: 36px; border: 2px solid #e0e0e0; border-radius: 10px;
+      padding: 0 10px; font-size: 12px; font-weight: 700;
+    }
+    .btn-save {
+      height: 36px; padding: 0 14px; border-radius: 10px;
+      background: #ffc107; border: none; font-weight: 800; font-size: 12px; color: #005b38;
+    }
+    .note-mini { width: 140px; height: 34px; border: 2px solid #e0e0e0; border-radius: 10px; padding: 4px 8px; font-size: 12px; }
+    .date-mini { height: 34px; border: 2px solid #e0e0e0; border-radius: 10px; padding: 4px 8px; font-size: 12px; }
+    .followup-item { background: #fff8e1; border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; border-left: 4px solid #ffc107; }
+    .followup-item strong { color: #005b38; }
+    @media(max-width:768px) {
+      .v-sidebar { position: relative; width: 100%; height: auto; }
+      .v-content { margin-left: 0; }
+      .stat-grid { grid-template-columns: repeat(2,1fr); }
+      table { min-width: 700px; }
+      .section-card { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="v-sidebar">
+  <div class="brand">☀ HGS CRM</div>
+  <div class="vendor-info">
+    <div><i class="fa-solid fa-building me-1"></i> {{ vendor.company_name }}</div>
+    <div><i class="fa-solid fa-location-dot me-1"></i> {{ vendor.district }}</div>
+    <div><i class="fa-solid fa-user me-1"></i> {{ vendor.owner_name }}</div>
+  </div>
+  <a href="/vendor-dashboard" class="active">
+    <i class="fa-solid fa-gauge-high"></i> My Dashboard
+  </a>
+  <a href="/vendor-logout" class="logout">
+    <i class="fa-solid fa-right-from-bracket"></i> Logout
+  </a>
+</div>
+
+<!-- CONTENT -->
+<div class="v-content">
+  <div class="page-title">
+    <i class="fa-solid fa-gauge-high me-2"></i>Vendor Dashboard
+  </div>
+
+  <!-- STATS -->
+  <div class="stat-grid">
+    <div class="stat-card c-total">
+      <div class="num">{{ total_leads }}</div>
+      <div class="lbl">Total Leads</div>
+    </div>
+    <div class="stat-card c-comp">
+      <div class="num">{{ completed_leads }}</div>
+      <div class="lbl">Completed</div>
+    </div>
+    <div class="stat-card c-pend">
+      <div class="num">{{ pending_leads }}</div>
+      <div class="lbl">Pending</div>
+    </div>
+    <div class="stat-card c-canc">
+      <div class="num">{{ cancelled_leads }}</div>
+      <div class="lbl">Cancelled</div>
+    </div>
+    <div class="stat-card c-pct">
+      <div class="num">{{ completion_pct }}%</div>
+      <div class="lbl">Completion</div>
+    </div>
+  </div>
+
+  <!-- TODAY FOLLOW UPS -->
+  {% if today_followups %}
+  <div class="section-card">
+    <h5><i class="fa-solid fa-bell me-2 text-warning"></i>Today's Follow Ups ({{ today_followups|length }})</h5>
+    {% for f in today_followups %}
+    <div class="followup-item">
+      <strong>{{ f.name }}</strong> &nbsp;|&nbsp; 📞 {{ f.phone }}
+      {% if f.note %} &nbsp;|&nbsp; 📝 {{ f.note }}{% endif %}
+      <span class="sbadge {{ f.status }} float-end">{{ f.status }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- FILTERS -->
+  <div class="section-card">
+    <h5><i class="fa-solid fa-list-check me-2"></i>Assigned Leads</h5>
+    <form method="GET" class="filter-bar">
+      <select name="status">
+        <option value="">All Status</option>
+        {% for s in STATUSES %}
+        <option value="{{ s }}" {% if f_status == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+      <input type="text" name="search" value="{{ f_search }}" placeholder="🔍 Name / Phone">
+      <button type="submit"><i class="fa-solid fa-filter me-1"></i>Filter</button>
+      {% if f_status or f_search %}
+      <a class="btn-clear" href="/vendor-dashboard">✕ Clear</a>
+      {% endif %}
+    </form>
+
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Customer</th>
+          <th>Phone</th>
+          <th>District</th>
+          <th>Bill</th>
+          <th>Status</th>
+          <th>Update Status</th>
+          <th>Note / Follow Up</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for lead in leads %}
+        <tr>
+          <td>{{ lead.id }}</td>
+          <td><strong>{{ lead.name }}</strong></td>
+          <td>{{ lead.phone }}</td>
+          <td>{{ lead.district }}</td>
+          <td>{{ lead.bill }}</td>
+          <td><span class="sbadge {{ lead.status }}">{{ lead.status }}</span></td>
+          <td>
+            <form method="GET" action="/update-status/{{ lead.id }}/{{ lead.status }}" style="display:inline">
+              <select class="action-select" onchange="this.form.action='/update-status/{{ lead.id }}/'+this.value; this.form.submit()">
+                {% for s in STATUSES %}
+                <option value="{{ s }}" {% if lead.status == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+              </select>
+            </form>
+          </td>
+          <td>
+            <form method="POST" action="/add-note/{{ lead.id }}" style="display:flex;gap:6px;flex-wrap:wrap">
+              <input class="note-mini" type="text" name="note"
+                     value="{{ lead.note }}" placeholder="Add note">
+              <input class="date-mini" type="date" name="follow_date"
+                     value="{{ lead.follow_date }}">
+              <button class="btn-save" type="submit">💾</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="8" class="text-center text-muted py-4">No leads assigned yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

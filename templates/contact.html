@@ -183,17 +183,19 @@ required
 
 
 
-<input 
-
+<input
 type="text"
-
 name="city"
-
-placeholder="City / District"
-
+placeholder="City / Town"
 required
-
 >
+
+<select name="district" required>
+<option value="">-- Select District (Uttar Pradesh) --</option>
+{% for d in districts %}
+<option value="{{ d }}">{{ d }}</option>
+{% endfor %}
+</select>
 
 
 
