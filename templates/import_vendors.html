@@ -1,0 +1,62 @@
+{% extends 'admin_base.html' %}
+{% block page_title %}Import Vendors{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+  <li class="breadcrumb-item"><a href="/vendors">Vendors</a></li>
+  <li class="breadcrumb-item active">Import Excel</li>
+{% endblock %}
+{% block admin %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="crm-title mb-0"><i class="fa-solid fa-file-import me-2"></i>Import Vendors from Excel</h1>
+  <a href="/vendors" class="btn btn-outline-secondary rounded-pill fw-bold">
+    <i class="fa-solid fa-arrow-left me-1"></i> Back to Vendors
+  </a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div class="alert alert-{{ cat }} rounded-3 fw-semibold">{{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+
+<div class="table-box mb-4">
+  <h5 class="fw-bold text-success mb-3"><i class="fa-solid fa-circle-info me-2"></i>Excel File Format</h5>
+  <p class="text-muted mb-3">Your Excel file must have the following column headers (first row):</p>
+  <table class="table table-bordered table-sm" style="max-width:600px">
+    <thead class="table-success">
+      <tr>
+        <th>Column Name</th>
+        <th>Required</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><code>company_name</code></td><td>✅ Yes</td><td>Solar company name</td></tr>
+      <tr><td><code>owner_name</code></td><td>✅ Yes</td><td>Owner / contact person</td></tr>
+      <tr><td><code>mobile</code></td><td>✅ Yes</td><td>10-digit mobile number</td></tr>
+      <tr><td><code>district</code></td><td>✅ Yes</td><td>UP district name</td></tr>
+      <tr><td><code>email</code></td><td>❌ Optional</td><td>Email address</td></tr>
+    </tbody>
+  </table>
+  <div class="alert alert-info rounded-3 mt-3">
+    <i class="fa-solid fa-lightbulb me-2"></i>
+    <strong>Auto-generated:</strong> Username = <code>vendor_&lt;mobile&gt;</code> &nbsp;|&nbsp;
+    Password = mobile number (vendor can change after login)
+  </div>
+</div>
+
+<div class="table-box">
+  <form method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label class="fw-bold text-success mb-2">Select Excel File (.xlsx)</label>
+      <input type="file" name="file" accept=".xlsx,.xls" class="form-control rounded-3" required>
+    </div>
+    <button type="submit" class="btn btn-success rounded-pill fw-bold px-5 py-2">
+      <i class="fa-solid fa-upload me-2"></i>Import Vendors
+    </button>
+    <a href="/vendors" class="btn btn-outline-secondary rounded-pill fw-bold px-4 py-2 ms-2">Cancel</a>
+  </form>
+</div>
+
+{% endblock %}

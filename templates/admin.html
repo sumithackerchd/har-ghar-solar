@@ -1,715 +1,635 @@
 {% extends 'admin_base.html' %}
 
+{% block page_title %}Dashboard{% endblock %}
+{% block breadcrumb %}<li class="breadcrumb-item active">Dashboard</li>{% endblock %}
 
 {% block admin %}
 
-
-
-<!-- ==========================
-TITLE
-========================== -->
-
-
-<h1 class="crm-title">
-
-☀ Solar Lead Dashboard
-
-</h1>
-
-
-
-
-
-
-
-<!-- ==========================
-STATUS CARDS
-========================== -->
-
-
-<div class="dashboard-grid">
-
-
-<div class="crm-card">
-
-<h1>{{leads|length}}</h1>
-
-<p>Total Leads</p>
-
+<!-- STATS CARDS -->
+<div class="dashboard-cards-grid mb-4">
+  <!-- Today's Leads -->
+  <div class="stat-card stat-today">
+    <div class="stat-card-body">
+      <div class="stat-icon-wrap"><i class="bi bi-calendar-day"></i></div>
+      <div class="stat-info">
+        <div class="stat-number" data-target="{{ today_leads_count }}">0</div>
+        <div class="stat-label">Today's Leads</div>
+      </div>
+    </div>
+    <div class="stat-footer"><i class="bi bi-arrow-up-short text-success me-1"></i>Yesterday: {{ yesterday_leads_count }}</div>
+  </div>
+  <!-- Total Leads -->
+  <div class="stat-card stat-total">
+    <div class="stat-card-body">
+      <div class="stat-icon-wrap"><i class="bi bi-people"></i></div>
+      <div class="stat-info">
+        <div class="stat-number" data-target="{{ total_leads }}">0</div>
+        <div class="stat-label">Total Leads</div>
+      </div>
+    </div>
+    <div class="stat-footer"><i class="bi bi-calendar-month me-1"></i>This month: {{ this_month_count }}</div>
+  </div>
+  <!-- Pending Leads -->
+  <div class="stat-card stat-pending">
+    <div class="stat-card-body">
+      <div class="stat-icon-wrap"><i class="bi bi-hourglass-split"></i></div>
+      <div class="stat-info">
+        <div class="stat-number" data-target="{{ pending_leads_count }}">0</div>
+        <div class="stat-label">Pending Leads</div>
+      </div>
+    </div>
+    <div class="stat-footer"><i class="bi bi-person-check me-1"></i>Assigned: {{ assigned_leads_count }}</div>
+  </div>
+  <!-- Completed -->
+  <div class="stat-card stat-completed">
+    <div class="stat-card-body">
+      <div class="stat-icon-wrap"><i class="bi bi-check-circle"></i></div>
+      <div class="stat-info">
+        <div class="stat-number" data-target="{{ completed_leads_count }}">0</div>
+        <div class="stat-label">Completed</div>
+      </div>
+    </div>
+    <div class="stat-footer"><i class="bi bi-trophy me-1"></i>Converted</div>
+  </div>
+  <!-- Cancelled -->
+  <div class="stat-card stat-cancelled">
+    <div class="stat-card-body">
+      <div class="stat-icon-wrap"><i class="bi bi-x-circle"></i></div>
+      <div class="stat-info">
+        <div class="stat-number" data-target="{{ cancelled_leads_count }}">0</div>
+        <div class="stat-label">Cancelled</div>
+      </div>
+    </div>
+    <div class="stat-footer"><i class="bi bi-slash-circle me-1"></i>Dropped</div>
+  </div>
+  <!-- Total Vendors -->
+  <div class="stat-card stat-vendors">
+    <div class="stat-card-body">
+      <div class="stat-icon-wrap"><i class="bi bi-building"></i></div>
+      <div class="stat-info">
+        <div class="stat-number" data-target="{{ total_vendors_count }}">0</div>
+        <div class="stat-label">Total Vendors</div>
+      </div>
+    </div>
+    <div class="stat-footer"><i class="bi bi-check-circle me-1"></i>Active: {{ active_vendors_count }} &nbsp;|&nbsp; <i class="bi bi-x-circle me-1"></i>Inactive: {{ inactive_vendors_count }}</div>
+  </div>
 </div>
 
-
-
-
-<div class="crm-card">
-
-<h1>{{new_count}}</h1>
-
-<p>New Leads</p>
-
+<!-- FOLLOW UP ALERTS -->
+{% if today_followups or overdue_followups %}
+<div class="followup-alerts-grid mb-4">
+  {% if today_followups %}
+  <div class="followup-alert-card followup-today">
+    <div class="followup-card-header">
+      <i class="bi bi-bell-fill me-2"></i>Today's Follow Ups
+      <span class="followup-count">{{ today_followups|length }}</span>
+    </div>
+    <div class="followup-list">
+      {% for f in today_followups %}
+      <div class="followup-item">
+        <div class="followup-item-info">
+          <div class="followup-name">{{ f.name }}</div>
+          <div class="followup-meta"><i class="bi bi-telephone me-1"></i>{{ f.phone }} &nbsp;<i class="bi bi-geo-alt me-1"></i>{{ f.district }}</div>
+          {% if f.note %}<div class="followup-note"><i class="bi bi-chat-dots me-1"></i>{{ f.note }}</div>{% endif %}
+        </div>
+        <span class="crm-badge crm-badge-{{ f.status|lower|replace(' ','_') }}">{{ f.status }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% if overdue_followups %}
+  <div class="followup-alert-card followup-overdue">
+    <div class="followup-card-header">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>Overdue Follow Ups
+      <span class="followup-count overdue-count">{{ overdue_followups|length }}</span>
+    </div>
+    <div class="followup-list">
+      {% for f in overdue_followups %}
+      <div class="followup-item">
+        <div class="followup-item-info">
+          <div class="followup-name">{{ f.name }}</div>
+          <div class="followup-meta"><i class="bi bi-calendar-x me-1 text-danger"></i>{{ f.follow_date }} &nbsp;<i class="bi bi-telephone me-1"></i>{{ f.phone }}</div>
+          {% if f.note %}<div class="followup-note"><i class="bi bi-chat-dots me-1"></i>{{ f.note }}</div>{% endif %}
+        </div>
+        <span class="crm-badge crm-badge-{{ f.status|lower|replace(' ','_') }}">{{ f.status }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 </div>
-
-
-
-
-<div class="crm-card">
-
-<h1>{{contacted_count}}</h1>
-
-<p>Contacted</p>
-
-</div>
-
-
-
-
-
-<div class="crm-card">
-
-<h1>{{installed_count}}</h1>
-
-<p>Installed</p>
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-
-
-<!-- ==========================
-FOLLOW UP CRM ALERTS
-========================== -->
-
-
-<div class="follow-grid">
-
-
-
-<!-- TODAY -->
-
-
-{% if today_followups %}
-
-
-<div class="follow-card today-card">
-
-
-<h2>
-
-🔔 Today's Follow Ups
-
-</h2>
-
-
-
-
-{% for f in today_followups %}
-
-
-
-<div class="follow-item">
-
-
-<div>
-
-
-<h3>
-
-{{f.name}}
-
-</h3>
-
-
-
-<p>
-
-📞 {{f.phone}}
-
-</p>
-
-
-
-{% if f.note %}
-
-<p>
-
-📝 {{f.note}}
-
-</p>
-
 {% endif %}
 
-
-
-
+<!-- CHARTS ROW -->
+<div class="charts-grid mb-4">
+  <div class="chart-card">
+    <div class="chart-card-header"><i class="bi bi-graph-up-arrow me-2"></i>Monthly Leads</div>
+    <div class="chart-card-body"><canvas id="monthChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-card-header"><i class="bi bi-pie-chart me-2"></i>Status Distribution</div>
+    <div class="chart-card-body"><canvas id="statusChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-card-header"><i class="bi bi-bar-chart me-2"></i>Top Districts</div>
+    <div class="chart-card-body"><canvas id="districtChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-card-header"><i class="bi bi-trophy me-2"></i>Vendor Performance</div>
+    <div class="chart-card-body"><canvas id="vendorChart"></canvas></div>
+  </div>
 </div>
 
-
-
-
-<div>
-
-
-<span class="status-badge {{f.status}}">
-
-{{f.status}}
-
-</span>
-
-
+<!-- SEARCH / FILTER BAR -->
+<div class="filter-panel mb-3">
+  <form method="GET" action="/admin" id="filterForm">
+    <div class="filter-row">
+      <div class="filter-field">
+        <label class="filter-label"><i class="bi bi-person me-1"></i>Customer</label>
+        <input type="text" name="search" class="filter-input" value="{{ f_search }}" placeholder="Name / Phone...">
+      </div>
+      <div class="filter-field">
+        <label class="filter-label"><i class="bi bi-geo-alt me-1"></i>District</label>
+        <select name="district" class="filter-input">
+          <option value="">All Districts</option>
+          {% for d in districts %}
+          <option value="{{ d }}" {% if f_district == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-field">
+        <label class="filter-label"><i class="bi bi-building me-1"></i>Vendor</label>
+        <select name="vendor" class="filter-input">
+          <option value="">All Vendors</option>
+          {% for v in vendors %}
+          <option value="{{ v.id }}" {% if f_vendor == v.id|string %}selected{% endif %}>{{ v.company_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-field">
+        <label class="filter-label"><i class="bi bi-flag me-1"></i>Status</label>
+        <select name="status" class="filter-input">
+          <option value="">All Status</option>
+          {% for s in STATUSES %}
+          <option value="{{ s }}" {% if f_status == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-field">
+        <label class="filter-label"><i class="bi bi-calendar me-1"></i>Date</label>
+        <input type="date" name="date" class="filter-input" value="{{ f_date }}">
+      </div>
+      <div class="filter-actions">
+        <button type="submit" class="btn-filter-search">
+          <i class="bi bi-search me-1"></i>Search
+        </button>
+        <a href="/admin" class="btn-filter-reset">
+          <i class="bi bi-x-circle me-1"></i>Reset
+        </a>
+      </div>
+    </div>
+  </form>
 </div>
 
+<!-- LEADS TABLE -->
+<div class="table-panel">
+  <div class="table-panel-header">
+    <div class="table-panel-title">
+      <i class="bi bi-table me-2"></i>Leads
+      <span class="table-count-badge">{{ leads|length }}</span>
+    </div>
+    <div class="table-panel-actions">
+      <a href="/download-leads" class="btn-sm-action btn-excel">
+        <i class="bi bi-file-earmark-excel me-1"></i>Export
+      </a>
+    </div>
+  </div>
 
+  <div class="table-responsive">
+    <table class="crm-table" id="leadTable">
+      <thead>
+        <tr>
+          <th style="width:46px">#</th>
+          <th style="width:140px">Customer</th>
+          <th style="width:108px">Phone</th>
+          <th style="width:110px">District</th>
+          <th style="width:130px">Status</th>
+          <th style="width:130px">Vendor</th>
+          <th style="width:160px">Assign</th>
+          <th style="width:50px" class="text-center">Note</th>
+          <th style="width:50px" class="text-center">Timeline</th>
+          <th style="width:90px" class="text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="leadsTableBody">
+      {% for lead in leads %}
+      <tr class="lead-row">
+        <td class="lead-id">{{ lead.id }}</td>
+        <td>
+          <div class="customer-cell">
+            <div class="customer-name">{{ lead.name }}</div>
+            <div class="customer-date"><i class="bi bi-clock me-1"></i>{{ lead.created_at }}</div>
+          </div>
+        </td>
+        <td>
+          <a href="tel:{{ lead.phone }}" class="phone-link">
+            <i class="bi bi-telephone me-1"></i>{{ lead.phone }}
+          </a>
+        </td>
+        <td><span class="district-tag">{{ lead.district or '—' }}</span></td>
+        <td>
+          <!-- STATUS DROPDOWN — instant update -->
+          <select class="status-select status-{{ lead.status|lower|replace(' ','_') }}"
+                  onchange="updateStatus({{ lead.id }}, this.value, this)">
+            {% for s in STATUSES %}
+            <option value="{{ s }}" {% if lead.status == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td>
+          {% if lead.vendor %}
+          <span class="vendor-badge">{{ lead.vendor.company_name }}</span>
+          {% else %}
+          <span class="unassigned-text">Unassigned</span>
+          {% endif %}
+        </td>
+        <!-- ASSIGN VENDOR -->
+        <td>
+          <form method="POST" action="/assign-vendor/{{ lead.id }}" class="assign-form">
+            <select name="vendor_id" class="assign-select">
+              <option value="">— Vendor —</option>
+              {% for v in vendors %}
+              <option value="{{ v.id }}" {% if lead.vendor_id == v.id %}selected{% endif %}>{{ v.company_name }}</option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="assign-btn" title="Assign Vendor">
+              <i class="bi bi-person-check"></i>
+            </button>
+          </form>
+        </td>
+        <!-- FOLLOW UP NOTE ICON -->
+        <td class="text-center">
+          <button class="icon-btn icon-btn-note"
+                  onclick="openFollowModal({{ lead.id }}, '{{ lead.name|e }}', '{{ lead.note|e }}', '{{ lead.follow_date }}')"
+                  title="Follow Up Note">
+            <i class="bi bi-chat-dots{% if lead.note %}-fill text-warning{% endif %}"></i>
+          </button>
+        </td>
+        <!-- TIMELINE ICON -->
+        <td class="text-center">
+          <button class="icon-btn icon-btn-timeline"
+                  onclick="openTimeline({{ lead.id }}, '{{ lead.name|e }}')"
+                  title="View Timeline">
+            <i class="bi bi-clock-history"></i>
+          </button>
+        </td>
+        <!-- ACTIONS DROPDOWN -->
+        <td class="text-center">
+          <div class="actions-dropdown-wrap">
+            <button class="actions-dropdown-btn" onclick="toggleActionsMenu(this)">
+              Actions <i class="bi bi-chevron-down ms-1"></i>
+            </button>
+            <div class="actions-dropdown-menu">
+              <a href="#" class="actions-item" onclick="event.preventDefault(); openLeadDetail({{ lead.id }}, '{{ lead.name|e }}')">
+                <i class="bi bi-eye me-2"></i>View Lead
+              </a>
+              <a href="#" class="actions-item" onclick="event.preventDefault(); openLeadDetail({{ lead.id }}, '{{ lead.name|e }}', 'edit')">
+                <i class="bi bi-pencil-square me-2"></i>Edit Lead
+              </a>
+              <a href="#" class="actions-item" onclick="event.preventDefault(); openFollowModal({{ lead.id }}, '{{ lead.name|e }}', '{{ lead.note|e }}', '{{ lead.follow_date }}')">
+                <i class="bi bi-chat-dots me-2"></i>Add Note
+              </a>
+              <a href="#" class="actions-item" onclick="event.preventDefault(); openTimeline({{ lead.id }}, '{{ lead.name|e }}')">
+                <i class="bi bi-clock-history me-2"></i>View Timeline
+              </a>
+              <div class="actions-divider"></div>
+              <a href="/delete/{{ lead.id }}"
+                 class="actions-item actions-item-danger"
+                 onclick="return confirm('Delete this lead permanently?')">
+                <i class="bi bi-trash me-2"></i>Delete Lead
+              </a>
+            </div>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="10" class="empty-table-cell">
+          <div class="empty-table-state">
+            <i class="bi bi-inbox"></i>
+            <p>No leads found</p>
+            <small>Try adjusting your filters or add a new lead from the website.</small>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
-
+  <!-- PAGINATION -->
+  <div class="table-pagination" id="tablePagination"></div>
 </div>
 
-
-
-{% endfor %}
-
-
-
+<!-- ============ FOLLOW UP MODAL ============ -->
+<div class="modal fade" id="followModal" tabindex="-1" aria-labelledby="followModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content crm-modal">
+      <div class="modal-header crm-modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-wrap"><i class="bi bi-chat-dots-fill"></i></div>
+          <div>
+            <h5 class="modal-title" id="followModalLabel">Follow Up Note</h5>
+            <small id="followLeadName" class="text-white-50"></small>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" id="followForm" action="">
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="crm-label"><i class="bi bi-chat-text me-1"></i>Note</label>
+            <textarea name="note" id="followNote" class="crm-textarea" rows="4"
+                      placeholder="Enter follow-up note..."></textarea>
+          </div>
+          <div class="mb-2">
+            <label class="crm-label"><i class="bi bi-calendar-event me-1"></i>Follow-up Date</label>
+            <input type="date" name="follow_date" id="followDate" class="crm-input">
+          </div>
+        </div>
+        <div class="modal-footer crm-modal-footer">
+          <button type="button" class="btn-crm-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x me-1"></i>Cancel
+          </button>
+          <button type="submit" class="btn-crm-primary">
+            <i class="bi bi-save me-1"></i>Save Note
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
-
-
-{% endif %}
-
-
-
-
-
-
-
-
-<!-- OVERDUE -->
-
-
-{% if overdue_followups %}
-
-
-
-<div class="follow-card overdue-card">
-
-
-<h2>
-
-⚠️ Pending Follow Ups
-
-</h2>
-
-
-
-
-
-{% for f in overdue_followups %}
-
-
-
-
-<div class="follow-item">
-
-
-
-<div>
-
-
-
-<h3>
-
-{{f.name}}
-
-</h3>
-
-
-
-<p>
-
-📅 {{f.follow_date}}
-
-</p>
-
-
-
-
-<p>
-
-📞 {{f.phone}}
-
-</p>
-
-
-
-
-{% if f.note %}
-
-<p>
-
-📝 {{f.note}}
-
-</p>
-
-{% endif %}
-
-
-
-
+<!-- ============ TIMELINE MODAL ============ -->
+<div class="modal fade" id="timelineModal" tabindex="-1" aria-labelledby="timelineModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content crm-modal">
+      <div class="modal-header crm-modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-wrap"><i class="bi bi-clock-history"></i></div>
+          <div>
+            <h5 class="modal-title" id="timelineModalLabel">Lead Timeline</h5>
+            <small id="tlLeadName" class="text-white-50"></small>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4" id="timelineBody">
+        <div class="tl-loading">
+          <div class="spinner-border text-success" role="status"></div>
+          <p class="mt-2 text-muted">Loading timeline...</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-
-
-
-
-<div>
-
-
-<span class="status-badge {{f.status}}">
-
-{{f.status}}
-
-</span>
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-{% endfor %}
-
-
-
-</div>
-
-
-
-{% endif %}
-
-
-
-
-</div>
-
-
-
-
-
-
-
-
-
-<!-- ==========================
-CHART
-========================== -->
-
-
-<div class="crm-chart">
-
-
-<h2>
-
-📈 Monthly Solar Enquiries
-
-</h2>
-
-
-
-<canvas id="leadChart"></canvas>
-
-
-
-</div>
-
-
-
-
-
-
-
-
-
-
-<!-- SEARCH -->
-
-
-<input
-
-class="search-box"
-
-id="leadSearch"
-
-placeholder="🔍 Search customer..."
-
-onkeyup="searchLead()"
-
->
-<!-- ==========================
-LEADS TABLE
-========================== -->
-
-
-<div class="table-box">
-
-
-<table class="table" id="leadTable">
-
-
-<thead>
-
-<tr>
-
-<th>ID</th>
-
-<th>Name</th>
-
-<th>Phone</th>
-
-<th>City</th>
-
-<th>Bill</th>
-
-<th>Status</th>
-
-<th>Follow Up</th>
-
-<th>Action</th>
-
-</tr>
-
-</thead>
-
-
-
-
-
-<tbody>
-
-
-{% for lead in leads %}
-
-
-<tr>
-
-
-<td>{{lead.id}}</td>
-
-
-<td>{{lead.name}}</td>
-
-
-<td>{{lead.phone}}</td>
-
-
-<td>{{lead.city}}</td>
-
-
-<td>{{lead.bill}}</td>
-
-
-
-
-
-<!-- STATUS -->
-
-
-<td>
-
-
-<span class="status-badge {{lead.status}}">
-
-
-{{lead.status}}
-
-
-</span>
-
-
-</td>
-
-
-
-
-
-
-<!-- FOLLOW UP -->
-
-
-<td>
-
-
-<form
-
-class="follow-form"
-
-method="POST"
-
-action="/add-note/{{lead.id}}"
-
->
-
-
-<textarea
-
-class="note-input"
-
-name="note"
-
-placeholder="Follow up note"
-
->{{lead.note}}</textarea>
-
-
-
-<input
-
-type="date"
-
-class="note-date"
-
-name="follow_date"
-
-value="{{lead.follow_date}}"
-
->
-
-
-
-<button
-
-class="note-btn"
-
-type="submit"
-
->
-
-💾 Save
-
-</button>
-
-
-
-</form>
-
-
-</td>
-
-
-
-
-
-
-
-
-<!-- ACTION -->
-
-
-<td>
-
-
-{% if lead.status != "Contacted" %}
-
-
-<a
-
-class="action-btn contact"
-
-href="/update-status/{{lead.id}}/Contacted"
-
->
-
-☎ Contacted
-
-</a>
-
-
-{% endif %}
-
-
-
-
-
-{% if lead.status != "Installed" %}
-
-
-<a
-
-class="action-btn install"
-
-href="/update-status/{{lead.id}}/Installed"
-
->
-
-✅ Installed
-
-</a>
-
-
-{% endif %}
-
-
-
-
-
-
-<a
-
-class="action-btn delete"
-
-onclick="return confirm('Delete this lead?')"
-
-href="/delete/{{lead.id}}"
-
->
-
-🗑 Delete
-
-</a>
-
-
-
-</td>
-
-
-
-</tr>
-
-
-
-{% endfor %}
-
-
-
-</tbody>
-
-
-</table>
-
-
-</div>
-
-
-
-
-
-
-
-
-
-<!-- ==========================
-CHART SCRIPT
-========================== -->
-
-
+<!-- CHART SCRIPTS -->
+{% block scripts %}
 <script>
-
-
-let months = [];
-
-
-let counts = [];
-
-
-
-{% for item in chart_data %}
-
-
-months.push(
-
-"{{item[0]}}"
-
-);
-
-
-
-counts.push(
-
-{{item[1]}}
-
-);
-
-
-
-{% endfor %}
-
-
-
-
-
-
-let ctx=document.getElementById(
-
-"leadChart"
-
-);
-
-
-
-
-
-if(ctx){
-
-
-new Chart(ctx,{
-
-
-type:"line",
-
-
-
-data:{
-
-
-labels:months,
-
-
-
-datasets:[{
-
-
-label:"Solar Leads",
-
-
-data:counts,
-
-
-borderWidth:3,
-
-
-tension:.4
-
-
-}]
-
-
-}
-
-
-
-});
-
-
-}
-
-
-
+(function() {
+  function noDataPlugin() {
+    return {
+      id: 'noData',
+      afterDraw: function(chart) {
+        var total = chart.data.datasets.reduce(function(s, ds) {
+          return s + ds.data.reduce(function(a, b) { return a + (b || 0); }, 0);
+        }, 0);
+        if (total === 0) {
+          var ctx = chart.ctx, w = chart.width, h = chart.height;
+          chart.clear();
+          ctx.save();
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#bbb'; ctx.font = '600 14px Poppins,sans-serif';
+          ctx.fillText('No Data Available', w / 2, h / 2);
+          ctx.restore();
+        }
+      }
+    };
+  }
+
+  /* ── Monthly Leads (last 12 months) ───────────────────── */
+  var monthLabels = {{ month_labels | tojson }};
+  var monthCounts = {{ month_counts | tojson }};
+  new Chart(document.getElementById('monthChart'), {
+    type: 'line',
+    plugins: [noDataPlugin()],
+    data: {
+      labels: monthLabels,
+      datasets: [{
+        label: 'Leads', data: monthCounts,
+        borderColor: '#00A651', backgroundColor: 'rgba(0,166,81,.15)',
+        borderWidth: 3, tension: .4, fill: true,
+        pointBackgroundColor: '#005B38', pointRadius: 5, pointHoverRadius: 7
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f0f4f0' } },
+        x: { grid: { display: false }, ticks: { maxRotation: 40, font: { size: 10 } } }
+      }
+    }
+  });
+
+  /* ── Status Distribution Pie ───────────────────────────── */
+  var statusLabels = {{ status_data | map(attribute='label') | list | tojson }};
+  var statusCounts = {{ status_data | map(attribute='count') | list | tojson }};
+  new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    plugins: [noDataPlugin()],
+    data: {
+      labels: statusLabels,
+      datasets: [{
+        data: statusCounts,
+        backgroundColor: ['#9E9E9E','#2196F3','#00BCD4','#9C27B0','#FF9800','#3F51B5','#4CAF50','#F44336'],
+        borderWidth: 3, borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { font: { family: 'Poppins', size: 11 } } }
+      },
+      cutout: '65%'
+    }
+  });
+
+  /* ── Top Districts Bar ─────────────────────────────────── */
+  var districtLabels = {{ district_data | map(attribute='label') | list | tojson }};
+  var districtCounts = {{ district_data | map(attribute='count') | list | tojson }};
+  new Chart(document.getElementById('districtChart'), {
+    type: 'bar',
+    plugins: [noDataPlugin()],
+    data: {
+      labels: districtLabels,
+      datasets: [{
+        label: 'Leads', data: districtCounts,
+        backgroundColor: '#00A651', borderRadius: 6, borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f0f4f0' } },
+        x: { grid: { display: false }, ticks: { maxRotation: 40, font: { size: 10 } } }
+      }
+    }
+  });
+
+  /* ── Vendor Performance Stacked Bar ───────────────────── */
+  var vendorLabels    = {{ vendor_perf | map(attribute='name')      | list | tojson }};
+  var vendorCompleted = {{ vendor_perf | map(attribute='completed') | list | tojson }};
+  var vendorPending   = {{ vendor_perf | map(attribute='pending')   | list | tojson }};
+  new Chart(document.getElementById('vendorChart'), {
+    type: 'bar',
+    plugins: [noDataPlugin()],
+    data: {
+      labels: vendorLabels,
+      datasets: [
+        { label: 'Completed', data: vendorCompleted, backgroundColor: '#4CAF50', borderRadius: 4, borderSkipped: false },
+        { label: 'Pending',   data: vendorPending,   backgroundColor: '#FF9800', borderRadius: 4, borderSkipped: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { font: { family: 'Poppins', size: 11 } } }
+      },
+      scales: {
+        y: { beginAtZero: true, stacked: true, ticks: { precision: 0 }, grid: { color: '#f0f4f0' } },
+        x: { stacked: true, grid: { display: false }, ticks: { maxRotation: 40, font: { size: 10 } } }
+      }
+    }
+  });
+})();
 </script>
+{% endblock %}
 
+<!-- ============ LEAD DETAIL / EDIT MODAL ============ -->
+<div class="modal fade" id="leadDetailModal" tabindex="-1" aria-labelledby="leadDetailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+    <div class="modal-content crm-modal">
+      <div class="modal-header crm-modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-wrap"><i class="bi bi-person-lines-fill"></i></div>
+          <div>
+            <h5 class="modal-title" id="leadDetailModalLabel">Lead Details</h5>
+            <small id="ldLeadSubtitle" class="text-white-50">Loading...</small>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <!-- View / Edit toggle -->
+          <button class="ld-tab-btn active" id="ldTabView" onclick="switchLeadTab('view')">
+            <i class="bi bi-eye me-1"></i>View
+          </button>
+          <button class="ld-tab-btn" id="ldTabEdit" onclick="switchLeadTab('edit')">
+            <i class="bi bi-pencil-square me-1"></i>Edit
+          </button>
+          <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="modal"></button>
+        </div>
+      </div>
 
+      <div class="modal-body p-0" id="ldModalBody">
 
+        <!-- === VIEW PANEL === -->
+        <div id="ldViewPanel" class="ld-panel">
+          <div class="ld-view-grid" id="ldViewGrid">
+            <!-- populated by JS -->
+          </div>
+          <!-- Timeline inside detail -->
+          <div class="ld-section-header"><i class="bi bi-clock-history me-2"></i>Timeline</div>
+          <div class="p-4 pt-0" id="ldTimelineBody">
+            <div class="tl-loading"><div class="spinner-border text-success spinner-border-sm" role="status"></div><span class="ms-2 text-muted">Loading...</span></div>
+          </div>
+        </div>
 
+        <!-- === EDIT PANEL === -->
+        <div id="ldEditPanel" class="ld-panel" style="display:none">
+          <form id="leadEditForm" class="ld-edit-form" onsubmit="submitLeadEdit(event)">
+            <input type="hidden" id="ldEditLeadId" name="lead_id" value="">
 
+            <div class="ld-edit-grid">
+              <div class="ld-form-group">
+                <label class="crm-label"><i class="bi bi-person me-1"></i>Customer Name</label>
+                <input type="text" name="name" id="ldEditName" class="crm-input" placeholder="Full Name" required>
+              </div>
+              <div class="ld-form-group">
+                <label class="crm-label"><i class="bi bi-telephone me-1"></i>Phone Number</label>
+                <input type="text" name="phone" id="ldEditPhone" class="crm-input" placeholder="Mobile Number">
+              </div>
+              <div class="ld-form-group">
+                <label class="crm-label"><i class="bi bi-building me-1"></i>City</label>
+                <input type="text" name="city" id="ldEditCity" class="crm-input" placeholder="City">
+              </div>
+              <div class="ld-form-group">
+                <label class="crm-label"><i class="bi bi-geo-alt me-1"></i>District</label>
+                <select name="district" id="ldEditDistrict" class="crm-input">
+                  <option value="">— Select District —</option>
+                  {% for d in districts %}
+                  <option value="{{ d }}">{{ d }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="ld-form-group">
+                <label class="crm-label"><i class="bi bi-lightning me-1"></i>Monthly Bill</label>
+                <input type="text" name="bill" id="ldEditBill" class="crm-input" placeholder="e.g. ₹2000-5000">
+              </div>
+              <div class="ld-form-group">
+                <label class="crm-label"><i class="bi bi-flag me-1"></i>Status</label>
+                <select name="status" id="ldEditStatus" class="crm-input">
+                  {% for s in STATUSES %}
+                  <option value="{{ s }}">{{ s }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="ld-form-group">
+                <label class="crm-label"><i class="bi bi-building-check me-1"></i>Assign Vendor</label>
+                <select name="vendor_id" id="ldEditVendor" class="crm-input">
+                  <option value="">— Unassigned —</option>
+                  {% for v in vendors %}
+                  <option value="{{ v.id }}">{{ v.company_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="ld-form-group">
+                <label class="crm-label"><i class="bi bi-calendar-event me-1"></i>Follow-up Date</label>
+                <input type="date" name="follow_date" id="ldEditFollowDate" class="crm-input">
+              </div>
+              <div class="ld-form-group ld-form-group-full">
+                <label class="crm-label"><i class="bi bi-chat-text me-1"></i>Note</label>
+                <textarea name="note" id="ldEditNote" class="crm-textarea" rows="3" placeholder="Enter note..."></textarea>
+              </div>
+            </div>
+
+            <div class="ld-edit-footer">
+              <button type="button" class="btn-crm-secondary" onclick="switchLeadTab('view')">
+                <i class="bi bi-arrow-left me-1"></i>Back to View
+              </button>
+              <button type="submit" class="btn-crm-primary" id="ldSaveBtn">
+                <i class="bi bi-save me-1"></i>Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
 
 
 {% endblock %}

@@ -1,114 +1,172 @@
 <!DOCTYPE html>
-
-<html>
-
+<html lang="en">
 <head>
-
-<title>
-Har Ghar Solar CRM
-</title>
-
-
-<link 
-href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
-rel="stylesheet">
-
-
-<link
-rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
-
-
-<link 
-rel="stylesheet"
-href="{{ url_for('static', filename='css/admin.css') }}?v=20">
-
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HGS CRM Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v=50">
 </head>
-
-
 <body>
 
+<div class="crm-layout" id="crmLayout">
 
-<div class="crm-layout">
+  <!-- SIDEBAR -->
+  <aside class="crm-sidebar" id="crmSidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="logo-icon"><i class="fa-solid fa-solar-panel"></i></div>
+        <div class="logo-text">
+          <span class="logo-title">HGS CRM</span>
+          <span class="logo-sub">Portal</span>
+        </div>
+      </div>
+      <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Sidebar">
+        <i class="bi bi-layout-sidebar-reverse" id="toggleIcon"></i>
+      </button>
+    </div>
 
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">MAIN MENU</div>
 
-<!-- SIDEBAR -->
+      <a href="/admin" class="sidebar-link {% if request.path == '/admin' %}active{% endif %}" title="Dashboard">
+        <span class="link-icon"><i class="bi bi-speedometer2"></i></span>
+        <span class="link-text">Dashboard</span>
+      </a>
 
-<div class="crm-sidebar">
+      <a href="/vendors" class="sidebar-link {% if '/vendor' in request.path and 'login' not in request.path and 'dashboard' not in request.path %}active{% endif %}" title="Vendors">
+        <span class="link-icon"><i class="bi bi-building"></i></span>
+        <span class="link-text">Vendors</span>
+      </a>
 
+      <a href="/vendor-add" class="sidebar-link {% if request.path == '/vendor-add' %}active{% endif %}" title="Add Vendor">
+        <span class="link-icon"><i class="bi bi-person-plus"></i></span>
+        <span class="link-text">Add Vendor</span>
+      </a>
 
-<h3>
-☀ HGS CRM
-</h3>
+      <a href="/import-vendors" class="sidebar-link {% if request.path == '/import-vendors' %}active{% endif %}" title="Import Vendors">
+        <span class="link-icon"><i class="bi bi-file-earmark-arrow-up"></i></span>
+        <span class="link-text">Import Vendors</span>
+      </a>
 
-<a href="/" class="home-btn">
+      <div class="nav-section-label nav-divider">ACTIONS</div>
 
+      <a href="/download-leads" class="sidebar-link" title="Export Excel">
+        <span class="link-icon"><i class="bi bi-file-earmark-excel"></i></span>
+        <span class="link-text">Export Leads</span>
+      </a>
 
-Back To Home
+      <a href="/" class="sidebar-link" title="Main Website">
+        <span class="link-icon"><i class="bi bi-house-door"></i></span>
+        <span class="link-text">Main Website</span>
+      </a>
 
+      <a href="/logout" class="sidebar-link sidebar-link-danger" title="Logout">
+        <span class="link-icon"><i class="bi bi-box-arrow-right"></i></span>
+        <span class="link-text">Logout</span>
+      </a>
+    </nav>
 
-</a>
+    <div class="sidebar-footer">
+      <div class="sidebar-user-mini">
+        <div class="mini-avatar"><i class="bi bi-person-fill"></i></div>
+        <div class="mini-user-info">
+          <span class="mini-name">Administrator</span>
+          <span class="mini-role">Super Admin</span>
+        </div>
+      </div>
+    </div>
+  </aside>
 
-<a href="/admin">
+  <!-- MAIN AREA -->
+  <div class="crm-main" id="crmMain">
 
-<i class="fa-solid fa-chart-line"></i>
+    <!-- TOP HEADER -->
+    <header class="crm-header" id="crmHeader">
+      <div class="header-left">
+        <button class="mobile-menu-btn d-lg-none" id="mobileMenuBtn">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="header-title-block">
+          <h1 class="header-page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item"><a href="/admin"><i class="bi bi-house-fill me-1"></i>Home</a></li>
+              {% block breadcrumb %}<li class="breadcrumb-item active">Dashboard</li>{% endblock %}
+            </ol>
+          </nav>
+        </div>
+      </div>
 
-Dashboard
+      <div class="header-right">
+        <div class="header-action-btn" id="notifBtn" title="Notifications">
+          <i class="bi bi-bell"></i>
+          <span class="notif-badge" id="notifCount">0</span>
+        </div>
 
-</a>
+        <a href="/download-leads" class="header-export-btn" title="Export Leads">
+          <i class="bi bi-file-earmark-excel me-1"></i>
+          <span class="d-none d-md-inline">Export</span>
+        </a>
 
+        <div class="header-profile-wrap" id="profileDropdown">
+          <div class="profile-trigger" id="profileTrigger">
+            <div class="profile-avatar"><i class="bi bi-person-fill"></i></div>
+            <div class="profile-info d-none d-md-flex flex-column">
+              <span class="profile-name">Admin</span>
+              <span class="profile-role">Super Admin</span>
+            </div>
+            <i class="bi bi-chevron-down profile-chevron d-none d-md-inline"></i>
+          </div>
+          <div class="profile-menu" id="profileMenu">
+            <div class="profile-menu-header">
+              <div class="pm-avatar"><i class="bi bi-person-circle"></i></div>
+              <div>
+                <div class="pm-name">Administrator</div>
+                <div class="pm-email">admin@hgssolar.com</div>
+              </div>
+            </div>
+            <div class="profile-menu-divider"></div>
+            <a href="/admin" class="profile-menu-item"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
+            <a href="/vendors" class="profile-menu-item"><i class="bi bi-building me-2"></i>Manage Vendors</a>
+            <a href="/download-leads" class="profile-menu-item"><i class="bi bi-download me-2"></i>Export Leads</a>
+            <div class="profile-menu-divider"></div>
+            <a href="/logout" class="profile-menu-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
 
-<a href="/download-leads">
+    <!-- PAGE CONTENT -->
+    <main class="crm-content" id="crmContent">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash-container mb-3">
+        {% for cat, msg in messages %}
+        <div class="alert alert-{{ 'success' if cat == 'success' else 'danger' }} alert-dismissible fade show crm-alert" role="alert">
+          <i class="bi bi-{{ 'check-circle-fill' if cat == 'success' else 'exclamation-triangle-fill' }} me-2"></i>{{ msg }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
 
-<i class="fa-solid fa-file-excel"></i>
-
-Export Leads
-
-</a>
-
-
-<a href="/logout">
-
-<i class="fa-solid fa-right-from-bracket"></i>
-
-Logout
-
-</a>
-
-
+      {% block admin %}{% endblock %}
+    </main>
+  </div>
 </div>
 
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-
-
-
-<!-- CONTENT -->
-
-
-<div class="crm-content">
-
-
-{% block admin %}
-
-{% endblock %}
-
-
-</div>
-
-
-
-</div>
-
-
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-
-
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% block scripts %}{% endblock %}
+<script src="{{ url_for('static', filename='js/admin.js') }}?v=50"></script>
 </body>
-
 </html>

@@ -1,0 +1,151 @@
+{% extends 'admin_base.html' %}
+{% block page_title %}Vendor Management{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+  <li class="breadcrumb-item active">Vendors</li>
+{% endblock %}
+{% block admin %}
+
+<!-- PAGE HEADER -->
+<div class="crm-page-header">
+  <div>
+    <h1 class="crm-page-title"><i class="bi bi-people-fill me-2"></i>Vendor Management</h1>
+    <p class="crm-page-sub">Manage all registered solar installation vendors</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/vendor-add" class="btn-crm-primary">
+      <i class="bi bi-person-plus-fill me-1"></i> Add Vendor
+    </a>
+    <a href="/import-vendors" class="btn-crm-secondary">
+      <i class="bi bi-file-earmark-arrow-up me-1"></i> Import Excel
+    </a>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filter-panel mb-4">
+  <form method="GET" class="d-flex gap-3 flex-wrap align-items-end">
+    <div>
+      <label class="filter-label">District</label>
+      <select name="district" class="crm-input" style="width:200px">
+        <option value="">All Districts</option>
+        {% for d in districts %}
+        <option value="{{ d }}" {% if f_district == d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="filter-label">Status</label>
+      <select name="active" class="crm-input" style="width:150px">
+        <option value="">All Status</option>
+        <option value="1" {% if f_active == '1' %}selected{% endif %}>Active</option>
+        <option value="0" {% if f_active == '0' %}selected{% endif %}>Inactive</option>
+      </select>
+    </div>
+    <div class="d-flex gap-2 align-items-end">
+      <button class="btn-crm-primary" type="submit">
+        <i class="bi bi-funnel-fill me-1"></i> Filter
+      </button>
+      {% if f_district or f_active %}
+      <a href="/vendors" class="btn-crm-danger">
+        <i class="bi bi-x-lg me-1"></i> Clear
+      </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- TABLE -->
+<div class="crm-table-wrap">
+  <table class="crm-table" id="vendorTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Company</th>
+        <th>Owner</th>
+        <th>Mobile</th>
+        <th>District</th>
+        <th>Username</th>
+        <th>Status</th>
+        <th>Total</th>
+        <th>Done</th>
+        <th>Pending</th>
+        <th>Rate</th>
+        <th style="width:60px">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for v in vendors %}
+    <tr class="lead-row">
+      <td class="text-muted" style="font-size:12px">{{ v.id }}</td>
+      <td><span class="fw-700" style="color:#1a2332">{{ v.company_name }}</span></td>
+      <td style="font-size:13px">{{ v.owner_name }}</td>
+      <td style="font-size:13px">{{ v.mobile }}</td>
+      <td><span class="crm-badge" style="background:#e8f5e9;color:#1b5e20">{{ v.district }}</span></td>
+      <td><code style="font-size:12px;color:#1565c0;background:#e3f2fd;padding:3px 8px;border-radius:6px">{{ v.username }}</code></td>
+      <td>
+        {% if v.is_active %}
+          <span class="crm-badge crm-badge-completed">Active</span>
+        {% else %}
+          <span class="crm-badge crm-badge-cancelled">Inactive</span>
+        {% endif %}
+      </td>
+      <td><strong>{{ perf[v.id].total }}</strong></td>
+      <td class="fw-700" style="color:#1b5e20">{{ perf[v.id].completed }}</td>
+      <td class="fw-700" style="color:#e65100">{{ perf[v.id].pending }}</td>
+      <td>
+        <span class="fw-700 {% if perf[v.id].pct >= 70 %}text-success{% elif perf[v.id].pct >= 40 %}text-warning{% else %}text-danger{% endif %}">
+          {{ perf[v.id].pct }}%
+        </span>
+      </td>
+      <td>
+        <div class="actions-wrapper" style="position:relative">
+          <button class="actions-dropdown-btn"
+                  onclick="toggleVendorMenu(this, {{ v.id }})"
+                  title="Actions">
+            <i class="bi bi-three-dots-vertical"></i>
+          </button>
+          <div class="actions-menu" id="vmenu-{{ v.id }}" style="display:none;min-width:160px">
+            <a href="/vendor-edit/{{ v.id }}" class="actions-item">
+              <i class="bi bi-pencil-square me-2"></i>Edit Vendor
+            </a>
+            <a href="/vendor-toggle/{{ v.id }}" class="actions-item">
+              {% if v.is_active %}
+                <i class="bi bi-lock me-2"></i>Deactivate
+              {% else %}
+                <i class="bi bi-check-circle me-2"></i>Activate
+              {% endif %}
+            </a>
+            <div class="actions-divider"></div>
+            <a href="/vendor-delete/{{ v.id }}" class="actions-item actions-item-danger"
+               onclick="return confirm('Delete {{ v.company_name }}? Their leads will be unassigned.')">
+              <i class="bi bi-trash me-2"></i>Delete
+            </a>
+          </div>
+        </div>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="12" class="text-center text-muted py-4">No vendors found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+function toggleVendorMenu(btn, id) {
+  document.querySelectorAll('.actions-menu').forEach(function(m) {
+    if (m.id !== 'vmenu-' + id) m.style.display = 'none';
+  });
+  var menu = document.getElementById('vmenu-' + id);
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  document.addEventListener('click', function closeMenu(e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) {
+      menu.style.display = 'none';
+      document.removeEventListener('click', closeMenu);
+    }
+  });
+}
+</script>
+
+{% endblock %}
