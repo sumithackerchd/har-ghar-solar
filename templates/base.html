@@ -1,844 +1,273 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-
-<title>
-Har Ghar Solar | Solar Solutions Uttar Pradesh
-</title>
-
-
-
-<!-- SEO -->
-
-<meta 
-name="description"
-content="Har Ghar Solar provides rooftop solar installation with government subsidy support in Uttar Pradesh."
->
-
-
-<meta 
-name="theme-color"
-content="#006b3c"
->
-
-
-
-<!-- FAVICON -->
-
-<link 
-rel="icon"
-href="{{ url_for('static', filename='images/logo.png') }}"
->
-
-
-
-
-
-<!-- BOOTSTRAP -->
-
-<link 
-href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
-rel="stylesheet">
-
-
-
-
-
-
-<!-- FONT AWESOME -->
-
-<link 
-rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
-
-
-
-
-
-<!-- GOOGLE FONT -->
-
-<link 
-href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap"
-rel="stylesheet">
-
-
-
-
-
-<!-- AOS -->
-
-<link 
-href="https://unpkg.com/aos@2.3.1/dist/aos.css"
-rel="stylesheet">
-
-
-
-
-
-
-<!-- CUSTOM CSS -->
-
-<link 
-rel="stylesheet"
-href="{{ url_for('static', filename='css/style.css') }}"
->
-
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>{% block title %}Har Ghar Solar | PM Surya Ghar Scheme | Rooftop Solar Uttar Pradesh{% endblock %}</title>
+  <meta name="description" content="{% block meta_desc %}Har Ghar Solar – Uttar Pradesh's trusted rooftop solar installation company. Get PM Surya Ghar subsidy up to ₹1,08,000. Free consultation, expert installation, 25-year warranty.{% endblock %}">
+  <meta name="keywords" content="rooftop solar UP, PM Surya Ghar Yojana, solar installation Uttar Pradesh, solar subsidy 2026, Har Ghar Solar">
+  <meta name="author" content="Har Ghar Solar">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#005B38">
+  <link rel="canonical" href="https://hargharsolar.in{{ request.path }}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Har Ghar Solar | PM Surya Ghar Scheme | Rooftop Solar Uttar Pradesh">
+  <meta property="og:description" content="Get rooftop solar with government subsidy up to ₹1,08,000. Trusted solar installer in Uttar Pradesh.">
+  <meta property="og:image" content="{{ url_for('static', filename='images/logo.png') }}">
+  <meta property="og:url" content="https://hargharsolar.in">
+  <meta property="og:site_name" content="Har Ghar Solar">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Har Ghar Solar | Rooftop Solar Uttar Pradesh">
+  <meta name="twitter:description" content="Install rooftop solar with PM Surya Ghar Yojana subsidy. Expert installation across UP.">
+  <meta name="twitter:image" content="{{ url_for('static', filename='images/logo.png') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo.png') }}">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"LocalBusiness","name":"Har Ghar Solar","description":"Rooftop solar installation company in Uttar Pradesh with PM Surya Ghar subsidy support","telephone":"+91-8077181038","email":"hargharsolar@zohomail.in","address":{"@type":"PostalAddress","addressRegion":"Uttar Pradesh","addressCountry":"IN"},"url":"https://hargharsolar.in","openingHours":"Mo-Sa 09:00-18:00"}
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+  {% block extra_head %}{% endblock %}
 </head>
-
-
-
-
-
-
 <body>
 
-
-
-
-
-
-<!-- LOADER -->
-
-
-<div id="loader">
-
-
-<div class="sun">
-
-☀
-
+<!-- PREMIUM LOADER -->
+<div id="loader" aria-hidden="true">
+  <div class="loader-inner">
+    <div class="loader-sun"><i class="fas fa-sun"></i></div>
+    <p class="loader-text">Har Ghar Solar</p>
+    <div class="loader-bar"><div class="loader-progress"></div></div>
+  </div>
 </div>
-
-
-<p>
-
-Har Ghar Solar
-
-</p>
-
-
-</div>
-
-
-
-
-
-
-
-
 
 <!-- TOP GOVERNMENT HEADER -->
-
-
-<header class="gov-header">
-
-
-<div class="container">
-
-
-<div class="row align-items-center">
-
-
-
-<div class="col-md-7">
-
-
-
-<div class="gov-brand">
-
-
-<div class="gov-icon">
-
-☀
-
-</div>
-
-
-
-<div>
-
-
-<h3>
-
-Har Ghar Solar Mission
-
-</h3>
-
-
-<p>
-
-Clean Energy Initiative | Rooftop Solar Assistance Portal
-
-</p>
-
-
-</div>
-
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-
-
-<div class="col-md-5">
-
-
-<div class="header-contact">
-
-
-
-<div>
-
-
-<i class="fa-solid fa-phone"></i>
-
-
-<span>
-
-Helpline
-
-</span>
-
-
-<h5>
-
-+91 8077181038
-
-</h5>
-
-
-</div>
-
-
-
-
-
-<div>
-
-
-<i class="fa-solid fa-location-dot"></i>
-
-
-<span>
-
-Service Area
-
-</span>
-
-
-<h5>
-
-Uttar Pradesh
-
-</h5>
-
-
-</div>
-
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-</div>
-
-
-</div>
-
-
+<header class="gov-header" role="banner">
+  <div class="container">
+    <div class="row align-items-center gy-1">
+      <div class="col-lg-7 col-md-6">
+        <div class="gov-brand">
+          <div class="gov-icon" aria-hidden="true"><i class="fas fa-sun"></i></div>
+          <div class="gov-brand-text">
+            <h1 class="gov-title">Har Ghar Solar Mission</h1>
+            <p class="gov-subtitle">Clean Energy Initiative | Rooftop Solar Assistance Portal | Uttar Pradesh</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5 col-md-6">
+        <div class="header-contact">
+          <a href="tel:+918077181038" class="hc-item" aria-label="Call us">
+            <span class="hc-icon"><i class="fas fa-phone-alt"></i></span>
+            <span class="hc-info"><small>Helpline</small><strong>+91 8077181038</strong></span>
+          </a>
+          <a href="https://wa.me/918077181038" class="hc-item" target="_blank" rel="noopener" aria-label="WhatsApp">
+            <span class="hc-icon hc-wa"><i class="fab fa-whatsapp"></i></span>
+            <span class="hc-info"><small>WhatsApp</small><strong>Chat Now</strong></span>
+          </a>
+          <div class="hc-item hc-loc">
+            <span class="hc-icon"><i class="fas fa-map-marker-alt"></i></span>
+            <span class="hc-info"><small>Service Area</small><strong>Uttar Pradesh</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </header>
 
-
-
-
-
-
-
-
-
-<!-- NAVBAR -->
-
-
-<nav class="navbar navbar-expand-lg main-nav">
-
-
-<div class="container">
-
-
-
-
-
-<a class="navbar-brand solar-logo" href="/">
-
-
-
-<img
-
-src="{{ url_for('static', filename='images/logo.png') }}"
-
-class="site-logo"
-
-alt="Har Ghar Solar"
-
->
-
-
-
-<div class="logo-text">
-
-
-<h3>
-
-Har Ghar Solar
-
-</h3>
-
-
-<span>
-
-Renewable Energy
-
-</span>
-
-
-</div>
-
-
-
-</a>
-
-
-
-
-
-
-
-
-<button 
-
-class="navbar-toggler"
-
-type="button"
-
-data-bs-toggle="collapse"
-
-data-bs-target="#menu">
-
-
-<span class="navbar-toggler-icon"></span>
-
-
-</button>
-
-
-
-
-
-
-
-
-<div class="collapse navbar-collapse" id="menu">
-
-
-
-<ul class="navbar-nav ms-auto">
-
-
-
-<li class="nav-item">
-
-<a class="nav-link" href="/">
-
-Home
-
-</a>
-
-</li>
-
-
-
-
-
-<li class="nav-item">
-
-<a class="nav-link" href="/about">
-
-About
-
-</a>
-
-</li>
-
-
-
-
-
-<li class="nav-item">
-
-<a class="nav-link" href="/services">
-
-Services
-
-</a>
-
-</li>
-
-
-
-
-
-<li class="nav-item">
-
-<a class="nav-link" href="/#projects">
-
-Projects
-
-</a>
-
-</li>
-
-
-
-
-
-<li class="nav-item">
-
-<a class="nav-link" href="/#subsidy">
-
-Subsidy
-
-</a>
-
-</li>
-
-
-
-
-
-
-<li class="nav-item">
-
-<a class="quote-btn" href="/contact">
-
-Get Quote
-
-</a>
-
-</li>
-
-
-
-
-
-</ul>
-
-
-</div>
-
-
-
-</div>
-
-
+<!-- STICKY NAVBAR -->
+<nav class="navbar navbar-expand-lg main-nav" id="mainNav" role="navigation" aria-label="Main navigation">
+  <div class="container">
+    <a class="navbar-brand solar-logo" href="/" aria-label="Har Ghar Solar Home">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" class="site-logo" alt="Har Ghar Solar Logo" width="48" height="48" loading="eager">
+      <div class="logo-text">
+        <span class="logo-main">Har Ghar Solar</span>
+        <span class="logo-sub">Renewable Energy</span>
+      </div>
+    </a>
+    <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="tog-line"></span><span class="tog-line"></span><span class="tog-line"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav mx-auto gap-1" role="list">
+        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+        <li class="nav-item"><a class="nav-link" href="/services">Services</a></li>
+        <li class="nav-item"><a class="nav-link" href="/#projects">Projects</a></li>
+        <li class="nav-item"><a class="nav-link" href="/#subsidy">Subsidy</a></li>
+        <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <div class="dropdown login-dropdown">
+          <button class="btn btn-login-admin dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-user-shield me-1"></i> Admin
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end login-menu">
+            <li><a class="dropdown-item" href="/admin-login"><i class="fas fa-sign-in-alt me-2"></i>Admin Login</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="/admin"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+          </ul>
+        </div>
+        <div class="dropdown login-dropdown">
+          <button class="btn btn-login-vendor dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-store me-1"></i> Vendor
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end login-menu">
+            <li><a class="dropdown-item" href="/vendor-login"><i class="fas fa-sign-in-alt me-2"></i>Vendor Login</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="/vendor-dashboard"><i class="fas fa-chart-bar me-2"></i>Vendor Panel</a></li>
+          </ul>
+        </div>
+        <a href="/contact" class="btn quote-btn" aria-label="Get Free Quote">
+          <i class="fas fa-solar-panel me-1"></i> Get Quote
+        </a>
+      </div>
+    </div>
+  </div>
 </nav>
 
-
-
-
-
-
-
-
-<!-- GOV NOTICE -->
-
-
-<div class="govt-strip">
-
-
-<marquee>
-
-
-☀ PM Surya Ghar Muft Bijli Yojana | Central Subsidy ₹78,000 + Uttar Pradesh Additional Subsidy ₹30,000 | Apply Now
-
-
-</marquee>
-
-
+<!-- GOVT SCHEME TICKER -->
+<div class="govt-strip" role="marquee" aria-label="Government scheme announcement">
+  <div class="ticker-wrap">
+    <div class="ticker">
+      <span>&#9728;&nbsp; <strong>PM Surya Ghar: Muft Bijli Yojana</strong> &mdash; Scheme Information &nbsp;|&nbsp;</span>
+      <span>&#127968;&nbsp; Central Government Subsidy up to <strong>&#8377;78,000</strong> &nbsp;|&nbsp;</span>
+      <span>&#9889;&nbsp; Uttar Pradesh Additional Subsidy <strong>&#8377;30,000</strong> &nbsp;|&nbsp;</span>
+      <span>&#9989;&nbsp; Get Rooftop Solar with Government Scheme Support &nbsp;|&nbsp;</span>
+      <span>&#128222;&nbsp; Call Now: <strong>+91 8077181038</strong> &nbsp;|&nbsp;</span>
+      <span>&#9728;&nbsp; <strong>PM Surya Ghar: Muft Bijli Yojana</strong> &mdash; Scheme Information &nbsp;|&nbsp;</span>
+      <span>&#127968;&nbsp; Central Government Subsidy up to <strong>&#8377;78,000</strong> &nbsp;|&nbsp;</span>
+      <span>&#9889;&nbsp; Uttar Pradesh Additional Subsidy <strong>&#8377;30,000</strong> &nbsp;|&nbsp;</span>
+      <span>&#9989;&nbsp; Get Rooftop Solar with Government Scheme Support &nbsp;|&nbsp;</span>
+      <span>&#128222;&nbsp; Call Now: <strong>+91 8077181038</strong> &nbsp;|&nbsp;</span>
+    </div>
+  </div>
 </div>
-
-
-
-
-
-
-
 
 <!-- PAGE CONTENT -->
-
-
-{% block content %}
-
-
-
-{% endblock %}
-
-
+{% block content %}{% endblock %}
 
 <!-- PREMIUM FOOTER -->
-
-
-<footer class="premium-footer">
-
-
-<div class="container">
-
-
-<div class="row">
-
-
-
-
-
-<!-- ABOUT -->
-
-
-<div class="col-md-4">
-
-
-<h3>
-
-☀ Har Ghar Solar
-
-</h3>
-
-
-<p>
-
-Helping every home switch to clean and affordable solar energy with expert installation and subsidy support.
-
-</p>
-
-
-
-
-<div class="footer-social">
-
-
-<i class="fab fa-facebook"></i>
-
-<i class="fab fa-instagram"></i>
-
-<i class="fab fa-linkedin"></i>
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-
-
-
-
-<!-- QUICK LINKS -->
-
-
-<div class="col-md-2">
-
-
-<h4>
-
-Quick Links
-
-</h4>
-
-
-<a href="/">
-
-Home
-
-</a>
-
-
-<a href="/about">
-
-About
-
-</a>
-
-
-<a href="/services">
-
-Services
-
-</a>
-
-
-<a href="/contact">
-
-Contact
-
-</a>
-
-
-
-</div>
-
-
-
-
-
-
-
-
-
-<!-- SERVICES -->
-
-
-<div class="col-md-3">
-
-
-<h4>
-
-Solar Services
-
-</h4>
-
-
-
-<p>
-
-Residential Solar
-
-</p>
-
-
-<p>
-
-Commercial Solar
-
-</p>
-
-
-<p>
-
-Solar Maintenance
-
-</p>
-
-
-
-<p>
-
-PM Surya Ghar Yojana
-
-</p>
-
-
-
-
-</div>
-
-
-
-
-
-
-
-
-
-
-<!-- CONTACT -->
-
-
-<div class="col-md-3">
-
-
-<h4>
-
-Contact Info
-
-</h4>
-
-
-
-<p>
-
-📞 +91 8077181038
-
-</p>
-
-
-
-<p>
-
-📍 Uttar Pradesh, India
-
-</p>
-
-
-
-
-<p>
-
-✉ hargharsolar@zohomail.in
-
-</p>
-
-
-
-
-</div>
-
-
-
-
-</div>
-
-
-
-
-
-<hr>
-
-
-
-
-<div class="footer-bottom">
-
-
-© 2026 Har Ghar Solar | Clean Energy For Everyone
-
-
-</div>
-
-
-
-
-</div>
-
-
+<footer class="premium-footer" role="contentinfo">
+  <div class="footer-top">
+    <div class="container">
+      <div class="row gy-5">
+        <div class="col-lg-4 col-md-6">
+          <div class="footer-brand">
+            <a href="/" class="footer-logo" aria-label="Har Ghar Solar">
+              <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Har Ghar Solar" width="50" height="50" loading="lazy">
+              <span>Har Ghar Solar</span>
+            </a>
+            <p class="footer-desc">Helping every home switch to clean and affordable solar energy with expert installation, government subsidy guidance, and 25-year warranty support.</p>
+            <div class="footer-badges">
+              <span class="fbadge"><i class="fas fa-shield-alt"></i> MNRE Approved</span>
+              <span class="fbadge"><i class="fas fa-certificate"></i> ISO Certified</span>
+            </div>
+            <div class="footer-social" aria-label="Social media links">
+              <a href="https://www.facebook.com/hargharsolar" target="_blank" rel="noopener" aria-label="Facebook" class="fsoc fsoc-fb"><i class="fab fa-facebook-f"></i></a>
+              <a href="https://www.instagram.com/hargharsolar" target="_blank" rel="noopener" aria-label="Instagram" class="fsoc fsoc-ig"><i class="fab fa-instagram"></i></a>
+              <a href="https://www.linkedin.com/company/hargharsolar" target="_blank" rel="noopener" aria-label="LinkedIn" class="fsoc fsoc-li"><i class="fab fa-linkedin-in"></i></a>
+              <a href="https://twitter.com/hargharsolar" target="_blank" rel="noopener" aria-label="X Twitter" class="fsoc fsoc-x"><i class="fab fa-x-twitter"></i></a>
+              <a href="https://www.youtube.com/@hargharsolar" target="_blank" rel="noopener" aria-label="YouTube" class="fsoc fsoc-yt"><i class="fab fa-youtube"></i></a>
+              <a href="https://wa.me/918077181038" target="_blank" rel="noopener" aria-label="WhatsApp" class="fsoc fsoc-wa"><i class="fab fa-whatsapp"></i></a>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-2 col-md-3 col-6">
+          <div class="footer-col">
+            <h4 class="footer-heading">Quick Links</h4>
+            <ul class="footer-links">
+              <li><a href="/"><i class="bi bi-chevron-right"></i> Home</a></li>
+              <li><a href="/about"><i class="bi bi-chevron-right"></i> About Us</a></li>
+              <li><a href="/services"><i class="bi bi-chevron-right"></i> Services</a></li>
+              <li><a href="/#projects"><i class="bi bi-chevron-right"></i> Projects</a></li>
+              <li><a href="/#subsidy"><i class="bi bi-chevron-right"></i> Subsidy</a></li>
+              <li><a href="/contact"><i class="bi bi-chevron-right"></i> Contact</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-lg-2 col-md-3 col-6">
+          <div class="footer-col">
+            <h4 class="footer-heading">Solar Services</h4>
+            <ul class="footer-links">
+              <li><a href="/services"><i class="bi bi-chevron-right"></i> Residential Solar</a></li>
+              <li><a href="/services"><i class="bi bi-chevron-right"></i> Commercial Solar</a></li>
+              <li><a href="/services"><i class="bi bi-chevron-right"></i> Hybrid Solar</a></li>
+              <li><a href="/services"><i class="bi bi-chevron-right"></i> Solar Maintenance</a></li>
+              <li><a href="/#subsidy"><i class="bi bi-chevron-right"></i> PM Surya Ghar</a></li>
+              <li><a href="/contact"><i class="bi bi-chevron-right"></i> Free Survey</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+          <div class="footer-col">
+            <h4 class="footer-heading">Contact &amp; Hours</h4>
+            <ul class="footer-contact-list">
+              <li><a href="tel:+918077181038" aria-label="Call us"><span class="fci fci-phone"><i class="fas fa-phone-alt"></i></span><span>+91 8077181038</span></a></li>
+              <li><a href="mailto:hargharsolar@zohomail.in" aria-label="Email us"><span class="fci fci-email"><i class="fas fa-envelope"></i></span><span>hargharsolar@zohomail.in</span></a></li>
+              <li><a href="https://wa.me/918077181038" target="_blank" rel="noopener" aria-label="WhatsApp us"><span class="fci fci-wa"><i class="fab fa-whatsapp"></i></span><span>WhatsApp Support</span></a></li>
+              <li><a href="https://maps.google.com/?q=Uttar+Pradesh+India" target="_blank" rel="noopener" aria-label="Find us on Google Maps"><span class="fci fci-map"><i class="fas fa-map-marker-alt"></i></span><span>Uttar Pradesh, India</span></a></li>
+            </ul>
+            <div class="footer-hours">
+              <h5><i class="fas fa-clock me-2"></i>Working Hours</h5>
+              <div class="hours-grid">
+                <span>Mon &ndash; Sat</span><span>9:00 AM &ndash; 6:00 PM</span>
+                <span>Sunday</span><span>10:00 AM &ndash; 2:00 PM</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="container">
+      <div class="row align-items-center gy-2">
+        <div class="col-md-5">
+          <p class="footer-copy">&copy; 2026 <strong>Har Ghar Solar</strong> | Clean Energy For Everyone</p>
+        </div>
+        <div class="col-md-4 text-center">
+          <div class="visitor-counter" aria-label="Website visitor counter">
+            <span class="vc-eye"><i class="fas fa-eye"></i></span>
+            <span class="vc-label">Visitors</span>
+            <span class="vc-count" id="visitorCount">...</span>
+          </div>
+        </div>
+        <div class="col-md-3 text-end">
+          <div class="footer-legal">
+            <a href="/contact">Privacy Policy</a><span>|</span><a href="/contact">Terms</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </footer>
 
-
-
-
-
-
-
-
-
-
-<!-- QUICK ENQUIRY BUTTON -->
-
-
-<a href="/contact" class="quick-enquiry">
-
-
-Get Free Quote
-
-
+<!-- FLOATING WHATSAPP -->
+<a href="https://wa.me/918077181038" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+  <div class="wa-pulse"></div>
+  <i class="fab fa-whatsapp"></i>
+  <span class="wa-tooltip">Chat on WhatsApp</span>
 </a>
 
-
-
-
-
-
-
-
-
+<!-- BACK TO TOP -->
+<button class="back-to-top" id="backToTop" aria-label="Back to top">
+  <i class="fas fa-chevron-up"></i>
+</button>
 
 <!-- BOOTSTRAP JS -->
-
-
-<script
-
-src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js">
-
-</script>
-
-
-
-
-
-
-
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 <!-- AOS JS -->
-
-
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js">
-
-</script>
-
-
-
-<script>
-
-
-AOS.init({
-
-
-duration:1000,
-
-
-once:true
-
-
-});
-
-
-</script>
-
-
-
-
-
-
-
-
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+<script>AOS.init({duration:900,once:true,offset:60,easing:'ease-out-cubic'});</script>
 <!-- CUSTOM JS -->
-
-
-<script
-
-src="{{ url_for('static', filename='js/main.js') }}">
-
-
-</script>
-
-
-
-
-
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_scripts %}{% endblock %}
 </body>
-
-
 </html>

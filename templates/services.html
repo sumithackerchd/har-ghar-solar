@@ -1,290 +1,123 @@
 {% extends 'base.html' %}
-
+{% block title %}Solar Services | Residential, Commercial &amp; Hybrid Solar | Har Ghar Solar{% endblock %}
+{% block meta_desc %}Explore residential, commercial and hybrid solar solutions from Har Ghar Solar. Solar packages from 1KW to 100KW with government subsidy support in Uttar Pradesh.{% endblock %}
 
 {% block content %}
 
-
-<!-- SERVICE HERO -->
-
-
-<section class="page-banner">
-
-
-<div>
-
-
-<h1>
-Our Solar Solutions
-</h1>
-
-
-<p>
-Smart Renewable Energy Solutions For Every Need
-</p>
-
-
-</div>
-
-
+<!-- PAGE BANNER -->
+<section class="page-banner" aria-label="Services page header">
+  <div>
+    <h1>Our Solar Solutions</h1>
+    <p>Smart Renewable Energy Solutions For Every Need</p>
+  </div>
 </section>
 
-
-
-
-
-
-
-<!-- SERVICES -->
-
-
-<section class="services-section">
-
-
-<div class="container">
-
-
-<div class="section-title">
-
-
-<h5>
-WHAT WE OFFER
-</h5>
-
-
-<h2>
-Our Professional Solar Services
-</h2>
-
-
-</div>
-
-
-
-
-
-<div class="row">
-
-
-
-<div class="col-md-4">
-
-
-<div class="service-card">
-
-
-<i class="fa-solid fa-house"></i>
-
-
-<h3>
-Home Rooftop Solar
-</h3>
-
-
-<p>
-Complete residential rooftop solar installation with subsidy support.
-</p>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-<div class="col-md-4">
-
-
-<div class="service-card">
-
-
-<i class="fa-solid fa-building"></i>
-
-
-<h3>
-Commercial Solar
-</h3>
-
-
-<p>
-Solar power systems for offices, schools, hospitals and businesses.
-</p>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-<div class="col-md-4">
-
-
-<div class="service-card">
-
-
-<i class="fa-solid fa-screwdriver-wrench"></i>
-
-
-<h3>
-Solar Maintenance
-</h3>
-
-
-<p>
-AMC, cleaning and maintenance solutions for better performance.
-</p>
-
-
-</div>
-
-
-</div>
-
-
-
-
-</div>
-
-
-</div>
-
-
+<!-- SERVICES SECTION -->
+<section class="services-section" data-aos="fade-up">
+  <div class="container">
+    <div class="section-title">
+      <span class="section-label">WHAT WE OFFER</span>
+      <h2>Professional Solar Services</h2>
+      <p>Complete solar solutions designed for homes, businesses and industries.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="0">
+        <div class="service-card">
+          <div class="service-card-icon float-icon"><i class="fas fa-home"></i></div>
+          <h3>Home Rooftop Solar</h3>
+          <p>Complete residential rooftop solar installation with maximum government subsidy support and 25-year warranty.</p>
+        </div>
+      </div>
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="service-card">
+          <div class="service-card-icon float-icon"><i class="fas fa-building"></i></div>
+          <h3>Commercial Solar</h3>
+          <p>High capacity solar power systems for offices, schools, hospitals, factories and businesses. Reduce bills by up to 80%.</p>
+        </div>
+      </div>
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="service-card">
+          <div class="service-card-icon float-icon"><i class="fas fa-battery-full"></i></div>
+          <h3>Hybrid Solar + Battery</h3>
+          <p>Solar with battery backup system for 24/7 continuous power. Perfect for areas with frequent outages.</p>
+        </div>
+      </div>
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+        <div class="service-card">
+          <div class="service-card-icon float-icon"><i class="fas fa-screwdriver-wrench"></i></div>
+          <h3>Solar Maintenance</h3>
+          <p>AMC, panel cleaning, inverter service and performance monitoring solutions for better output and longevity.</p>
+        </div>
+      </div>
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="400">
+        <div class="service-card">
+          <div class="service-card-icon float-icon"><i class="fas fa-certificate"></i></div>
+          <h3>Subsidy Assistance</h3>
+          <p>Complete guidance and documentation support for PM Surya Ghar Muft Bijli Yojana subsidy application.</p>
+        </div>
+      </div>
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="500">
+        <div class="service-card">
+          <div class="service-card-icon float-icon"><i class="fas fa-industry"></i></div>
+          <h3>Industrial Solar</h3>
+          <p>Utility-scale solar for industries and large commercial establishments. Custom-designed high-capacity systems.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
-
-
-
-
-
-
 
 <!-- SOLAR PACKAGES -->
-
-
-<section class="package-section">
-
-
-<div class="container">
-
-
-<div class="section-title">
-
-
-<h5>
-SOLAR PACKAGES
-</h5>
-
-
-<h2>
-Choose Your Solar Plan
-</h2>
-
-
-</div>
-
-
-
-
-
-
-<div class="row">
-
-
-
-{% set packages = [
-
-("1 KW","Small Homes"),
-
-("2 KW","Medium Homes"),
-
-("3 KW","Family Homes"),
-
-("5 KW","Large Homes")
-
-] %}
-
-
-
-{% for p in packages %}
-
-
-
-<div class="col-md-3">
-
-
-<div class="package-card">
-
-
-<h3>
-
-{{p[0]}}
-
-</h3>
-
-
-<p>
-
-{{p[1]}}
-
-</p>
-
-
-
-<ul>
-
-
-<li>✔ Premium Solar Panels</li>
-
-<li>✔ Installation Included</li>
-
-<li>✔ Subsidy Assistance</li>
-
-<li>✔ 25 Years Warranty</li>
-
-
-
-</ul>
-
-
-
-<a href="/contact">
-
-Get Quote
-
-</a>
-
-
-
-</div>
-
-
-</div>
-
-
-
-{% endfor %}
-
-
-
-</div>
-
-
-
-</div>
-
-
-
+<section class="package-section" data-aos="zoom-in">
+  <div class="container">
+    <div class="section-title">
+      <span class="section-label">SOLAR PACKAGES</span>
+      <h2>Choose Your Solar Plan</h2>
+      <p>Flexible plans designed for different household sizes and energy requirements.</p>
+    </div>
+    <div class="row g-4 justify-content-center">
+
+      {% set packages = [
+        ("1 KW", "Small Homes", "1-2 BHK"),
+        ("2 KW", "Medium Homes", "2-3 BHK"),
+        ("3 KW", "Family Homes", "3-4 BHK"),
+        ("5 KW", "Large Homes", "4+ BHK")
+      ] %}
+
+      {% for p in packages %}
+      <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
+        <div class="package-card {% if loop.index == 3 %}featured{% endif %}">
+          {% if loop.index == 3 %}<span class="package-badge">Most Popular</span>{% endif %}
+          <h3>{{ p[0] }}</h3>
+          <div class="pkg-type">{{ p[1] }}</div>
+          <p style="font-size:13px;color:var(--text-light);">{{ p[2] }}</p>
+          <ul>
+            <li><i class="fas fa-check"></i> Premium Solar Panels</li>
+            <li><i class="fas fa-check"></i> Professional Installation</li>
+            <li><i class="fas fa-check"></i> Subsidy Assistance</li>
+            <li><i class="fas fa-check"></i> 25 Years Warranty</li>
+            <li><i class="fas fa-check"></i> AMC Available</li>
+          </ul>
+          <a href="/contact" class="ripple-btn" aria-label="Get quote for {{ p[0] }} solar">Get Free Quote</a>
+        </div>
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
 </section>
 
-
-
-
+<!-- EMI BANNER -->
+<section class="emi-section" data-aos="fade-in">
+  <div class="container">
+    <h2>&#128176; Easy EMI Available on Solar Installation</h2>
+    <p style="opacity:.8;max-width:560px;margin:0 auto 24px;font-size:15px;">
+      Install solar today with zero down payment and easy monthly instalments. Subsidy applied directly to reduce your total cost.
+    </p>
+    <a href="/contact" class="hero-btn ripple-btn" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:var(--primary-dark);">
+      <i class="fas fa-phone-alt"></i> Enquire About EMI
+    </a>
+  </div>
+</section>
 
 {% endblock %}

@@ -1,4 +1,9 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /admin-login
+Disallow: /vendor-login
+Disallow: /vendor-dashboard
+Disallow: /download-leads
 
-Sitemap: https://hargharsolar.com/sitemap.xml
+Sitemap: https://hargharsolar.in/sitemap.xml

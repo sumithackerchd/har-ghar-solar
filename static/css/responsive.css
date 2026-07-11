@@ -1,16 +1,261 @@
-/* Responsive foundation */
+/* ============================================================
+   HAR GHAR SOLAR — RESPONSIVE CSS
+   Breakpoints: 1400, 1200, 992, 768, 576, 480, 375
+============================================================ */
+
+/* BASE RESET */
 *{box-sizing:border-box}
+html{overflow-x:hidden}
+body{overflow-x:hidden;min-width:320px}
 img{max-width:100%;height:auto}
-body{overflow-x:hidden}
-table{display:block;overflow-x:auto}
-.container,.container-fluid{padding-left:16px;padding-right:16px}
+
+/* ============================================================
+   XL (≤1400)
+============================================================ */
+@media(max-width:1400px){
+  .hero-content h1{font-size:2.8rem}
+  .section-title h2{font-size:2.1rem}
+}
+
+/* ============================================================
+   LG (≤1200)
+============================================================ */
+@media(max-width:1199px){
+  .hero-content{padding-left:5%}
+  .hero-content h1{font-size:2.5rem}
+  .logo-main{font-size:18px}
+  .counter-divider{display:none}
+  .nav-actions{gap:6px}
+  .btn-login-admin,.btn-login-vendor{padding:6px 12px;font-size:12px}
+}
+
+/* ============================================================
+   MD — TABLETS (≤992)
+============================================================ */
 @media(max-width:991px){
-h1{font-size:2rem}h2{font-size:1.6rem}
-.btn{width:100%}
-.row>[class*='col-']{margin-bottom:1rem}
+  /* NAVBAR */
+  .main-nav .container{flex-wrap:wrap}
+  #navMenu{
+    background:var(--white);
+    border-top:1px solid var(--border);
+    padding:16px 0;margin-top:8px;
+    border-radius:0 0 var(--radius) var(--radius);
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+  }
+  .navbar-nav .nav-link{padding:10px 16px!important;border-radius:8px}
+  .nav-actions{
+    flex-direction:row;padding:12px 16px;
+    justify-content:flex-start;gap:8px;flex-wrap:wrap;
+  }
+  .btn-login-admin,.btn-login-vendor{flex:1;min-width:100px;text-align:center;justify-content:center}
+  .quote-btn{flex:1;min-width:100px;text-align:center}
+  .login-dropdown .dropdown-menu{position:static!important;transform:none!important;box-shadow:none;border:1px solid var(--border);margin-top:4px}
+
+  /* GOV HEADER */
+  .gov-subtitle{display:none}
+  .header-contact{justify-content:flex-start;gap:8px}
+  .hc-info strong{font-size:11px}
+  .hc-loc{display:none}
+
+  /* HERO */
+  .slide-img{height:75vh;min-height:480px}
+  .hero-content{padding:0 5%;max-width:100%}
+  .hero-content h1{font-size:2.2rem}
+  .hero-content p{font-size:15px}
+  .hero-stats{gap:20px}
+  .hero-stats h3{font-size:1.6rem}
+
+  /* SECTIONS */
+  .why-img,.subsidy-img,.about-img{height:320px;margin-bottom:30px}
+  .section-title h2{font-size:1.9rem}
+  .counter-num{font-size:2.2rem}
+  .emi-section{padding:50px 30px}
+  .crm-layout{flex-direction:column}
+  .crm-sidebar{width:100%;min-width:unset;padding:16px 20px}
+  .crm-sidebar h3{margin-bottom:16px}
+  .crm-content{width:100%;padding:20px}
+  .calculator-box{padding:32px 24px}
+  .result-grid{grid-template-columns:1fr}
+  .page-banner h1{font-size:2.2rem}
+
+  /* FOOTER */
+  .footer-top{padding:50px 0 30px}
 }
+
+/* ============================================================
+   SM — LARGE MOBILE (≤768)
+============================================================ */
 @media(max-width:767px){
-.navbar-nav{text-align:center}
-.section{padding:48px 0}
-.card{height:auto}
+  /* HERO */
+  .slide-img{height:65vh;min-height:420px;background-position:60% center}
+  .hero-content{padding:0 20px;max-width:100%}
+  .hero-content h1{font-size:1.9rem;line-height:1.2}
+  .hero-content p{font-size:14px;display:none}
+  .hero-btn{padding:11px 20px;font-size:14px}
+  .hero-btn-outline{padding:11px 20px;font-size:14px}
+  .hero-stats{gap:16px;justify-content:flex-start}
+  .hero-stats h3{font-size:1.4rem}
+  .hero-stats span{font-size:10px}
+
+  /* SECTIONS */
+  .services-section,.why-section,.subsidy-section,
+  .process-section,.projects-section,.review-section{padding:60px 0}
+  .calculator-section{padding:60px 0}
+  .contact-page,.contact-info-section{padding:50px 0}
+  .about-section,.mission-section{padding:60px 0}
+  .package-section{padding:60px 0}
+  .section-title{margin-bottom:35px}
+  .section-title h2{font-size:1.7rem}
+
+  /* CARDS */
+  .service-card{padding:28px 20px}
+  .process-card{padding:24px 18px}
+  .scheme-card{padding:24px 16px}
+  .subsidy-box{padding:24px}
+  .subsidy-box .amount{font-size:2.2rem}
+  .calculator-box{padding:24px 18px}
+  .lead-form{padding:28px 20px}
+  .contact-card{padding:28px 20px;margin-bottom:0}
+
+  /* CONTACT FORM — stack */
+  .contact-page .row{flex-direction:column}
+  .contact-page .col-md-5,.contact-page .col-md-7{width:100%}
+
+  /* SUBSIDY */
+  .subsidy-section .row{flex-direction:column-reverse}
+
+  /* GOV HEADER */
+  .gov-header{padding:8px 0}
+  .gov-title{font-size:13px}
+  .header-contact{gap:6px;justify-content:flex-start}
+  .hc-wa,.hc-loc{display:none}
+
+  /* FOOTER */
+  .footer-bottom .col-md-3{text-align:center!important}
+  .footer-legal{justify-content:center}
+  .footer-copy{text-align:center}
+  .visitor-counter{margin:0 auto}
+
+  /* PAGE BANNER */
+  .page-banner{height:250px}
+  .page-banner h1{font-size:1.8rem}
+  .page-banner p{font-size:14px}
+
+  /* BACK TO TOP + WA */
+  .back-to-top{bottom:90px;left:20px;width:42px;height:42px}
+  .whatsapp-float{bottom:20px;right:20px;width:52px;height:52px}
+  .quick-enquiry{display:none}
+
+  /* THANK YOU */
+  .thankyou-card{padding:36px 24px}
+  .thankyou-card h2{font-size:1.6rem}
+
+  /* COUNTER */
+  .counter-area{padding:50px 0}
+  .counter-num{font-size:2rem}
+  .counter-area .row>div{margin-bottom:20px}
+  .counter-area .row>div:last-child{margin-bottom:0}
 }
+
+/* ============================================================
+   XS — MOBILE (≤576)
+============================================================ */
+@media(max-width:575px){
+  /* HERO */
+  .slide-img{height:58vh;min-height:360px}
+  .hero-content h1{font-size:1.6rem}
+  .hero-badge{font-size:11px;padding:5px 12px}
+  .hero-buttons{gap:10px}
+  .hero-btn,.hero-btn-outline{padding:10px 18px;font-size:13px}
+  .hero-stats{display:none}
+
+  /* CAROUSEL CONTROLS */
+  .carousel-control-prev,.carousel-control-next{width:36px;height:36px}
+
+  /* GOVT HEADER — minimal */
+  .gov-header .col-md-6:last-child{display:none}
+  .gov-brand-text p{display:none}
+
+  /* NAVBAR */
+  .logo-main{font-size:16px}
+  .logo-sub{display:none}
+  .site-logo{width:38px;height:38px}
+
+  /* TICKER */
+  .govt-strip{font-size:11px}
+
+  /* SECTIONS */
+  .section-title h2{font-size:1.5rem}
+  .section-title p{font-size:13px}
+  .section-label{font-size:10px;letter-spacing:1.5px}
+
+  /* PROCESS — 2 col on small */
+  .process-section .col-md-3{width:50%}
+
+  /* COUNTER */
+  .counter-area .col-md-3{width:50%}
+  .counter-num{font-size:1.8rem}
+
+  /* REVIEW */
+  .review-card{padding:24px 18px}
+
+  /* CONTACT */
+  .contact-card h2{font-size:1.4rem}
+  .info-card{padding:24px 18px}
+
+  /* FOOTER */
+  .footer-top{padding:40px 0 20px}
+  .footer-col,.footer-brand{padding-bottom:10px}
+  .footer-social{gap:8px}
+  .fsoc{width:34px;height:34px;font-size:13px}
+  .footer-hours{display:none}
+
+  /* ADMIN CRM */
+  .crm-title{font-size:22px}
+  .crm-card{height:120px}
+  .crm-card h1{font-size:1.8rem}
+
+  /* TABLES */
+  .table-box{padding:16px}
+  table{font-size:13px}
+
+  /* SUBSIDY BOX */
+  .subsidy-box .amount{font-size:1.8rem}
+  .scheme-amount{font-size:1.5rem}
+
+  /* LEAD FORM */
+  .lead-form{padding:22px 16px}
+  .lead-form h3{font-size:1.2rem}
+
+  /* PACKAGES — single col */
+  .package-section .col-md-3{width:100%!important}
+  .package-section .row{flex-direction:column}
+
+  /* CALCULATOR */
+  .result-grid{grid-template-columns:1fr}
+}
+
+/* ============================================================
+   XXS — SMALL MOBILE (≤400)
+============================================================ */
+@media(max-width:400px){
+  .slide-img{height:50vh;min-height:320px}
+  .hero-content h1{font-size:1.4rem}
+  .hero-content{padding:0 14px}
+  .hero-buttons{flex-direction:column}
+  .hero-btn,.hero-btn-outline{width:100%;justify-content:center}
+  .section-title h2{font-size:1.35rem}
+  .navbar-brand .logo-main{font-size:15px}
+  .process-section .col-md-3{width:100%}
+  .why-img,.subsidy-img{height:220px}
+  .footer-legal{flex-direction:column;gap:6px}
+}
+
+/* ============================================================
+   NO HORIZONTAL SCROLL GUARANTEE
+============================================================ */
+html,body{max-width:100%;overflow-x:hidden}
+.container,.container-fluid{padding-left:16px;padding-right:16px;max-width:100%}
+section,header,footer,nav{max-width:100%;overflow-x:hidden}
+img,video,iframe,embed,object{max-width:100%}
+.row{--bs-gutter-x:1rem}

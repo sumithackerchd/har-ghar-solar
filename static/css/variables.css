@@ -1,0 +1,24 @@
+/* ============================================================
+   HAR GHAR SOLAR — CSS CUSTOM PROPERTIES
+   All design tokens defined here for easy theming
+============================================================ */
+:root {
+  --primary:       #005B38;
+  --primary-dark:  #003d26;
+  --primary-light: #00734a;
+  --accent:        #00A651;
+  --gold:          #FFC107;
+  --gold-dark:     #e5ac00;
+  --bg:            #F5F7FA;
+  --white:         #ffffff;
+  --text:          #1a2332;
+  --text-light:    #5a6474;
+  --border:        #e2e8f0;
+  --shadow-sm:     0 2px 12px rgba(0,91,56,.08);
+  --shadow-md:     0 8px 30px rgba(0,91,56,.12);
+  --shadow-lg:     0 20px 60px rgba(0,91,56,.16);
+  --radius:        16px;
+  --radius-lg:     24px;
+  --transition:    .35s cubic-bezier(.4,0,.2,1);
+  --font-primary:  'Poppins', sans-serif;
+}

@@ -1,34 +1,37 @@
+import io
+import logging
+import os
+import secrets
+import sqlite3
+import smtplib
+from datetime import datetime, timedelta
+from email.message import EmailMessage
+from functools import wraps
+
+from dotenv import load_dotenv
 from flask import (
     Flask, render_template, request, redirect,
-    session, send_file, flash, jsonify
+    session, send_file, flash, jsonify, abort, url_for
 )
 from flask_sqlalchemy import SQLAlchemy
-from openpyxl.utils import get_column_letter
-from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
-import pandas as pd
-import io, os, sqlite3
-from openpyxl.worksheet.table import Table, TableStyleInfo
-from dotenv import load_dotenv
-import smtplib
-from email.message import EmailMessage
 from openpyxl import load_workbook, Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-
-# ==========================
-# AZURE
-# ==========================
-from azure.monitor.opentelemetry import configure_azure_monitor
-from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.table import Table, TableStyleInfo
+from werkzeug.security import generate_password_hash, check_password_hash
+import pandas as pd
 
 load_dotenv()
 
-configure_azure_monitor(
-    connection_string=os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
+# ==========================
+# LOGGING
+# ==========================
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
 )
-import logging
 logger = logging.getLogger("hargharsolar")
-logger.setLevel(logging.INFO)
 
 # ==========================
 # UTTAR PRADESH 75 DISTRICTS
@@ -63,12 +66,68 @@ LEAD_STATUSES = [
 # APP CONFIG
 # ==========================
 app = Flask(__name__)
-FlaskInstrumentor().instrument_app(app)
-app.secret_key = os.getenv("SECRET_KEY", "solar_secret_key")
+app.secret_key = os.getenv("SECRET_KEY", secrets.token_hex(32))
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///solar.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+}
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 db = SQLAlchemy(app)
+
+# ==========================
+# RATE LIMITING (in-memory)
+# ==========================
+_rate_store: dict = {}
+
+def rate_limit(max_calls: int, period: int):
+    """Simple per-IP rate limiter decorator."""
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            ip  = request.remote_addr or "0.0.0.0"
+            key = f"{f.__name__}:{ip}"
+            now = datetime.now().timestamp()
+            hits = [t for t in _rate_store.get(key, []) if now - t < period]
+            if len(hits) >= max_calls:
+                return render_template("errors/429.html"), 429
+            hits.append(now)
+            _rate_store[key] = hits
+            return f(*args, **kwargs)
+        return wrapped
+    return decorator
+
+# ==========================
+# AUTH HELPERS
+# ==========================
+def login_required(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("admin_login"))
+        return f(*args, **kwargs)
+    return wrapped
+
+def admin_required(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("admin_login"))
+        if session.get("role") != "admin":
+            abort(403)
+        return f(*args, **kwargs)
+    return wrapped
+
+def vendor_required(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        if "vendor_id" not in session:
+            return redirect(url_for("vendor_login"))
+        return f(*args, **kwargs)
+    return wrapped
 
 # ==========================
 # EMAIL FUNCTION
@@ -147,6 +206,11 @@ class User(db.Model):
     role       = db.Column(db.String(50), default="employee")
     created_at = db.Column(db.String(50))
 
+
+class VisitorCount(db.Model):
+    id    = db.Column(db.Integer, primary_key=True)
+    count = db.Column(db.Integer, default=0)
+
 # ==========================
 # DB INIT + MIGRATION
 # ==========================
@@ -177,6 +241,10 @@ with app.app_context():
         ))
         db.session.commit()
 
+    if not VisitorCount.query.first():
+        db.session.add(VisitorCount(count=0))
+        db.session.commit()
+
 # ==========================
 # HELPERS
 # ==========================
@@ -196,7 +264,23 @@ def add_timeline(lead_id, event, note="", created_by="Admin"):
 # ==========================
 @app.route("/")
 def home():
+    # Increment visitor counter on homepage visit
+    try:
+        vc = VisitorCount.query.first()
+        if vc:
+            vc.count += 1
+            db.session.commit()
+    except Exception:
+        pass
     return render_template("index.html")
+
+@app.route("/visitor-count")
+def visitor_count():
+    try:
+        vc = VisitorCount.query.first()
+        return jsonify({"count": vc.count if vc else 0})
+    except Exception:
+        return jsonify({"count": 0})
 
 @app.route("/about")
 def about():
@@ -233,25 +317,30 @@ def contact():
 # ADMIN LOGIN
 # ==========================
 @app.route("/admin-login", methods=["GET", "POST"])
+@rate_limit(max_calls=10, period=60)
 def admin_login():
+    if "user_id" in session:
+        return redirect(url_for("admin"))
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
         user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password, password):
+        if user and user.role != "disabled" and check_password_hash(user.password, password):
             session["user_id"]  = user.id
             session["username"] = user.username
             session["role"]     = user.role
-            return redirect("/admin")
+            logger.info("Admin login: %s", username)
+            return redirect(url_for("admin"))
+        flash("Invalid credentials.", "danger")
+        logger.warning("Failed login attempt for username: %s", username)
     return render_template("login.html")
 
 # ==========================
 # ADMIN DASHBOARD
 # ==========================
 @app.route("/admin")
+@login_required
 def admin():
-    if "user_id" not in session:
-        return redirect("/admin-login")
 
     # ── filters ──────────────────────────────────────────────
     f_district = request.args.get("district", "")
@@ -284,7 +373,7 @@ def admin():
     # ── date helpers ─────────────────────────────────────────
     now       = datetime.now()
     today     = now.strftime("%Y-%m-%d")
-    yesterday = (now - __import__('datetime').timedelta(days=1)).strftime("%Y-%m-%d")
+    yesterday = (now - timedelta(days=1)).strftime("%Y-%m-%d")
     this_month_prefix = now.strftime("%Y-%m")
 
     # ── stat card counts ─────────────────────────────────────
@@ -316,22 +405,19 @@ def admin():
     ).all()
 
     # ── monthly leads chart — last 12 months ─────────────────
-    # group by YYYY-MM (substr positions 1-7 of "YYYY-MM-DD")
     raw_monthly = db.session.query(
         db.func.substr(Lead.created_at, 1, 7).label("ym"),
         db.func.count(Lead.id).label("cnt")
     ).filter(
         Lead.created_at != "",
-        Lead.created_at != None
+        Lead.created_at.isnot(None)
     ).group_by("ym").order_by("ym").all()
 
-    # build a lookup and fill last 12 months with 0 for missing
     monthly_lookup = {row.ym: row.cnt for row in raw_monthly if row.ym}
     month_labels, month_counts = [], []
     for i in range(11, -1, -1):
-        import datetime as dt
-        d  = now - dt.timedelta(days=i * 30)
-        ym = d.strftime("%Y-%m")
+        d   = now - timedelta(days=i * 30)
+        ym  = d.strftime("%Y-%m")
         lbl = d.strftime("%b %Y")
         month_labels.append(lbl)
         month_counts.append(monthly_lookup.get(ym, 0))
@@ -415,19 +501,77 @@ def admin():
 # ADD EMPLOYEE
 # ==========================
 @app.route("/add-user", methods=["POST"])
+@admin_required
 def add_user():
-    if session.get("role") != "admin":
-        return redirect("/admin")
+    username = request.form.get("username", "").strip()
+    if User.query.filter_by(username=username).first():
+        flash("Username already exists.", "danger")
+        return redirect(url_for("admin"))
     user = User(
-        name=request.form["name"],
-        username=request.form["username"],
+        name=request.form.get("name", "").strip(),
+        username=username,
         password=generate_password_hash(request.form["password"]),
-        role=request.form["role"],
+        role=request.form.get("role", "employee"),
         created_at=datetime.now().strftime("%d-%m-%Y")
     )
     db.session.add(user)
     db.session.commit()
-    return redirect("/admin")
+    flash("User added successfully.", "success")
+    return redirect(url_for("admin"))
+
+# ==========================
+# DISABLE / ENABLE ADMIN USER
+# ==========================
+@app.route("/toggle-user/<int:user_id>")
+@admin_required
+def toggle_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.id == session["user_id"]:
+        flash("You cannot disable your own account.", "warning")
+        return redirect(url_for("admin"))
+    # Toggle role between active role and "disabled"
+    if user.role == "disabled":
+        user.role = "employee"
+        flash(f"User '{user.username}' enabled.", "success")
+    else:
+        user.role = "disabled"
+        flash(f"User '{user.username}' disabled.", "warning")
+    db.session.commit()
+    return redirect(url_for("admin"))
+
+# ==========================
+# RESET USER PASSWORD (admin)
+# ==========================
+@app.route("/reset-password/<int:user_id>", methods=["POST"])
+@admin_required
+def reset_password(user_id):
+    user = User.query.get_or_404(user_id)
+    new_pw = request.form.get("new_password", "").strip()
+    if len(new_pw) < 6:
+        flash("Password must be at least 6 characters.", "danger")
+        return redirect(url_for("admin"))
+    user.password = generate_password_hash(new_pw)
+    db.session.commit()
+    flash(f"Password reset for '{user.username}'.", "success")
+    return redirect(url_for("admin"))
+
+# ==========================
+# DELETE ADMIN USER
+# ==========================
+@app.route("/delete-user/<int:user_id>")
+@admin_required
+def delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.id == session["user_id"]:
+        flash("You cannot delete your own account.", "warning")
+        return redirect(url_for("admin"))
+    if user.username == "admin":
+        flash("Cannot delete the super-admin account.", "danger")
+        return redirect(url_for("admin"))
+    db.session.delete(user)
+    db.session.commit()
+    flash(f"User '{user.username}' deleted.", "success")
+    return redirect(url_for("admin"))
 
 # ==========================
 # UPDATE STATUS
@@ -435,7 +579,9 @@ def add_user():
 @app.route("/update-status/<int:id>/<status>")
 def update_status(id, status):
     if "user_id" not in session and "vendor_id" not in session:
-        return redirect("/admin-login")
+        return redirect(url_for("admin_login"))
+    if status not in LEAD_STATUSES:
+        abort(400)
     lead = Lead.query.get_or_404(id)
     old_status = lead.status
     lead.status = status
@@ -444,8 +590,8 @@ def update_status(id, status):
     db.session.commit()
     add_timeline(lead.id, f"Status Changed: {old_status} → {status}", "", actor)
     if "vendor_id" in session:
-        return redirect("/vendor-dashboard")
-    return redirect("/admin")
+        return redirect(url_for("vendor_dashboard"))
+    return redirect(url_for("admin"))
 
 # ==========================
 # ADD NOTE / FOLLOW UP
@@ -453,52 +599,51 @@ def update_status(id, status):
 @app.route("/add-note/<int:id>", methods=["POST"])
 def add_note(id):
     if "user_id" not in session and "vendor_id" not in session:
-        return redirect("/admin-login")
+        return redirect(url_for("admin_login"))
     lead = Lead.query.get_or_404(id)
-    new_note = request.form.get("note", "")
+    new_note    = request.form.get("note", "")
     follow_date = request.form.get("follow_date", "")
-    lead.note = new_note
+    lead.note        = new_note
     lead.follow_date = follow_date
-    actor = session.get("username") or session.get("vendor_username", "Vendor")
-    lead.updated_by = actor
+    actor            = session.get("username") or session.get("vendor_username", "Vendor")
+    lead.updated_by  = actor
     db.session.commit()
     add_timeline(lead.id, "Note Updated", new_note, actor)
     if "vendor_id" in session:
-        return redirect("/vendor-dashboard")
-    return redirect("/admin")
+        return redirect(url_for("vendor_dashboard"))
+    return redirect(url_for("admin"))
 
 # ==========================
 # DELETE LEAD (admin only)
 # ==========================
 @app.route("/delete/<int:id>")
+@admin_required
 def delete(id):
-    if session.get("role") != "admin":
-        return redirect("/admin")
     lead = Lead.query.get_or_404(id)
     LeadTimeline.query.filter_by(lead_id=id).delete()
     db.session.delete(lead)
     db.session.commit()
-    return redirect("/admin")
+    flash("Lead deleted.", "success")
+    return redirect(url_for("admin"))
 
 # ==========================
 # ASSIGN VENDOR TO LEAD
 # ==========================
 @app.route("/assign-vendor/<int:lead_id>", methods=["POST"])
+@admin_required
 def assign_vendor(lead_id):
-    if session.get("role") != "admin":
-        return redirect("/admin")
-    lead = Lead.query.get_or_404(lead_id)
+    lead      = Lead.query.get_or_404(lead_id)
     vendor_id = request.form.get("vendor_id")
     if vendor_id:
-        lead.vendor_id = int(vendor_id)
-        lead.status = "Assigned"
+        lead.vendor_id  = int(vendor_id)
+        lead.status     = "Assigned"
         lead.updated_by = session.get("username", "Admin")
         db.session.commit()
-        vendor = Vendor.query.get(vendor_id)
+        vendor = db.session.get(Vendor, int(vendor_id))
         v_name = vendor.company_name if vendor else "Unknown"
         add_timeline(lead_id, f"Assigned to Vendor: {v_name}",
                      "", session.get("username", "Admin"))
-    return redirect("/admin")
+    return redirect(url_for("admin"))
 
 # ==========================
 # LEAD TIMELINE API
@@ -521,6 +666,7 @@ def lead_timeline(lead_id):
 # VENDOR LOGIN
 # ==========================
 @app.route("/vendor-login", methods=["GET", "POST"])
+@rate_limit(max_calls=10, period=60)
 def vendor_login():
     if request.method == "POST":
         username = request.form["username"]
@@ -603,10 +749,11 @@ def vendor_dashboard():
 # ==========================
 # VENDOR LIST (admin)
 # ==========================
+# VENDOR LIST (admin)
+# ==========================
 @app.route("/vendors")
+@login_required
 def vendor_list():
-    if "user_id" not in session:
-        return redirect("/admin-login")
     f_district = request.args.get("district", "")
     f_active   = request.args.get("active", "")
     query = Vendor.query
@@ -616,7 +763,6 @@ def vendor_list():
         query = query.filter(Vendor.is_active == (f_active == "1"))
     vendors = query.order_by(Vendor.id.desc()).all()
 
-    # Performance stats per vendor
     perf = {}
     for v in vendors:
         total     = Lead.query.filter_by(vendor_id=v.id).count()
@@ -643,14 +789,11 @@ def vendor_list():
 # ADD VENDOR (admin)
 # ==========================
 @app.route("/vendor-add", methods=["GET", "POST"])
+@login_required
 def vendor_add():
-    if "user_id" not in session:
-        return redirect("/admin-login")
     if request.method == "POST":
-        existing = Vendor.query.filter_by(
-            username=request.form["username"]
-        ).first()
-        if existing:
+        username = request.form.get("username", "").strip()
+        if Vendor.query.filter_by(username=username).first():
             flash("Username already exists.", "danger")
             return render_template("vendor_add.html", districts=UP_DISTRICTS)
         vendor = Vendor(
@@ -658,7 +801,7 @@ def vendor_add():
             owner_name=request.form["owner_name"],
             mobile=request.form["mobile"],
             email=request.form.get("email", ""),
-            username=request.form["username"],
+            username=username,
             password=generate_password_hash(request.form["password"]),
             district=request.form["district"],
             is_active=True,
@@ -667,16 +810,15 @@ def vendor_add():
         db.session.add(vendor)
         db.session.commit()
         flash("Vendor added successfully.", "success")
-        return redirect("/vendors")
+        return redirect(url_for("vendor_list"))
     return render_template("vendor_add.html", districts=UP_DISTRICTS)
 
 # ==========================
 # EDIT VENDOR (admin)
 # ==========================
 @app.route("/vendor-edit/<int:vendor_id>", methods=["GET", "POST"])
+@login_required
 def vendor_edit(vendor_id):
-    if "user_id" not in session:
-        return redirect("/admin-login")
     vendor = Vendor.query.get_or_404(vendor_id)
     if request.method == "POST":
         vendor.company_name = request.form["company_name"]
@@ -690,45 +832,42 @@ def vendor_edit(vendor_id):
             vendor.password = generate_password_hash(new_pass)
         db.session.commit()
         flash("Vendor updated successfully.", "success")
-        return redirect("/vendors")
+        return redirect(url_for("vendor_list"))
     return render_template("vendor_edit.html", vendor=vendor, districts=UP_DISTRICTS)
 
 # ==========================
 # DELETE VENDOR (admin)
 # ==========================
 @app.route("/vendor-delete/<int:vendor_id>")
+@admin_required
 def vendor_delete(vendor_id):
-    if session.get("role") != "admin":
-        return redirect("/vendors")
     vendor = Vendor.query.get_or_404(vendor_id)
-    # Unassign leads
     Lead.query.filter_by(vendor_id=vendor_id).update(
         {"vendor_id": None, "status": "New"}
     )
     db.session.delete(vendor)
     db.session.commit()
     flash("Vendor deleted.", "success")
-    return redirect("/vendors")
+    return redirect(url_for("vendor_list"))
 
 # ==========================
 # TOGGLE VENDOR STATUS
 # ==========================
 @app.route("/vendor-toggle/<int:vendor_id>")
+@admin_required
 def vendor_toggle(vendor_id):
-    if session.get("role") != "admin":
-        return redirect("/vendors")
     vendor = Vendor.query.get_or_404(vendor_id)
     vendor.is_active = not vendor.is_active
     db.session.commit()
-    return redirect("/vendors")
+    flash(f"Vendor {'enabled' if vendor.is_active else 'disabled'}.", "success")
+    return redirect(url_for("vendor_list"))
 
 # ==========================
 # IMPORT VENDORS FROM EXCEL
 # ==========================
 @app.route("/import-vendors", methods=["GET", "POST"])
+@admin_required
 def import_vendors():
-    if session.get("role") != "admin":
-        return redirect("/admin")
     if request.method == "POST":
         file = request.files.get("file")
         if not file:
@@ -782,9 +921,8 @@ def import_vendors():
 # PROFESSIONAL EXCEL EXPORT
 # ==========================
 @app.route("/download-leads")
+@login_required
 def download():
-    if "user_id" not in session:
-        return redirect("/admin-login")
 
     leads = Lead.query.order_by(Lead.id.desc()).all()
 
@@ -922,9 +1060,8 @@ def download():
 # LEAD DETAIL API (JSON)
 # ==========================
 @app.route("/lead-detail/<int:lead_id>")
+@login_required
 def lead_detail(lead_id):
-    if "user_id" not in session:
-        return jsonify({"error": "unauthorized"}), 401
     lead = Lead.query.get_or_404(lead_id)
     return jsonify({
         "id":          lead.id,
@@ -946,9 +1083,8 @@ def lead_detail(lead_id):
 # LEAD EDIT (POST — saves edits)
 # ==========================
 @app.route("/lead-edit/<int:lead_id>", methods=["POST"])
+@login_required
 def lead_edit(lead_id):
-    if "user_id" not in session:
-        return jsonify({"error": "unauthorized"}), 401
     lead = Lead.query.get_or_404(lead_id)
     old_status = lead.status
     lead.name        = request.form.get("name",        lead.name)
@@ -974,30 +1110,38 @@ def lead_edit(lead_id):
 # ==========================
 @app.route("/logout")
 def logout():
+    username = session.get("username", "unknown")
     session.clear()
-    return redirect("/admin-login")
+    logger.info("Admin logout: %s", username)
+    return redirect(url_for("admin_login"))
 
 # ==========================
-# AZURE UPLOAD ROUTE
+# ERROR HANDLERS
 # ==========================
-from azure_storage import upload_file
+@app.errorhandler(400)
+def bad_request(e):
+    return render_template("errors/400.html"), 400
 
-@app.route("/azure-upload", methods=["GET", "POST"])
-def azure_upload():
-    if request.method == "POST":
-        file = request.files["file"]
-        url  = upload_file(file)
-        return f'Upload Successful<br><br>URL: <a href="{url}" target="_blank">{url}</a>'
-    return """
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="file"><br><br>
-        <button>Upload</button>
-    </form>
-    """
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template("errors/403.html"), 403
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template("errors/404.html"), 404
+
+@app.errorhandler(429)
+def too_many_requests(e):
+    return render_template("errors/429.html"), 429
+
+@app.errorhandler(500)
+def server_error(e):
+    logger.error("500 error: %s", str(e))
+    return render_template("errors/500.html"), 500
 
 # ==========================
 # RUN SERVER
 # ==========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5002))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=False)

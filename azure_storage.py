@@ -1,44 +1,17 @@
 import os
+import io
 import uuid
 
-from azure.storage.blob import BlobServiceClient
-from dotenv import load_dotenv
-
-from dotenv import load_dotenv
-
-load_dotenv(override=True)
-#load_dotenv()
-
-connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-container_name = os.getenv("AZURE_STORAGE_CONTAINER")
-
-
-print("Connection String =", os.getenv("AZURE_STORAGE_CONNECTION_STRING"))
-print("Container =", os.getenv("AZURE_STORAGE_CONTAINER"))
-
-
-blob_service_client = BlobServiceClient.from_connection_string(
-    connection_string
-)
-
-container_client = blob_service_client.get_container_client(container_name)
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "static", "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 def upload_file(file):
-    """
-    Uploads a Flask uploaded file to Azure Blob Storage.
-    Returns the Blob URL.
-    """
-
-    extension = os.path.splitext(file.filename)[1]
-
-    blob_name = f"{uuid.uuid4()}{extension}"
-
-    blob_client = container_client.get_blob_client(blob_name)
-
-    blob_client.upload_blob(
-        file,
-        overwrite=True
-    )
-
-    return blob_client.url
+    """Save uploaded file locally. Returns relative URL path."""
+    ext       = os.path.splitext(file.filename or "upload")[1] or ".bin"
+    filename  = f"{uuid.uuid4()}{ext}"
+    dest      = os.path.join(UPLOAD_FOLDER, filename)
+    if hasattr(file, "read"):
+        with open(dest, "wb") as f:
+            f.write(file.read())
+    return f"/static/uploads/{filename}"

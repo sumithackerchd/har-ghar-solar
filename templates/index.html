@@ -1,1489 +1,436 @@
 {% extends 'base.html' %}
 
-
 {% block content %}
 
+<!-- ===================== HERO SLIDER ===================== -->
+<div id="solarSlider" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4800">
+  <div class="carousel-inner">
 
-<!-- =====================
- PREMIUM HERO SLIDER
-===================== -->
+    <!-- SLIDE 1 -->
+    <div class="carousel-item active">
+      <div class="slide-img img1">
+        <div class="hero-content">
+          <span class="hero-badge"><i class="fas fa-certificate me-2"></i>Government Subsidy Available</span>
+          <h1>Power Your Home With<br><span>Clean Solar Energy</span></h1>
+          <p>Install rooftop solar with expert support and save up to 90% on electricity bills with Central + Uttar Pradesh subsidy benefits.</p>
+          <div class="hero-buttons">
+            <a href="/contact" class="hero-btn ripple-btn">
+              <i class="fas fa-phone-alt"></i> Free Solar Consultation
+            </a>
+            <a href="/services" class="hero-btn-outline ripple-btn">
+              Explore Solutions <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+          </div>
+          <div class="hero-stats">
+            <div class="stat-item"><h3 data-count="500">0</h3><span>Projects</span></div>
+            <div class="stat-item"><h3 data-count="25">0</h3><span>Cities</span></div>
+            <div class="stat-item"><h3>25Yr</h3><span>Warranty</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
+    <!-- SLIDE 2 -->
+    <div class="carousel-item">
+      <div class="slide-img img2">
+        <div class="hero-content">
+          <span class="hero-badge"><i class="fas fa-bolt me-2"></i>Save Electricity Bills</span>
+          <h1>Smart Solar Solutions<br><span>For Every Home</span></h1>
+          <p>Reliable rooftop solar installation with premium quality panels and professional service across Uttar Pradesh.</p>
+          <div class="hero-buttons">
+            <a href="/contact" class="hero-btn ripple-btn">
+              <i class="fas fa-calendar-check me-2"></i>Book Free Survey
+            </a>
+            <a href="/#subsidy" class="hero-btn-outline ripple-btn">
+              Check Subsidy <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<div id="solarSlider"
-class="carousel slide carousel-fade"
-data-bs-ride="carousel"
-data-bs-interval="4500">
+    <!-- SLIDE 3 -->
+    <div class="carousel-item">
+      <div class="slide-img img3">
+        <div class="hero-content">
+          <span class="hero-badge"><i class="fas fa-leaf me-2"></i>Green Energy Future</span>
+          <h1>Residential &amp; Commercial<br><span>Solar Solutions</span></h1>
+          <p>Affordable solar solutions designed for homes, businesses and industries with end-to-end installation support.</p>
+          <div class="hero-buttons">
+            <a href="/contact" class="hero-btn ripple-btn">
+              <i class="fas fa-solar-panel me-2"></i>Get Free Quote
+            </a>
+            <a href="/about" class="hero-btn-outline ripple-btn">
+              About Us <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
 
+  </div>
 
-<div class="carousel-inner">
+  <button class="carousel-control-prev" type="button" data-bs-target="#solarSlider" data-bs-slide="prev" aria-label="Previous slide">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+  </button>
+  <button class="carousel-control-next" type="button" data-bs-target="#solarSlider" data-bs-slide="next" aria-label="Next slide">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+  </button>
 
-
-
-<!-- SLIDE 1 -->
-
-
-<div class="carousel-item active">
-
-
-<div class="slide-img img1">
-
-
-<div class="hero-content">
-
-
-<span class="hero-badge">
-
-☀ Government Subsidy Available
-
-</span>
-
-
-<h1>
-
-Power Your Home With
-<br>
-Clean Solar Energy
-
-</h1>
-
-
-<p>
-
-Install rooftop solar system with expert support and save electricity bills with Central + Uttar Pradesh subsidy benefits.
-
-</p>
-
-
-
-<div class="hero-buttons">
-
-
-<a href="/contact" class="hero-btn">
-
-<i class="fa-solid fa-phone"></i>
-
-Free Solar Consultation
-
-</a>
-
-
-
-<a href="/services" class="hero-btn-outline">
-
-Explore Solutions
-
-<i class="fa-solid fa-arrow-right"></i>
-
-</a>
-
-
+  <div class="carousel-indicators">
+    <button type="button" data-bs-target="#solarSlider" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+    <button type="button" data-bs-target="#solarSlider" data-bs-slide-to="1" aria-label="Slide 2"></button>
+    <button type="button" data-bs-target="#solarSlider" data-bs-slide-to="2" aria-label="Slide 3"></button>
+  </div>
 </div>
 
 
-
-
-<div class="hero-stats">
-
-
-<div>
-
-<h3>500+</h3>
-
-<span>Projects</span>
-
-</div>
-
-
-
-<div>
-
-<h3>25+</h3>
-
-<span>Cities</span>
-
-</div>
-
-
-
-<div>
-
-<h3>25Yr</h3>
-
-<span>Warranty</span>
-
-</div>
-
-
-</div>
-
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-<!-- SLIDE 2 -->
-
-
-<div class="carousel-item">
-
-
-<div class="slide-img img2">
-
-
-<div class="hero-content">
-
-
-<span class="hero-badge">
-
-⚡ Save Electricity Bills
-
-</span>
-
-
-<h1>
-
-Smart Solar Solutions
-
-<br>
-
-For Every Home
-
-</h1>
-
-
-
-<p>
-
-Reliable rooftop solar installation with premium quality panels and professional service.
-
-</p>
-
-
-
-<div class="hero-buttons">
-
-
-<a href="/contact" class="hero-btn">
-
-Book Free Survey
-
-</a>
-
-
-</div>
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-
-
-<!-- SLIDE 3 -->
-
-
-<div class="carousel-item">
-
-
-<div class="slide-img img3">
-
-
-<div class="hero-content">
-
-
-<span class="hero-badge">
-
-🌱 Green Energy Future
-
-</span>
-
-
-<h1>
-
-Residential & Commercial Solar
-
-</h1>
-
-
-<p>
-
-Affordable solar solutions designed for homes, businesses and industries.
-
-</p>
-
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-
-</div>
-
-
-
-
-
-<button class="carousel-control-prev"
-type="button"
-data-bs-target="#solarSlider"
-data-bs-slide="prev">
-
-<span class="carousel-control-prev-icon"></span>
-
-</button>
-
-
-
-
-<button class="carousel-control-next"
-type="button"
-data-bs-target="#solarSlider"
-data-bs-slide="next">
-
-<span class="carousel-control-next-icon"></span>
-
-</button>
-
-
-
-</div>
-
-
-
-
-
-
-
-
-
-<!-- =====================
- SOLAR SOLUTIONS
-===================== -->
-
-
+<!-- ===================== GOVT TRUST / PM SURYA GHAR SECTION ===================== -->
+<section class="govt-trust-section" data-aos="fade-up">
+  <div class="container">
+    <div class="govt-trust-header">
+      <span class="govt-scheme-badge">
+        <i class="fas fa-sun"></i> PM Surya Ghar: Muft Bijli Yojana — Scheme Information
+      </span>
+      <h2 style="font-size:1.8rem;font-weight:900;color:var(--primary);margin:12px 0 6px;">Government Rooftop Solar Mission</h2>
+      <p style="color:var(--text-light);font-size:14px;max-width:600px;margin:0 auto 10px;">
+        Har Ghar Solar assists customers in availing benefits under Central &amp; State Government solar subsidy schemes.
+      </p>
+      <span class="govt-notice">
+        <i class="fas fa-info-circle me-1"></i>
+        This is an informational page. Har Ghar Solar is a private solar installation company, not an official Government portal.
+      </span>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+      <div class="col-lg-3 col-md-6" data-aos="zoom-in" data-aos-delay="0">
+        <div class="scheme-card">
+          <div class="scheme-card-icon"><i class="fas fa-rupee-sign" style="color:var(--accent);"></i></div>
+          <span class="scheme-amount">&#8377;78,000</span>
+          <h4>Central Subsidy</h4>
+          <p>PM Surya Ghar Muft Bijli Yojana — Central Government rooftop solar subsidy</p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6" data-aos="zoom-in" data-aos-delay="100">
+        <div class="scheme-card">
+          <div class="scheme-card-icon"><i class="fas fa-home" style="color:var(--gold);"></i></div>
+          <span class="scheme-amount">&#8377;30,000</span>
+          <h4>UP State Subsidy</h4>
+          <p>Additional subsidy from Uttar Pradesh Government for eligible households</p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6" data-aos="zoom-in" data-aos-delay="200">
+        <div class="scheme-card">
+          <div class="scheme-card-icon"><i class="fas fa-bolt" style="color:#ff9800;"></i></div>
+          <span class="scheme-amount">300 Units</span>
+          <h4>Free Electricity</h4>
+          <p>Generate up to 300 units of free electricity every month after installation</p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6" data-aos="zoom-in" data-aos-delay="300">
+        <div class="scheme-card">
+          <div class="scheme-card-icon"><i class="fas fa-shield-alt" style="color:#5c6bc0;"></i></div>
+          <span class="scheme-amount">25 Years</span>
+          <h4>Panel Warranty</h4>
+          <p>Premium solar panels with 25-year performance warranty and 5-year installation guarantee</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-5">
+      <a href="/contact" class="hero-btn ripple-btn" style="display:inline-flex;align-items:center;gap:8px;">
+        <i class="fas fa-check-circle"></i> Check Your Eligibility — Free
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== SOLAR SOLUTIONS ===================== -->
 <section class="services-section" data-aos="fade-up">
-
-
-<div class="container">
-
-
-<div class="section-title">
-
-
-<h5>
-
-OUR SOLUTIONS
-
-</h5>
-
-
-<h2>
-
-Complete Solar Energy Solutions
-
-</h2>
-
-
-<p>
-
-Choose the right solar solution for your energy needs.
-
-</p>
-
-
-</div>
-
-
-
-
-
-
-<div class="row g-4">
-
-
-
-<div class="col-md-4">
-
-
-<div class="service-card">
-
-
-<i class="fa-solid fa-house"></i>
-
-
-<h3>
-
-On Grid Solar
-
-</h3>
-
-
-<p>
-
-Government approved rooftop solar system connected with electricity grid.
-
-</p>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-
-<div class="col-md-4">
-
-
-<div class="service-card">
-
-
-<i class="fa-solid fa-solar-panel"></i>
-
-
-<h3>
-
-Hybrid Solar
-
-</h3>
-
-
-<p>
-
-Solar system with battery backup for continuous power supply.
-
-</p>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-
-<div class="col-md-4">
-
-
-<div class="service-card">
-
-
-<i class="fa-solid fa-industry"></i>
-
-
-<h3>
-
-Commercial Solar
-
-</h3>
-
-
-<p>
-
-High capacity solar solutions for shops, factories and businesses.
-
-</p>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-</div>
-
-
-</div>
-
-
+  <div class="container">
+    <div class="section-title">
+      <span class="section-label">OUR SOLUTIONS</span>
+      <h2>Complete Solar Energy Solutions</h2>
+      <p>Choose the right solar solution for your home or business energy needs.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="0">
+        <div class="service-card">
+          <div class="service-card-icon float-icon"><i class="fas fa-home"></i></div>
+          <h3>On Grid Solar</h3>
+          <p>Government approved rooftop solar system connected with electricity grid. Eligible for maximum subsidy under PM Surya Ghar scheme.</p>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+        <div class="service-card">
+          <div class="service-card-icon float-icon"><i class="fas fa-solar-panel"></i></div>
+          <h3>Hybrid Solar</h3>
+          <p>Solar system with battery backup for continuous 24/7 power supply. Perfect for areas with frequent power cuts.</p>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+        <div class="service-card">
+          <div class="service-card-icon float-icon"><i class="fas fa-industry"></i></div>
+          <h3>Commercial Solar</h3>
+          <p>High capacity solar solutions for shops, factories, schools and businesses. Reduce commercial electricity bills by up to 80%.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
-<!-- =====================
- WHY CHOOSE US
-===================== -->
 
 
+<!-- ===================== STATS COUNTER ===================== -->
+<section class="counter-area" data-aos="fade-in">
+  <div class="container">
+    <div class="row g-4 text-center">
+      <div class="col-lg-3 col-md-6 col-6">
+        <div class="counter-item">
+          <div class="counter-icon float-icon"><i class="fas fa-solar-panel"></i></div>
+          <span class="counter-num" data-target="500" data-suffix="+">0+</span>
+          <p class="counter-label">Installations Done</p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 col-6">
+        <div class="counter-item">
+          <div class="counter-icon float-icon"><i class="fas fa-bolt"></i></div>
+          <span class="counter-num" data-target="5" data-suffix="MW+">0MW+</span>
+          <p class="counter-label">Solar Capacity</p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 col-6">
+        <div class="counter-item">
+          <div class="counter-icon float-icon"><i class="fas fa-smile"></i></div>
+          <span class="counter-num" data-target="1000" data-suffix="+">0+</span>
+          <p class="counter-label">Happy Customers</p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 col-6">
+        <div class="counter-item">
+          <div class="counter-icon float-icon"><i class="fas fa-map-marker-alt"></i></div>
+          <span class="counter-num" data-target="25" data-suffix="+">0+</span>
+          <p class="counter-label">Cities Covered</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== WHY CHOOSE US ===================== -->
 <section class="why-section" data-aos="fade-right">
-
-
-<div class="container">
-
-
-<div class="row align-items-center g-5">
-
-
-
-<div class="col-md-6">
-
-
-<img 
-
-class="why-img"
-
-src="{{ url_for('static', filename='images/about.jpg') }}"
-
-alt="Solar Installation"
-
->
-
-
-</div>
-
-
-
-
-
-
-
-<div class="col-md-6">
-
-
-<h5>
-
-WHY CHOOSE US
-
-</h5>
-
-
-<h2>
-
-Trusted Solar Installation Partner
-
-</h2>
-
-
-
-<p>
-
-Har Ghar Solar provides reliable rooftop solar installation with complete guidance from consultation to subsidy approval.
-
-</p>
-
-
-
-
-<ul>
-
-
-<li>
-
-✔ MNRE Approved Solar Solutions
-
-</li>
-
-
-<li>
-
-✔ Central & State Subsidy Assistance
-
-</li>
-
-
-<li>
-
-✔ Professional Installation Team
-
-</li>
-
-
-<li>
-
-✔ 25 Years Panel Performance Warranty
-
-</li>
-
-
-
-</ul>
-
-
-
-
-
-<a href="/contact" class="btn btn-success btn-lg">
-
-Talk To Expert
-
-</a>
-
-
-
-
-</div>
-
-
-
-</div>
-
-
-
-</div>
-
-
-
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-md-6">
+        <img class="why-img" src="{{ url_for('static', filename='images/about.jpg') }}" alt="Solar Installation by Har Ghar Solar" loading="lazy">
+      </div>
+      <div class="col-md-6">
+        <h5>WHY CHOOSE US</h5>
+        <h2>Trusted Solar Installation Partner in Uttar Pradesh</h2>
+        <p style="color:var(--text-light);margin-bottom:20px;">Har Ghar Solar provides reliable rooftop solar installation with complete guidance from consultation to subsidy approval and 25-year warranty support.</p>
+        <ul class="why-list">
+          <li><span class="why-check"><i class="fas fa-check"></i></span> MNRE Approved Solar Solutions</li>
+          <li><span class="why-check"><i class="fas fa-check"></i></span> Central &amp; State Subsidy Assistance</li>
+          <li><span class="why-check"><i class="fas fa-check"></i></span> Professional Certified Installation Team</li>
+          <li><span class="why-check"><i class="fas fa-check"></i></span> 25 Years Panel Performance Warranty</li>
+          <li><span class="why-check"><i class="fas fa-check"></i></span> End-to-End Customer Support</li>
+        </ul>
+        <a href="/contact" class="hero-btn ripple-btn" style="display:inline-flex;align-items:center;gap:8px;">
+          <i class="fas fa-headset"></i> Talk To Expert
+        </a>
+      </div>
+    </div>
+  </div>
 </section>
 
 
-
-
-
-
-
-
-
-
-
-<!-- =====================
- COUNTER
-===================== -->
-
-
-<section class="counter-area">
-
-
-<div class="container">
-
-
-<div class="row">
-
-
-
-<div class="col-md-3">
-
-<h2>500+</h2>
-
-<p>Installations</p>
-
-</div>
-
-
-
-<div class="col-md-3">
-
-<h2>5MW+</h2>
-
-<p>Solar Capacity</p>
-
-</div>
-
-
-
-
-<div class="col-md-3">
-
-<h2>1000+</h2>
-
-<p>Happy Customers</p>
-
-</div>
-
-
-
-
-<div class="col-md-3">
-
-<h2>25Yr</h2>
-
-<p>Warranty</p>
-
-</div>
-
-
-
-</div>
-
-
-
-</div>
-
-
+<!-- ===================== SUBSIDY SECTION ===================== -->
+<section class="subsidy-section" id="subsidy" data-aos="fade-up">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-md-6">
+        <h5>SOLAR SUBSIDY BENEFITS</h5>
+        <h2>PM Surya Ghar Muft Bijli Yojana</h2>
+        <p style="color:var(--text-light);margin-bottom:24px;">Install rooftop solar and avail subsidy benefits from Central Government and Uttar Pradesh Government schemes. Har Ghar Solar guides you through the complete application process.</p>
+        <div class="subsidy-box">
+          <div class="amount"><sup>&#8377;</sup>1,08,000<sup>*</sup></div>
+          <p style="color:var(--text-light);font-size:13px;margin-bottom:18px;">Maximum combined subsidy benefits available</p>
+          <div class="subsidy-list">
+            <div class="subsidy-item"><i class="fas fa-sun"></i> Central Subsidy up to &#8377;78,000</div>
+            <div class="subsidy-item"><i class="fas fa-home"></i> Uttar Pradesh Additional &#8377;30,000</div>
+            <div class="subsidy-item"><i class="fas fa-bolt"></i> Save electricity bills up to 90%</div>
+            <div class="subsidy-item"><i class="fas fa-redo"></i> ROI in 3–5 years</div>
+          </div>
+        </div>
+        <a href="/contact" class="hero-btn ripple-btn mt-4" style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--primary-dark);">
+          <i class="fas fa-check-circle"></i> Check Eligibility
+        </a>
+        <p style="font-size:11px;color:var(--text-light);margin-top:10px;">*Subject to scheme guidelines and eligibility. Terms apply.</p>
+      </div>
+      <div class="col-md-6">
+        <img class="subsidy-img" src="{{ url_for('static', filename='images/solar2.jpg') }}" alt="PM Surya Ghar Solar Scheme" loading="lazy">
+      </div>
+    </div>
+  </div>
 </section>
 
 
-
-
-
-
-
-
-
-<!-- =====================
- SUBSIDY SECTION
-===================== -->
-
-
-<section 
-class="subsidy-section"
-id="subsidy"
-data-aos="fade-up">
-
-
-<div class="container">
-
-
-<div class="row align-items-center g-5">
-
-
-
-<div class="col-md-6">
-
-
-<h5>
-
-SOLAR SUBSIDY BENEFITS
-
-</h5>
-
-
-
-<h2>
-
-PM Surya Ghar Muft Bijli Yojana
-
-</h2>
-
-
-
-<p>
-
-Install rooftop solar and get subsidy benefits from Central Government and Uttar Pradesh Government schemes.
-
-</p>
-
-
-
-
-
-<div class="subsidy-box">
-
-
-<h3>
-
-₹1,08,000*
-
-</h3>
-
-
-<p>
-
-Maximum subsidy benefits available
-
-</p>
-
-
-
-
-<div class="subsidy-list">
-
-
-<span>
-
-☀ Central Subsidy up to ₹78,000
-
-</span>
-
-
-
-<span>
-
-🏠 Uttar Pradesh Additional ₹30,000
-
-</span>
-
-
-
-<span>
-
-⚡ Save electricity bills up to 90%
-
-</span>
-
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-<a href="/contact" class="btn btn-warning btn-lg mt-4">
-
-Check Eligibility
-
-</a>
-
-
-
-
-</div>
-
-
-
-
-
-
-
-<div class="col-md-6">
-
-
-<img 
-
-class="subsidy-img"
-
-src="{{ url_for('static', filename='images/solar2.jpg') }}"
-
->
-
-
-</div>
-
-
-
-
-</div>
-
-
-</div>
-
-
-</section>
-
-
-
-
-
-
-
-
-
-<!-- =====================
- INSTALLATION PROCESS
-===================== -->
-
-
+<!-- ===================== INSTALLATION PROCESS ===================== -->
 <section class="process-section" data-aos="zoom-in">
-
-
-<div class="container">
-
-
-<div class="section-title">
-
-
-<h5>
-
-HOW IT WORKS
-
-</h5>
-
-
-<h2>
-
-Simple Solar Installation Process
-
-</h2>
-
-
-</div>
-
-
-
-
-
-<div class="row g-4">
-
-
-
-
-
-<div class="col-md-3">
-
-
-<div class="process-card">
-
-
-<h1>01</h1>
-
-
-<h3>
-
-Consultation
-
-</h3>
-
-
-<p>
-
-Free solar requirement analysis.
-
-</p>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-
-<div class="col-md-3">
-
-
-<div class="process-card">
-
-
-<h1>02</h1>
-
-
-<h3>
-
-Site Survey
-
-</h3>
-
-
-<p>
-
-Technical inspection by experts.
-
-</p>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-
-
-<div class="col-md-3">
-
-
-<div class="process-card">
-
-
-<h1>03</h1>
-
-
-<h3>
-
-Installation
-
-</h3>
-
-
-<p>
-
-Professional rooftop installation.
-
-</p>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-
-
-<div class="col-md-3">
-
-
-<div class="process-card">
-
-
-<h1>04</h1>
-
-
-<h3>
-
-Save Energy
-
-</h3>
-
-
-<p>
-
-Start generating free electricity.
-
-</p>
-
-
-</div>
-
-
-</div>
-
-
-
-
-</div>
-
-
-
-</div>
-
-
-
-</section>
-<!-- =====================
- SOLAR CALCULATOR
-===================== -->
-
-
-<section class="calculator-section">
-
-
-<div class="container">
-
-
-<div class="section-title">
-
-
-<h5>
-
-SOLAR SAVING CALCULATOR
-
-</h5>
-
-
-<h2>
-
-Calculate Your Solar Savings
-
-</h2>
-
-
-<p>
-
-Check estimated savings according to your monthly electricity bill.
-
-</p>
-
-
-</div>
-
-
-
-
-
-<div class="calculator-box">
-
-
-<input 
-
-type="number"
-
-id="bill"
-
-placeholder="Enter Monthly Electricity Bill ₹"
-
->
-
-
-
-<button onclick="calculateSolar()">
-
-Calculate Savings
-
-</button>
-
-
-
-<div id="solarResult">
-
-
-</div>
-
-
-
-
-</div>
-
-
-</div>
-
-
+  <div class="container">
+    <div class="section-title">
+      <span class="section-label">HOW IT WORKS</span>
+      <h2>Simple Solar Installation Process</h2>
+      <p>From consultation to commissioning — we handle everything.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="0">
+        <div class="process-card">
+          <div class="process-num">01</div>
+          <h3>Consultation</h3>
+          <p>Free solar requirement analysis and site feasibility check by our experts.</p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+        <div class="process-card">
+          <div class="process-num">02</div>
+          <h3>Site Survey</h3>
+          <p>Technical inspection of your rooftop to design the optimal solar system.</p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
+        <div class="process-card">
+          <div class="process-num">03</div>
+          <h3>Installation</h3>
+          <p>Professional certified installation with subsidy application assistance.</p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
+        <div class="process-card">
+          <div class="process-num">04</div>
+          <h3>Save Energy</h3>
+          <p>Start generating free electricity and earn returns on your investment.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
 
-
-
-
-
-
-
-
-<!-- =====================
- PROJECT GALLERY
-===================== -->
-
-
-<section 
-class="projects-section"
-id="projects"
-data-aos="fade-up">
-
-
-<div class="container">
-
-
-<div class="section-title">
-
-
-<h5>
-
-OUR WORK
-
-</h5>
-
-
-<h2>
-
-Recently Completed Projects
-
-</h2>
-
-
-<p>
-
-Quality solar installations delivered by our expert team.
-
-</p>
-
-
-</div>
-
-
-
-
-
-<div class="row g-4">
-
-
-
-
-
-
-<div class="col-md-4">
-
-
-<div class="project-card">
-
-
-<img
-
-src="{{ url_for('static', filename='images/project1.jpg') }}"
-
->
-
-
-<div>
-
-
-<h4>
-
-Residential Solar
-
-</h4>
-
-
-<p>
-
-Rooftop Installation
-
-</p>
-
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-
-
-<div class="col-md-4">
-
-
-<div class="project-card">
-
-
-<img
-
-src="{{ url_for('static', filename='images/project2.jpg') }}"
-
->
-
-
-<div>
-
-
-<h4>
-
-Commercial Solar
-
-</h4>
-
-
-<p>
-
-50KW Solar Plant
-
-</p>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-
-
-
-<div class="col-md-4">
-
-
-<div class="project-card">
-
-
-<img
-
-src="{{ url_for('static', filename='images/project3.jpg') }}"
-
->
-
-
-
-<div>
-
-
-<h4>
-
-Industrial Solar
-
-</h4>
-
-
-<p>
-
-High Capacity System
-
-</p>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-</div>
-
-
-
-</div>
-
-
-
+<!-- ===================== SOLAR CALCULATOR ===================== -->
+<section class="calculator-section" data-aos="fade-up">
+  <div class="container">
+    <div class="section-title">
+      <span class="section-label" style="background:rgba(255,193,7,.15);color:rgba(255,193,7,.9);">SOLAR SAVING CALCULATOR</span>
+      <h2>Calculate Your Solar Savings</h2>
+      <p>Check estimated savings based on your monthly electricity bill.</p>
+    </div>
+    <div class="calculator-box">
+      <div class="calc-input-group">
+        <span class="calc-icon"><i class="fas fa-file-invoice-dollar"></i></span>
+        <input type="number" id="bill" placeholder="Enter Monthly Electricity Bill (&#8377;)" min="100" max="100000" aria-label="Monthly electricity bill amount">
+      </div>
+      <button class="calc-btn ripple-btn" onclick="calculateSolar()" aria-label="Calculate solar savings">
+        <i class="fas fa-calculator me-2"></i> Calculate My Savings
+      </button>
+      <div id="solarResult" role="alert" aria-live="polite"></div>
+    </div>
+  </div>
 </section>
 
 
-
-
-
-
-
-
-
-<!-- =====================
- CUSTOMER REVIEWS
-===================== -->
-
-
-<section class="review-section">
-
-
-<div class="container">
-
-
-<div class="section-title">
-
-
-<h5>
-
-TESTIMONIALS
-
-</h5>
-
-
-
-<h2>
-
-What Our Customers Say
-
-</h2>
-
-
-
-</div>
-
-
-
-
-
-
-
-<div class="row g-4">
-
-
-
-
-
-<div class="col-md-4">
-
-
-<div class="review-card">
-
-
-<h3>
-
-⭐⭐⭐⭐⭐
-
-</h3>
-
-
-
-<p>
-
-"Professional installation team and excellent subsidy support."
-
-</p>
-
-
-
-<h4>
-
-Rahul Sharma
-
-</h4>
-
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-
-
-<div class="col-md-4">
-
-
-<div class="review-card">
-
-
-<h3>
-
-⭐⭐⭐⭐⭐
-
-</h3>
-
-
-<p>
-
-"My electricity bill reduced after installing solar panels."
-
-</p>
-
-
-
-<h4>
-
-Amit Kumar
-
-</h4>
-
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-
-
-<div class="col-md-4">
-
-
-<div class="review-card">
-
-
-<h3>
-
-⭐⭐⭐⭐⭐
-
-</h3>
-
-
-<p>
-
-"Best solar service provider with fast installation."
-
-</p>
-
-
-<h4>
-
-Neha Singh
-
-</h4>
-
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-</div>
-
-
-</div>
-
-
+<!-- ===================== PROJECT GALLERY ===================== -->
+<section class="projects-section" id="projects" data-aos="fade-up">
+  <div class="container">
+    <div class="section-title">
+      <span class="section-label">OUR WORK</span>
+      <h2>Recently Completed Projects</h2>
+      <p>Quality solar installations delivered by our expert team across Uttar Pradesh.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4" data-aos="zoom-in" data-aos-delay="0">
+        <div class="project-card" role="button" aria-label="View Residential Solar project" tabindex="0">
+          <img src="{{ url_for('static', filename='images/project1.jpg') }}" alt="Residential Rooftop Solar Installation" loading="lazy">
+          <div class="project-overlay">
+            <h4>Residential Solar</h4>
+            <p>3KW Rooftop Installation</p>
+          </div>
+          <span class="project-zoom"><i class="fas fa-expand-alt"></i></span>
+        </div>
+      </div>
+      <div class="col-md-4" data-aos="zoom-in" data-aos-delay="100">
+        <div class="project-card" role="button" aria-label="View Commercial Solar project" tabindex="0">
+          <img src="{{ url_for('static', filename='images/project2.jpg') }}" alt="Commercial Solar Plant 50KW" loading="lazy">
+          <div class="project-overlay">
+            <h4>Commercial Solar</h4>
+            <p>50KW Solar Plant</p>
+          </div>
+          <span class="project-zoom"><i class="fas fa-expand-alt"></i></span>
+        </div>
+      </div>
+      <div class="col-md-4" data-aos="zoom-in" data-aos-delay="200">
+        <div class="project-card" role="button" aria-label="View Industrial Solar project" tabindex="0">
+          <img src="{{ url_for('static', filename='images/project3.jpg') }}" alt="Industrial High Capacity Solar System" loading="lazy">
+          <div class="project-overlay">
+            <h4>Industrial Solar</h4>
+            <p>High Capacity System</p>
+          </div>
+          <span class="project-zoom"><i class="fas fa-expand-alt"></i></span>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
+<!-- LIGHTBOX -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Project image viewer">
+  <button id="lightbox-close" aria-label="Close image viewer"><i class="fas fa-times"></i></button>
+  <img id="lightbox-img" src="" alt="Project Image">
+</div>
 
 
+<!-- ===================== CUSTOMER REVIEWS ===================== -->
+<section class="review-section" data-aos="fade-up">
+  <div class="container">
+    <div class="section-title">
+      <span class="section-label">TESTIMONIALS</span>
+      <h2>What Our Customers Say</h2>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="0">
+        <div class="review-card">
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">"Professional installation team and excellent subsidy support. Got &#8377;78,000 central subsidy with their help. Highly recommended!"</p>
+          <div class="review-author">
+            <div class="review-avatar">R</div>
+            <div><p class="review-name">Rahul Sharma</p><p class="review-location">Lucknow, UP</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="review-card">
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">"My electricity bill reduced from &#8377;4,000 to just &#8377;200 after installing 3KW solar. Best investment I ever made!"</p>
+          <div class="review-author">
+            <div class="review-avatar">A</div>
+            <div><p class="review-name">Amit Kumar</p><p class="review-location">Kanpur, UP</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="review-card">
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">"Best solar service provider with fast installation and complete documentation support. Team is very knowledgeable and helpful."</p>
+          <div class="review-author">
+            <div class="review-avatar">N</div>
+            <div><p class="review-name">Neha Singh</p><p class="review-location">Varanasi, UP</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-
-
-
-
-
-
-<!-- WHATSAPP FLOAT BUTTON -->
-
-
-<a 
-
-href="https://wa.me/918077181038"
-
-class="whatsapp"
-
-target="_blank">
-
-
-<i class="fab fa-whatsapp"></i>
-
-
-</a>
-
-
-
-
-
-
+<!-- FLOATING WHATSAPP (index level — base.html has global one) -->
 {% endblock %}

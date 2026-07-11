@@ -1,14 +1,48 @@
-venv/
-
+# Python
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
 
-*.pyc
+# Virtual environments
+venv/
+env/
+.venv/
 
+# Environment variables — NEVER commit secrets
 .env
+.env.*
+!.env.example
 
-.DS_Store
-
-solar.db
+# Database
 *.db
-
+*.sqlite3
 instance/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build / dist
+dist/
+build/
+*.egg-info/
+
+# Temporary Excel exports
+Har_Ghar_Solar_CRM*.xlsx
+solar_leads*.csv
+solar_leads*.xlsx
+
+# Gunicorn pid
+gunicorn.pid

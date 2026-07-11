@@ -1,286 +1,128 @@
 {% extends 'base.html' %}
-
+{% block title %}Contact Us | Free Solar Consultation | Har Ghar Solar{% endblock %}
+{% block meta_desc %}Contact Har Ghar Solar for free solar consultation and site survey in Uttar Pradesh. Call +91 8077181038 or submit your details to get a free quote.{% endblock %}
 
 {% block content %}
 
-
-<!-- CONTACT HERO -->
-
-
-<section class="page-banner">
-
-
-<div>
-
-
-<h1>
-
-Get Free Solar Consultation
-
-</h1>
-
-
-<p>
-
-Our solar expert will contact you shortly
-
-</p>
-
-
-</div>
-
-
+<!-- PAGE BANNER -->
+<section class="page-banner" aria-label="Contact page header">
+  <div>
+    <h1>Get Free Solar Consultation</h1>
+    <p>Our solar expert will contact you within 24 hours</p>
+  </div>
 </section>
 
-
-
-
-
-
-<!-- CONTACT FORM -->
-
-
-<section class="contact-page">
-
-
-<div class="container">
-
-
-<div class="row g-5 align-items-center">
-
-
-
-<!-- LEFT INFO -->
-
-
-<div class="col-md-5">
-
-
-<div class="contact-card">
-
-
-<h2>
-
-Switch To Solar Today ☀️
-
-</h2>
-
-
-
-<p>
-
-Fill your details and get complete rooftop solar guidance with subsidy support.
-
-</p>
-
-
-
-<div class="contact-point">
-
-✔ Free Site Survey
-
-</div>
-
-
-<div class="contact-point">
-
-✔ Subsidy Assistance
-
-</div>
-
-
-<div class="contact-point">
-
-✔ Expert Installation
-
-</div>
-
-
-
-<hr>
-
-
-
-<h4>
-
-📞 +91 8077181038
-
-</h4>
-
-
-<h4>
-
-📍 Uttar Pradesh
-
-</h4>
-
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-
-
-<!-- FORM -->
-
-
-<div class="col-md-7">
-
-
-
-<form method="POST" class="lead-form">
-
-
-
-<h3>
-
-Request Free Quote
-
-</h3>
-
-
-
-
-
-<input 
-
-type="text"
-
-name="name"
-
-placeholder="Full Name"
-
-required
-
->
-
-
-
-
-
-
-<input 
-
-type="tel"
-
-name="phone"
-
-placeholder="Mobile Number"
-
-required
-
->
-
-
-
-
-
-
-<input
-type="text"
-name="city"
-placeholder="City / Town"
-required
->
-
-<select name="district" required>
-<option value="">-- Select District (Uttar Pradesh) --</option>
-{% for d in districts %}
-<option value="{{ d }}">{{ d }}</option>
-{% endfor %}
-</select>
-
-
-
-
-
-
-
-<select name="bill">
-
-
-<option>
-
-Monthly Electricity Bill
-
-</option>
-
-
-
-<option>
-
-Below ₹1000
-
-</option>
-
-
-
-<option>
-
-₹1000 - ₹3000
-
-</option>
-
-
-
-<option>
-
-₹3000 - ₹5000
-
-</option>
-
-
-
-<option>
-
-Above ₹5000
-
-</option>
-
-
-
-</select>
-
-
-
-
-
-
-<button>
-
-
-Submit Enquiry
-
-
-</button>
-
-
-
-
-</form>
-
-
-
-</div>
-
-
-
-</div>
-
-
-</div>
-
-
+<!-- CONTACT INFO CARDS -->
+<section class="contact-info-section" data-aos="fade-up">
+  <div class="container">
+    <div class="row g-4 justify-content-center">
+      <div class="col-lg-3 col-md-6" data-aos="zoom-in" data-aos-delay="0">
+        <div class="info-card">
+          <div class="info-card-icon"><i class="fas fa-phone-alt"></i></div>
+          <h4>Call Us</h4>
+          <p><a href="tel:+918077181038">+91 8077181038</a></p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6" data-aos="zoom-in" data-aos-delay="100">
+        <div class="info-card">
+          <div class="info-card-icon" style="background:linear-gradient(135deg,rgba(37,211,102,.15),rgba(37,211,102,.25));"><i class="fab fa-whatsapp" style="color:#25d366;"></i></div>
+          <h4>WhatsApp</h4>
+          <p><a href="https://wa.me/918077181038" target="_blank" rel="noopener">+91 8077181038</a></p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6" data-aos="zoom-in" data-aos-delay="200">
+        <div class="info-card">
+          <div class="info-card-icon" style="background:rgba(255,193,7,.1);"><i class="fas fa-envelope" style="color:var(--gold-dark);"></i></div>
+          <h4>Email</h4>
+          <p><a href="mailto:hargharsolar@zohomail.in">hargharsolar@zohomail.in</a></p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6" data-aos="zoom-in" data-aos-delay="300">
+        <div class="info-card">
+          <div class="info-card-icon" style="background:rgba(255,99,99,.1);"><i class="fas fa-map-marker-alt" style="color:#ff6363;"></i></div>
+          <h4>Location</h4>
+          <p>Uttar Pradesh, India</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
+<!-- CONTACT FORM + MAP -->
+<section class="contact-page" data-aos="fade-up">
+  <div class="container">
+    <div class="row g-5 align-items-stretch">
 
+      <!-- LEFT INFO -->
+      <div class="col-md-5">
+        <div class="contact-card h-100">
+          <h2>Switch To Solar Today &#9728;</h2>
+          <p>Fill your details and our expert will contact you with complete solar guidance and subsidy support.</p>
 
+          <div class="contact-point"><i class="fas fa-check-circle"></i> Free Rooftop Site Survey</div>
+          <div class="contact-point"><i class="fas fa-check-circle"></i> Subsidy Application Assistance</div>
+          <div class="contact-point"><i class="fas fa-check-circle"></i> Expert Certified Installation</div>
+          <div class="contact-point"><i class="fas fa-check-circle"></i> 25 Years Warranty Support</div>
+          <div class="contact-point"><i class="fas fa-check-circle"></i> Post Installation Service</div>
+
+          <hr class="contact-divider">
+
+          <h4><i class="fas fa-phone-alt me-2"></i>+91 8077181038</h4>
+          <h4 style="margin-top:8px;font-size:14px;"><i class="fab fa-whatsapp me-2"></i>WhatsApp Available</h4>
+          <h4 style="margin-top:8px;font-size:14px;"><i class="fas fa-map-marker-alt me-2"></i>Uttar Pradesh, India</h4>
+        </div>
+      </div>
+
+      <!-- FORM -->
+      <div class="col-md-7">
+        <form method="POST" class="lead-form h-100" novalidate aria-label="Solar enquiry form">
+          <h3>&#128504; Request Free Solar Quote</h3>
+
+          <input type="text" name="name" placeholder="Full Name *" required aria-label="Full Name" autocomplete="name">
+          <input type="tel" name="phone" placeholder="Mobile Number *" required aria-label="Mobile number" autocomplete="tel" pattern="[0-9]{10}">
+          <input type="text" name="city" placeholder="City / Town *" required aria-label="City">
+
+          <select name="district" required aria-label="Select district">
+            <option value="">-- Select District (Uttar Pradesh) --</option>
+            {% for d in districts %}
+            <option value="{{ d }}">{{ d }}</option>
+            {% endfor %}
+          </select>
+
+          <select name="bill" aria-label="Monthly electricity bill range">
+            <option value="">Monthly Electricity Bill</option>
+            <option value="Below &#8377;1000">Below &#8377;1000</option>
+            <option value="&#8377;1000 - &#8377;3000">&#8377;1000 – &#8377;3000</option>
+            <option value="&#8377;3000 - &#8377;5000">&#8377;3000 – &#8377;5000</option>
+            <option value="Above &#8377;5000">Above &#8377;5000</option>
+          </select>
+
+          <button type="submit" class="ripple-btn">
+            <i class="fas fa-solar-panel me-2"></i> Submit Enquiry
+          </button>
+
+          <p style="font-size:11px;color:var(--text-light);text-align:center;margin-top:12px;">
+            <i class="fas fa-lock me-1"></i> Your information is safe and never shared with third parties.
+          </p>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- MAP -->
+<div class="container pb-5" data-aos="fade-up">
+  <div class="map-box">
+    <iframe
+      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3597.7!2d80.9462!3d26.8467!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399bfd991f32b16b%3A0x93ccba8909978be7!2sLucknow%2C+Uttar+Pradesh!5e0!3m2!1sen!2sin!4v1"
+      allowfullscreen=""
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      title="Har Ghar Solar Service Area — Uttar Pradesh"
+      aria-label="Map showing Har Ghar Solar service area in Uttar Pradesh">
+    </iframe>
+  </div>
+</div>
 
 {% endblock %}
