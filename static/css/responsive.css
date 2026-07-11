@@ -1,0 +1,16 @@
+/* Responsive foundation */
+*{box-sizing:border-box}
+img{max-width:100%;height:auto}
+body{overflow-x:hidden}
+table{display:block;overflow-x:auto}
+.container,.container-fluid{padding-left:16px;padding-right:16px}
+@media(max-width:991px){
+h1{font-size:2rem}h2{font-size:1.6rem}
+.btn{width:100%}
+.row>[class*='col-']{margin-bottom:1rem}
+}
+@media(max-width:767px){
+.navbar-nav{text-align:center}
+.section{padding:48px 0}
+.card{height:auto}
+}
