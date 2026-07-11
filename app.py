@@ -173,16 +173,19 @@ Date          : {lead.created_at}
 # MODELS
 # ==========================
 class Vendor(db.Model):
-    id           = db.Column(db.Integer, primary_key=True)
-    company_name = db.Column(db.String(150), nullable=False)
-    owner_name   = db.Column(db.String(100), nullable=False)
-    mobile       = db.Column(db.String(20), nullable=False)
-    email        = db.Column(db.String(150), default="")
-    username     = db.Column(db.String(50), unique=True, nullable=False)
-    password     = db.Column(db.String(300), nullable=False)
-    district     = db.Column(db.String(100), nullable=False)
-    is_active    = db.Column(db.Boolean, default=True)
-    created_at   = db.Column(db.String(50), default="")
+    id            = db.Column(db.Integer, primary_key=True)
+    company_name  = db.Column(db.String(150), nullable=False)
+    owner_name    = db.Column(db.String(100), nullable=False)
+    mobile        = db.Column(db.String(20), nullable=False)
+    email         = db.Column(db.String(150), default="")
+    username      = db.Column(db.String(50), unique=True, nullable=False)
+    password      = db.Column(db.String(300), nullable=False)
+    district      = db.Column(db.String(100), nullable=False)
+    is_active     = db.Column(db.Boolean, default=True)
+    created_at    = db.Column(db.String(50), default="")
+    vendor_code   = db.Column(db.String(50), default="")
+    address       = db.Column(db.Text, default="")
+    approved_date = db.Column(db.String(50), default="")
 
 
 class Lead(db.Model):
@@ -250,6 +253,15 @@ with app.app_context():
             cur.execute("ALTER TABLE user ADD COLUMN is_super BOOLEAN DEFAULT 0")
         if "email" not in user_cols:
             cur.execute("ALTER TABLE user ADD COLUMN email VARCHAR(150) DEFAULT ''")
+        # Vendor table migrations
+        cur.execute("PRAGMA table_info(vendor)")
+        vendor_cols = [r[1] for r in cur.fetchall()]
+        if "vendor_code" not in vendor_cols:
+            cur.execute("ALTER TABLE vendor ADD COLUMN vendor_code VARCHAR(50) DEFAULT ''")
+        if "address" not in vendor_cols:
+            cur.execute("ALTER TABLE vendor ADD COLUMN address TEXT DEFAULT ''")
+        if "approved_date" not in vendor_cols:
+            cur.execute("ALTER TABLE vendor ADD COLUMN approved_date VARCHAR(50) DEFAULT ''")
         conn.commit()
         conn.close()
 
@@ -355,10 +367,13 @@ def admin_login():
         password = request.form.get("password", "")
         user = User.query.filter_by(username=username).first()
         if user and user.role != "disabled" and check_password_hash(user.password, password):
-            session["user_id"]  = user.id
-            session["username"] = user.username
-            session["role"]     = user.role
-            session["is_super"] = user.is_super
+            session["user_id"]    = user.id
+            session["username"]   = user.username
+            session["role"]       = user.role
+            session["is_super"]   = user.is_super
+            session["user_name"]  = user.name or user.username
+            session["user_email"] = user.email or ""
+            session["last_login"] = datetime.now().strftime("%d-%m-%Y %H:%M")
             logger.info("Admin login: %s", username)
             return redirect(url_for("admin"))
         flash("Invalid credentials.", "danger")
@@ -759,6 +774,9 @@ def vendor_login():
             session["vendor_username"] = vendor.username
             session["vendor_district"] = vendor.district
             session["vendor_company"]  = vendor.company_name
+            session["vendor_name"]     = vendor.owner_name
+            session["vendor_mobile"]   = vendor.mobile
+            session["vendor_email"]    = vendor.email or ""
             return redirect("/vendor-dashboard")
         flash("Invalid credentials or inactive account.", "danger")
     return render_template("vendor_login.html")
@@ -772,11 +790,34 @@ def vendor_logout():
     session.pop("vendor_username", None)
     session.pop("vendor_district", None)
     session.pop("vendor_company", None)
+    session.pop("vendor_name", None)
+    session.pop("vendor_mobile", None)
+    session.pop("vendor_email", None)
     return redirect("/vendor-login")
 
 # ==========================
-# VENDOR DASHBOARD
+# VENDOR CHANGE PASSWORD
 # ==========================
+@app.route("/vendor-change-password", methods=["POST"])
+def vendor_change_password():
+    if "vendor_id" not in session:
+        return jsonify({"ok": False, "error": "Not logged in."}), 401
+    vendor = Vendor.query.get_or_404(session["vendor_id"])
+    current_pw  = request.form.get("current_password", "")
+    new_pw      = request.form.get("new_password", "").strip()
+    confirm_pw  = request.form.get("confirm_password", "").strip()
+    if not check_password_hash(vendor.password, current_pw):
+        return jsonify({"ok": False, "error": "Current password is incorrect."}), 400
+    if len(new_pw) < 6:
+        return jsonify({"ok": False, "error": "New password must be at least 6 characters."}), 400
+    if new_pw != confirm_pw:
+        return jsonify({"ok": False, "error": "New password and confirm password do not match."}), 400
+    vendor.password = generate_password_hash(new_pw)
+    db.session.commit()
+    logger.info("Vendor %s changed password.", vendor.username)
+    return jsonify({"ok": True, "message": "Password changed successfully."})
+
+
 @app.route("/vendor-dashboard")
 def vendor_dashboard():
     if "vendor_id" not in session:
@@ -990,43 +1031,105 @@ def import_vendors():
             return redirect("/import-vendors")
         try:
             df = pd.read_excel(file)
-            # Normalize column names
-            df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
-            required = {"company_name", "owner_name", "mobile", "district"}
-            if not required.issubset(set(df.columns)):
-                flash(f"Excel must have columns: {', '.join(required)}", "danger")
+
+            # Normalize column names: strip whitespace + lowercase
+            df.columns = [str(c).strip() for c in df.columns]
+
+            # Column alias map — supports both old template and UP approved vendor list
+            COL_ALIASES = {
+                "company_name":  ["company_name", "firm name", "firm_name"],
+                "mobile":        ["mobile", "mobile number", "mobile_number", "phone"],
+                "district":      ["district"],
+                "email":         ["email", "email id", "email_id"],
+                "owner_name":    ["owner_name", "owner name"],
+                "vendor_code":   ["vendor code", "vendor_code"],
+                "address":       ["address"],
+                "approved_date": ["approved date", "approved_date"],
+            }
+
+            def find_col(df_cols, aliases):
+                df_lower = {c.lower(): c for c in df_cols}
+                for alias in aliases:
+                    if alias.lower() in df_lower:
+                        return df_lower[alias.lower()]
+                return None
+
+            col_map = {field: find_col(df.columns, aliases) for field, aliases in COL_ALIASES.items()}
+
+            # company_name and mobile are mandatory
+            if not col_map["company_name"]:
+                flash("Could not find Firm Name / company_name column in the Excel file.", "danger")
                 return redirect("/import-vendors")
+            if not col_map["mobile"]:
+                flash("Could not find Mobile Number / mobile column in the Excel file.", "danger")
+                return redirect("/import-vendors")
+
+            def get_val(row, field):
+                c = col_map.get(field)
+                if not c or c not in row or pd.isna(row[c]):
+                    return ""
+                return str(row[c]).strip()
+
             added = 0
             skipped = 0
+            failed = 0
+
             for _, row in df.iterrows():
-                company  = str(row.get("company_name", "")).strip()
-                owner    = str(row.get("owner_name", "")).strip()
-                mobile   = str(row.get("mobile", "")).strip()
-                district = str(row.get("district", "")).strip()
-                email    = str(row.get("email", "")).strip()
-                if not company or not mobile:
-                    skipped += 1
+                try:
+                    company  = get_val(row, "company_name")
+                    mobile   = get_val(row, "mobile")
+                    # Clean mobile: keep digits only, take last 10
+                    mobile_clean = "".join(filter(str.isdigit, mobile))
+                    if len(mobile_clean) >= 10:
+                        mobile_clean = mobile_clean[-10:]
+
+                    if not company or not mobile_clean:
+                        skipped += 1
+                        continue
+
+                    # Skip duplicate mobile numbers
+                    if Vendor.query.filter_by(mobile=mobile_clean).first():
+                        skipped += 1
+                        continue
+
+                    district      = get_val(row, "district")
+                    email         = get_val(row, "email")
+                    owner         = get_val(row, "owner_name") or company  # fallback to firm name
+                    vendor_code   = get_val(row, "vendor_code")
+                    address       = get_val(row, "address")
+                    approved_date = get_val(row, "approved_date")
+
+                    # Auto-generate unique username
+                    username = f"vendor_{mobile_clean}"
+                    if Vendor.query.filter_by(username=username).first():
+                        skipped += 1
+                        continue
+
+                    vendor = Vendor(
+                        company_name=company,
+                        owner_name=owner,
+                        mobile=mobile_clean,
+                        email=email,
+                        username=username,
+                        password=generate_password_hash(mobile_clean),
+                        district=district,
+                        vendor_code=vendor_code,
+                        address=address,
+                        approved_date=approved_date,
+                        is_active=True,
+                        created_at=datetime.now().strftime("%d-%m-%Y")
+                    )
+                    db.session.add(vendor)
+                    added += 1
+                except Exception:
+                    failed += 1
                     continue
-                # Auto-generate username from mobile
-                username = f"vendor_{mobile}"
-                if Vendor.query.filter_by(username=username).first():
-                    skipped += 1
-                    continue
-                vendor = Vendor(
-                    company_name=company,
-                    owner_name=owner,
-                    mobile=mobile,
-                    email=email,
-                    username=username,
-                    password=generate_password_hash(mobile),
-                    district=district,
-                    is_active=True,
-                    created_at=datetime.now().strftime("%d-%m-%Y")
-                )
-                db.session.add(vendor)
-                added += 1
+
             db.session.commit()
-            flash(f"Import complete: {added} added, {skipped} skipped.", "success")
+            parts = [f"{added} imported", f"{skipped} skipped"]
+            if failed:
+                parts.append(f"{failed} failed")
+            flash(f"Import complete: {', '.join(parts)}.", "success")
         except Exception as e:
             flash(f"Import failed: {str(e)}", "danger")
         return redirect("/vendors")

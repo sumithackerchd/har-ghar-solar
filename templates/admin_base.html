@@ -84,8 +84,8 @@
       <div class="sidebar-user-mini">
         <div class="mini-avatar"><i class="bi bi-person-fill"></i></div>
         <div class="mini-user-info">
-          <span class="mini-name">Administrator</span>
-          <span class="mini-role">Super Admin</span>
+          <span class="mini-name">{{ session.get('user_name', session.get('username', 'Admin')) }}</span>
+          <span class="mini-role">{{ 'Super Admin' if session.get('is_super') else (session.get('role', 'Admin')|capitalize) }}</span>
         </div>
       </div>
     </div>
@@ -126,8 +126,8 @@
           <div class="profile-trigger" id="profileTrigger">
             <div class="profile-avatar"><i class="bi bi-person-fill"></i></div>
             <div class="profile-info d-none d-md-flex flex-column">
-              <span class="profile-name">Admin</span>
-              <span class="profile-role">Super Admin</span>
+              <span class="profile-name">{{ session.get('user_name', session.get('username', 'Admin')) }}</span>
+              <span class="profile-role">{{ 'Super Admin' if session.get('is_super') else (session.get('role', 'Admin')|capitalize) }}</span>
             </div>
             <i class="bi bi-chevron-down profile-chevron d-none d-md-inline"></i>
           </div>
@@ -135,8 +135,9 @@
             <div class="profile-menu-header">
               <div class="pm-avatar"><i class="bi bi-person-circle"></i></div>
               <div>
-                <div class="pm-name">Administrator</div>
-                <div class="pm-email">admin@hgssolar.com</div>
+                <div class="pm-name">{{ session.get('user_name', session.get('username', 'Admin')) }}</div>
+                <div class="pm-email">{{ session.get('user_email', '') or session.get('username', '') }}</div>
+                <div class="pm-email" style="font-size:11px;opacity:.7">{{ 'Super Admin' if session.get('is_super') else (session.get('role', '')|capitalize) }} &bull; Last login: {{ session.get('last_login', '—') }}</div>
               </div>
             </div>
             <div class="profile-menu-divider"></div>

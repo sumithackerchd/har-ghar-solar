@@ -106,9 +106,15 @@
     <div><i class="fa-solid fa-building me-1"></i> {{ vendor.company_name }}</div>
     <div><i class="fa-solid fa-location-dot me-1"></i> {{ vendor.district }}</div>
     <div><i class="fa-solid fa-user me-1"></i> {{ vendor.owner_name }}</div>
+    <div><i class="fa-solid fa-phone me-1"></i> {{ vendor.mobile }}</div>
+    <div><i class="fa-solid fa-at me-1"></i> {{ vendor.email or '—' }}</div>
+    <div style="margin-top:6px;color:#ffc107;font-size:11px;font-weight:700"><i class="fa-solid fa-circle-user me-1"></i> @{{ vendor.username }}</div>
   </div>
-  <a href="/vendor-dashboard" class="active">
+  <a href="/vendor-dashboard" class="{% if request.path == '/vendor-dashboard' %}active{% endif %}">
     <i class="fa-solid fa-gauge-high"></i> My Dashboard
+  </a>
+  <a href="#" onclick="document.getElementById('changePwModal').style.display='flex';return false;">
+    <i class="fa-solid fa-key"></i> Change Password
   </a>
   <a href="/vendor-logout" class="logout">
     <i class="fa-solid fa-right-from-bracket"></i> Logout
@@ -228,5 +234,75 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div id="changePwModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;padding:32px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+    <h5 style="font-weight:900;color:#005b38;margin-bottom:20px;"><i class="fa-solid fa-key me-2"></i>Change Password</h5>
+    <div id="cpAlert" style="display:none;padding:10px 14px;border-radius:10px;margin-bottom:14px;font-size:14px;font-weight:600;"></div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:6px;">Current Password</label>
+      <input type="password" id="cpCurrent" placeholder="Enter current password"
+        style="width:100%;height:42px;border:2px solid #e0e0e0;border-radius:10px;padding:0 14px;font-size:14px;outline:none;">
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:6px;">New Password</label>
+      <input type="password" id="cpNew" placeholder="Min 6 characters"
+        style="width:100%;height:42px;border:2px solid #e0e0e0;border-radius:10px;padding:0 14px;font-size:14px;outline:none;">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:6px;">Confirm New Password</label>
+      <input type="password" id="cpConfirm" placeholder="Re-enter new password"
+        style="width:100%;height:42px;border:2px solid #e0e0e0;border-radius:10px;padding:0 14px;font-size:14px;outline:none;">
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="document.getElementById('changePwModal').style.display='none';document.getElementById('cpAlert').style.display='none';['cpCurrent','cpNew','cpConfirm'].forEach(function(id){document.getElementById(id).value=''});"
+        style="flex:1;height:42px;border:2px solid #ccc;border-radius:10px;background:#fff;font-weight:700;cursor:pointer;">Cancel</button>
+      <button id="cpSaveBtn" onclick="doChangePassword()"
+        style="flex:1;height:42px;border:none;border-radius:10px;background:#005b38;color:#fff;font-weight:700;cursor:pointer;">
+        <i class="fa-solid fa-floppy-disk me-1"></i> Save
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function doChangePassword() {
+  var current = document.getElementById('cpCurrent').value;
+  var newPw   = document.getElementById('cpNew').value.trim();
+  var confirm = document.getElementById('cpConfirm').value.trim();
+  var alert   = document.getElementById('cpAlert');
+  var btn     = document.getElementById('cpSaveBtn');
+
+  if (!current || !newPw || !confirm) {
+    alert.style.display='block'; alert.style.background='#fff3cd'; alert.style.color='#856404';
+    alert.textContent='All fields are required.'; return;
+  }
+  btn.disabled=true; btn.textContent='Saving…';
+  var fd = new FormData();
+  fd.append('current_password', current);
+  fd.append('new_password', newPw);
+  fd.append('confirm_password', confirm);
+  fetch('/vendor-change-password', {method:'POST', body:fd})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-floppy-disk me-1"></i> Save';
+      alert.style.display='block';
+      if(d.ok){
+        alert.style.background='#d1e7dd'; alert.style.color='#0a3622';
+        alert.textContent='Password changed successfully! Please use your new password next time you log in.';
+        ['cpCurrent','cpNew','cpConfirm'].forEach(function(id){document.getElementById(id).value='';});
+        setTimeout(function(){document.getElementById('changePwModal').style.display='none';alert.style.display='none';},2500);
+      } else {
+        alert.style.background='#f8d7da'; alert.style.color='#842029';
+        alert.textContent=d.error||'Error changing password.';
+      }
+    }).catch(function(){
+      btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-floppy-disk me-1"></i> Save';
+      alert.style.display='block'; alert.style.background='#f8d7da'; alert.style.color='#842029';
+      alert.textContent='Server error. Please try again.';
+    });
+}
+</script>
 </body>
 </html>
