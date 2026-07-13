@@ -5,7 +5,317 @@
 <li class="breadcrumb-item active">Analytics</li>
 {% endblock %}
 
-{% block content %}
+{% block admin %}
+<style>
+.ana-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.ana-title{font-size:20px;font-weight:900;color:#005b38}
+/* ── Summary stat cards ── */
+.ana-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+.ana-stat-card{background:#fff;border-radius:12px;padding:18px 16px;border:1px solid #e8f5e9;box-shadow:0 1px 4px rgba(0,91,56,.04);text-align:center}
+.ana-stat-val{font-size:30px;font-weight:900;line-height:1;color:#005b38}
+.ana-stat-lbl{font-size:12px;color:#777;margin-top:5px;font-weight:600}
+.ana-stat-card.blue .ana-stat-val{color:#1565c0}
+.ana-stat-card.orange .ana-stat-val{color:#e65100}
+.ana-stat-card.red .ana-stat-val{color:#c62828}
+.ana-stat-card.gold .ana-stat-val{color:#d97706}
+.ana-stat-card.purple .ana-stat-val{color:#7c3aed}
+/* ── Chart cards ── */
+.ana-chart-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.ana-chart-card{background:#fff;border-radius:14px;border:1px solid #e8f5e9;overflow:hidden}
+.ana-chart-card.full{grid-column:1/-1}
+.ana-chart-hdr{padding:14px 20px;font-size:14px;font-weight:800;border-bottom:1px solid #e8f5e9;display:flex;align-items:center;gap:8px;color:#005b38}
+.ana-chart-body{padding:16px 20px}
+/* ── Rankings ── */
+.ana-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(480px,1fr));gap:20px}
+.ana-card{background:#fff;border-radius:14px;border:1px solid #e8f5e9;overflow:hidden}
+.ana-card-hdr{padding:14px 20px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:800;border-bottom:1px solid #e8f5e9}
+.ana-card-body{padding:16px 20px}
+.rank-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #f5f5f5}
+.rank-row:last-child{border-bottom:none}
+.rank-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0}
+.rank-1{background:#ffd700;color:#7c4d00}
+.rank-2{background:#c0c0c0;color:#333}
+.rank-3{background:#cd7f32;color:#fff}
+.rank-other{background:#e8f5e9;color:#005b38}
+.rank-name{flex:1;font-size:13px;font-weight:700;color:#222}
+.rank-sub{font-size:11px;color:#888;font-weight:400}
+.rank-val{font-size:14px;font-weight:900;color:#005b38;white-space:nowrap}
+.rank-bar-wrap{width:80px;background:#f0f0f0;border-radius:4px;height:6px;margin-left:8px}
+.rank-bar{height:6px;border-radius:4px;background:linear-gradient(90deg,#005b38,#00a651)}
+.ana-card-hdr.orange{background:#fff8f0;color:#e65100}
+.ana-card-hdr.orange i{color:#e65100}
+.ana-card-hdr.blue{background:#f0f4ff;color:#1565c0}
+.ana-card-hdr.blue i{color:#1565c0}
+.ana-card-hdr.green{background:#f0fdf4;color:#065f46}
+.ana-card-hdr.green i{color:#005b38}
+.ana-card-hdr.gold{background:#fffbeb;color:#92400e}
+.ana-card-hdr.gold i{color:#d97706}
+.ana-card-hdr.purple{background:#f5f3ff;color:#4c1d95}
+.ana-card-hdr.purple i{color:#7c3aed}
+.ana-card-hdr.red{background:#fff1f2;color:#9f1239}
+.ana-card-hdr.red i{color:#e11d48}
+.ana-card-hdr.teal{background:#f0fdfa;color:#065f46}
+.ana-card-hdr.teal i{color:#0d9488}
+.empty-state{text-align:center;color:#bbb;padding:24px 0;font-size:13px}
+@media(max-width:768px){.ana-chart-row{grid-template-columns:1fr}}
+</style>
+
+<div class="ana-header">
+  <div class="ana-title"><i class="fa-solid fa-chart-bar me-2"></i>Vendor Analytics</div>
+  <div style="display:flex;gap:8px">
+    <a href="/vendors" style="padding:8px 18px;border-radius:24px;border:2px solid #005b38;color:#005b38;font-weight:700;font-size:13px;text-decoration:none;background:#fff">
+      <i class="fa-solid fa-arrow-left me-1"></i> Vendors
+    </a>
+    <a href="/vendor-compare" style="padding:8px 18px;border-radius:24px;background:#005b38;color:#fff;font-weight:700;font-size:13px;text-decoration:none">
+      <i class="fa-solid fa-scale-balanced me-1"></i> Compare
+    </a>
+  </div>
+</div>
+
+<!-- ═══ SUMMARY STATS ═══ -->
+<div class="ana-stats">
+  <div class="ana-stat-card">
+    <div class="ana-stat-val">{{ total_vendors }}</div>
+    <div class="ana-stat-lbl"><i class="fa-solid fa-store me-1"></i>Total Vendors</div>
+  </div>
+  <div class="ana-stat-card">
+    <div class="ana-stat-val">{{ active_vendors }}</div>
+    <div class="ana-stat-lbl"><i class="fa-solid fa-circle-check me-1" style="color:#00a651"></i>Active Vendors</div>
+  </div>
+  <div class="ana-stat-card red">
+    <div class="ana-stat-val">{{ disabled_vendors }}</div>
+    <div class="ana-stat-lbl"><i class="fa-solid fa-ban me-1"></i>Disabled Vendors</div>
+  </div>
+  <div class="ana-stat-card gold">
+    <div class="ana-stat-val">{{ pm_surya_count }}</div>
+    <div class="ana-stat-lbl"><i class="fa-solid fa-sun me-1"></i>PM Surya Approved</div>
+  </div>
+  <div class="ana-stat-card blue">
+    <div class="ana-stat-val">{{ discom_count }}</div>
+    <div class="ana-stat-lbl"><i class="fa-solid fa-plug me-1"></i>DISCOM Empanelled</div>
+  </div>
+  <div class="ana-stat-card">
+    <div class="ana-stat-val">{{ res_vendor_count }}</div>
+    <div class="ana-stat-lbl"><i class="fa-solid fa-house me-1"></i>Residential Vendors</div>
+  </div>
+  <div class="ana-stat-card orange">
+    <div class="ana-stat-val">{{ com_vendor_count }}</div>
+    <div class="ana-stat-lbl"><i class="fa-solid fa-building me-1"></i>Commercial Vendors</div>
+  </div>
+  <div class="ana-stat-card purple">
+    <div class="ana-stat-val">{{ gov_vendor_count }}</div>
+    <div class="ana-stat-lbl"><i class="fa-solid fa-landmark me-1"></i>Government Vendors</div>
+  </div>
+  <div class="ana-stat-card">
+    <div class="ana-stat-val" style="font-size:22px">₹{{ '{:,.0f}'.format(avg_commission) }}</div>
+    <div class="ana-stat-lbl"><i class="fa-solid fa-percent me-1"></i>Avg Commission</div>
+  </div>
+  <div class="ana-stat-card blue">
+    <div class="ana-stat-val" style="font-size:22px">₹{{ '{:,.0f}'.format(avg_price) }}</div>
+    <div class="ana-stat-lbl"><i class="fa-solid fa-tag me-1"></i>Avg Price</div>
+  </div>
+</div>
+
+<!-- ═══ CHARTS ═══ -->
+<div class="ana-chart-row">
+  <!-- Registration Trend -->
+  <div class="ana-chart-card full">
+    <div class="ana-chart-hdr"><i class="fa-solid fa-chart-line"></i> Vendor Registration Trend (Last 12 Months)</div>
+    <div class="ana-chart-body"><canvas id="regTrendChart" height="80"></canvas></div>
+  </div>
+  <!-- Top Districts -->
+  <div class="ana-chart-card">
+    <div class="ana-chart-hdr"><i class="fa-solid fa-map-location-dot"></i> Top Districts by Vendor Count</div>
+    <div class="ana-chart-body">
+      {% if top_districts %}
+      {% set max_d = top_districts[0].count %}
+      {% for d in top_districts %}
+      <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f5f5f5">
+        <div style="font-size:12px;font-weight:700;width:130px;color:#333">{{ d.district }}</div>
+        <div style="flex:1;background:#e8f5e9;border-radius:4px;height:8px;overflow:hidden">
+          <div style="width:{{ ((d.count / max_d)*100)|int }}%;height:8px;background:linear-gradient(90deg,#005b38,#00a651);border-radius:4px"></div>
+        </div>
+        <div style="font-size:12px;font-weight:800;color:#005b38;min-width:30px;text-align:right">{{ d.count }}</div>
+      </div>
+      {% endfor %}
+      {% else %}<div class="empty-state">No data available</div>{% endif %}
+    </div>
+  </div>
+  <!-- Approval Status Breakdown -->
+  <div class="ana-chart-card">
+    <div class="ana-chart-hdr"><i class="fa-solid fa-chart-pie"></i> Approval Status</div>
+    <div class="ana-chart-body"><canvas id="approvalChart" height="180"></canvas></div>
+  </div>
+</div>
+
+<!-- ═══ RANKINGS ═══ -->
+<div class="ana-grid">
+
+  <!-- Most Active -->
+  <div class="ana-card">
+    <div class="ana-card-hdr teal"><i class="fa-solid fa-bolt"></i> Most Active Vendors (by Leads)</div>
+    <div class="ana-card-body">
+      {% if most_active %}
+      {% set max_val = most_active[0].total_leads %}
+      {% for r in most_active %}
+      {% set pct = ((r.total_leads / max_val * 100) | int) if max_val else 0 %}
+      <div class="rank-row">
+        <div class="rank-num {{ 'rank-1' if loop.index==1 else 'rank-2' if loop.index==2 else 'rank-3' if loop.index==3 else 'rank-other' }}">{{ loop.index }}</div>
+        <div class="rank-name">{{ r.vendor.company_name }}<div class="rank-sub">{{ r.vendor.district }}</div></div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="width:{{ pct }}%;background:linear-gradient(90deg,#0d9488,#2dd4bf)"></div></div>
+        <div class="rank-val" style="color:#0d9488">{{ r.total_leads }}</div>
+      </div>
+      {% endfor %}
+      {% else %}<div class="empty-state">No lead data available</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- Top Rated -->
+  <div class="ana-card">
+    <div class="ana-card-hdr gold"><i class="fa-solid fa-star"></i> Top Rated Vendors</div>
+    <div class="ana-card-body">
+      {% if top_rated %}
+      {% for r in top_rated %}
+      <div class="rank-row">
+        <div class="rank-num {{ 'rank-1' if loop.index==1 else 'rank-2' if loop.index==2 else 'rank-3' if loop.index==3 else 'rank-other' }}">{{ loop.index }}</div>
+        <div class="rank-name">{{ r.vendor.company_name }}<div class="rank-sub">{{ r.vendor.district }}</div></div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="width:{{ (r.avg_rating/5*100)|int }}%;background:linear-gradient(90deg,#d97706,#fbbf24)"></div></div>
+        <div class="rank-val" style="color:#d97706">{{ r.avg_rating }} <span style="color:#fbbf24">★</span></div>
+      </div>
+      {% endfor %}
+      {% else %}<div class="empty-state">No ratings available</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- Highest Commission -->
+  <div class="ana-card">
+    <div class="ana-card-hdr orange"><i class="fa-solid fa-percent"></i> Highest Commission Vendors</div>
+    <div class="ana-card-body">
+      {% if top_commission %}
+      {% set max_val = top_commission[0].avg_comm %}
+      {% for r in top_commission %}
+      {% set pct = ((r.avg_comm / max_val * 100) | int) if max_val else 0 %}
+      <div class="rank-row">
+        <div class="rank-num {{ 'rank-1' if loop.index==1 else 'rank-2' if loop.index==2 else 'rank-3' if loop.index==3 else 'rank-other' }}">{{ loop.index }}</div>
+        <div class="rank-name">{{ r.vendor.company_name }}<div class="rank-sub">{{ r.vendor.district }}</div></div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="width:{{ pct }}%;background:linear-gradient(90deg,#e65100,#ff7043)"></div></div>
+        <div class="rank-val" style="color:#e65100">₹{{ '{:,.0f}'.format(r.avg_comm) }}</div>
+      </div>
+      {% endfor %}
+      {% else %}<div class="empty-state">No data available</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- Lowest Price -->
+  <div class="ana-card">
+    <div class="ana-card-hdr blue"><i class="fa-solid fa-tag"></i> Lowest Price Vendors</div>
+    <div class="ana-card-body">
+      {% if top_low_price %}
+      {% set max_val = top_low_price[-1].min_price if top_low_price else 1 %}
+      {% for r in top_low_price %}
+      {% set pct = ((r.min_price / max_val * 100) | int) if max_val else 0 %}
+      <div class="rank-row">
+        <div class="rank-num {{ 'rank-1' if loop.index==1 else 'rank-2' if loop.index==2 else 'rank-3' if loop.index==3 else 'rank-other' }}">{{ loop.index }}</div>
+        <div class="rank-name">{{ r.vendor.company_name }}<div class="rank-sub">{{ r.vendor.district }}</div></div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="width:{{ pct }}%;background:linear-gradient(90deg,#1565c0,#42a5f5)"></div></div>
+        <div class="rank-val" style="color:#1565c0">₹{{ '{:,.0f}'.format(r.min_price) }}</div>
+      </div>
+      {% endfor %}
+      {% else %}<div class="empty-state">No pricing data available</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- Highest Conversion -->
+  <div class="ana-card">
+    <div class="ana-card-hdr green"><i class="fa-solid fa-arrow-trend-up"></i> Highest Conversion Rate</div>
+    <div class="ana-card-body">
+      {% if top_conversion %}
+      {% for r in top_conversion %}
+      <div class="rank-row">
+        <div class="rank-num {{ 'rank-1' if loop.index==1 else 'rank-2' if loop.index==2 else 'rank-3' if loop.index==3 else 'rank-other' }}">{{ loop.index }}</div>
+        <div class="rank-name">{{ r.vendor.company_name }}<div class="rank-sub">{{ r.completed }}/{{ r.total_leads }} leads completed</div></div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="width:{{ r.conv_pct }}%"></div></div>
+        <div class="rank-val">{{ r.conv_pct }}%</div>
+      </div>
+      {% endfor %}
+      {% else %}<div class="empty-state">No lead data available</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- Top Revenue -->
+  <div class="ana-card">
+    <div class="ana-card-hdr purple"><i class="fa-solid fa-money-bill-wave"></i> Top Revenue Vendors</div>
+    <div class="ana-card-body">
+      {% if top_revenue %}
+      {% set max_val = top_revenue[0].total_rev %}
+      {% for r in top_revenue %}
+      {% set pct = ((r.total_rev / max_val * 100) | int) if max_val else 0 %}
+      <div class="rank-row">
+        <div class="rank-num {{ 'rank-1' if loop.index==1 else 'rank-2' if loop.index==2 else 'rank-3' if loop.index==3 else 'rank-other' }}">{{ loop.index }}</div>
+        <div class="rank-name">{{ r.vendor.company_name }}<div class="rank-sub">{{ r.vendor.district }}</div></div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="width:{{ pct }}%;background:linear-gradient(90deg,#7c3aed,#a78bfa)"></div></div>
+        <div class="rank-val" style="color:#7c3aed">₹{{ '{:,.0f}'.format(r.total_rev) }}</div>
+      </div>
+      {% endfor %}
+      {% else %}<div class="empty-state">No approved quotations yet</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- Most Completed -->
+  <div class="ana-card">
+    <div class="ana-card-hdr red"><i class="fa-solid fa-circle-check"></i> Most Completed Leads</div>
+    <div class="ana-card-body">
+      {% if top_completed %}
+      {% set max_val = top_completed[0].completed %}
+      {% for r in top_completed %}
+      {% set pct = ((r.completed / max_val * 100) | int) if max_val else 0 %}
+      <div class="rank-row">
+        <div class="rank-num {{ 'rank-1' if loop.index==1 else 'rank-2' if loop.index==2 else 'rank-3' if loop.index==3 else 'rank-other' }}">{{ loop.index }}</div>
+        <div class="rank-name">{{ r.vendor.company_name }}<div class="rank-sub">{{ r.vendor.district }} &bull; {{ r.total_leads }} total leads</div></div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="width:{{ pct }}%;background:linear-gradient(90deg,#e11d48,#fb7185)"></div></div>
+        <div class="rank-val" style="color:#e11d48">{{ r.completed }}</div>
+      </div>
+      {% endfor %}
+      {% else %}<div class="empty-state">No completed leads yet</div>{% endif %}
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Registration Trend Chart
+new Chart(document.getElementById('regTrendChart'), {
+  type: 'line',
+  data: {
+    labels: {{ reg_trend_labels | tojson }},
+    datasets:[{
+      label: 'Vendor Registrations',
+      data: {{ reg_trend_counts | tojson }},
+      borderColor:'#005b38', backgroundColor:'rgba(0,91,56,.08)',
+      borderWidth:2, tension:.3, fill:true,
+      pointBackgroundColor:'#005b38', pointRadius:4
+    }]
+  },
+  options:{
+    responsive:true, plugins:{legend:{display:false}},
+    scales:{y:{beginAtZero:true, ticks:{stepSize:1}, grid:{color:'#f0f0f0'}}, x:{grid:{display:false}}}
+  }
+});
+// Approval Status Pie
+new Chart(document.getElementById('approvalChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Active','Disabled','PM Surya','DISCOM'],
+    datasets:[{
+      data: [{{ active_vendors }}, {{ disabled_vendors }}, {{ pm_surya_count }}, {{ discom_count }}],
+      backgroundColor:['#00a651','#e11d48','#d97706','#1565c0'],
+      borderWidth:2, borderColor:'#fff'
+    }]
+  },
+  options:{responsive:true, plugins:{legend:{position:'bottom'}}}
+});
+</script>
 <style>
 .ana-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
 .ana-title{font-size:20px;font-weight:900;color:#005b38}

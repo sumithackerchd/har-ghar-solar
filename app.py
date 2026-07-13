@@ -1430,9 +1430,21 @@ def vendor_profile():
             profile.govt_projects      = int(request.form.get("govt_projects", 0))
         except (ValueError, TypeError):
             pass
-        profile.pm_surya_approved  = request.form.get("pm_surya_approved") == "1"
-        profile.discom_empanelled  = request.form.get("discom_empanelled") == "1"
+        # BUG 1 FIX: hidden(value=0) + checkbox(value=1) both submit when checked.
+        # request.form.get() returns the FIRST value ("0"). Must use getlist and check for "1".
+        profile.pm_surya_approved  = "1" in request.form.getlist("pm_surya_approved")
+        profile.discom_empanelled  = "1" in request.form.getlist("discom_empanelled")
         profile.brands_supported   = ",".join(request.form.getlist("brands_supported"))
+        # Bank / service fields (BUG 6: were missing from save)
+        profile.bank_name          = request.form.get("bank_name", "").strip()
+        profile.account_holder     = request.form.get("account_holder", "").strip()
+        profile.account_number     = request.form.get("account_number", "").strip()
+        profile.ifsc_code          = request.form.get("ifsc_code", "").strip()
+        profile.upi_id             = request.form.get("upi_id", "").strip()
+        try:
+            profile.service_radius = int(request.form.get("service_radius", 0) or 0)
+        except (ValueError, TypeError):
+            profile.service_radius = 0
         profile.updated_at         = datetime.now().strftime("%d-%m-%Y %H:%M")
         db.session.commit()
         # Update session company name
@@ -2475,7 +2487,7 @@ def vendor_detail(vendor_id):
 @app.route("/vendor-compare")
 @login_required
 def vendor_compare():
-    import json as _json, statistics as _stat
+    import statistics as _stat
     ids_raw = request.args.getlist("ids")
     district_filter = request.args.get("district", "")
 
@@ -2484,78 +2496,115 @@ def vendor_compare():
         anchor_id = int(ids_raw[0])
         peers = Vendor.query.filter_by(district=district_filter, is_active=True)\
                             .filter(Vendor.is_deleted != True).all()
-        # ensure anchor is first
         ids_raw = [str(anchor_id)] + [str(p.id) for p in peers if p.id != anchor_id]
 
     if not ids_raw:
         defaults = Vendor.query.filter(Vendor.is_deleted != True)\
-                               .order_by(Vendor.id).limit(2).all()
+                               .order_by(Vendor.id).limit(3).all()
         ids_raw = [str(v.id) for v in defaults]
 
-    ids     = [int(i) for i in ids_raw if str(i).isdigit()][:6]
-    vendors = Vendor.query.filter(Vendor.id.in_(ids)).all()
+    ids = [int(i) for i in ids_raw if str(i).isdigit()][:6]
 
-    all_vendors = Vendor.query.filter_by(is_active=True)\
-                              .filter(Vendor.is_deleted != True)\
-                              .order_by(Vendor.company_name).all()
+    # BUG 7 FIX: eager-load relationships to avoid N+1 queries
+    from sqlalchemy.orm import joinedload
+    vendors = Vendor.query.options(
+        joinedload(Vendor.profile),
+        joinedload(Vendor.pricing),
+        joinedload(Vendor.commissions),
+        joinedload(Vendor.ratings),
+    ).filter(Vendor.id.in_(ids)).all()
+
+    # Pagination for vendor selector
+    try:
+        sel_page     = max(1, int(request.args.get("sel_page", 1)))
+        sel_per_page = 20
+    except (ValueError, TypeError):
+        sel_page = 1; sel_per_page = 20
+
+    all_vendors_q     = Vendor.query.filter_by(is_active=True)\
+                                    .filter(Vendor.is_deleted != True)\
+                                    .order_by(Vendor.company_name)
+    all_vendors_total = all_vendors_q.count()
+    all_vendors_pages = max(1, (all_vendors_total + sel_per_page - 1) // sel_per_page)
+    sel_page          = min(sel_page, all_vendors_pages)
+    all_vendors       = all_vendors_q.offset((sel_page - 1) * sel_per_page)\
+                                     .limit(sel_per_page).all()
+
+    # Pre-fetch all lead counts in one query to avoid N+1
+    lead_counts = db.session.query(
+        Lead.vendor_id,
+        db.func.count(Lead.id).label("total"),
+        db.func.sum(db.case((Lead.status == "Completed", 1), else_=0)).label("completed")
+    ).filter(Lead.vendor_id.in_(ids)).group_by(Lead.vendor_id).all()
+    lead_map = {r.vendor_id: (r.total or 0, r.completed or 0) for r in lead_counts}
+
     compare_data = []
     for v in vendors:
-        leads     = Lead.query.filter_by(vendor_id=v.id).all()
-        total_l   = len(leads)
-        completed = sum(1 for l in leads if l.status == "Completed")
-        conv_pct  = round(completed / total_l * 100, 1) if total_l else 0
-        ratings   = VendorRating.query.filter_by(vendor_id=v.id).all()
-        avg_r     = round(_stat.mean(r.rating for r in ratings), 1) if ratings else 0
-        approved  = VendorQuotation.query.filter_by(vendor_id=v.id, status="Approved").all()
-        total_rev = sum(q.net_price   for q in approved)
-        total_com = sum(q.commission  for q in approved)
+        total_l, completed = lead_map.get(v.id, (0, 0))
+        conv_pct = round(completed / total_l * 100, 1) if total_l else 0
 
-        pricing_res = VendorPricing.query.filter_by(
-            vendor_id=v.id, project_type="Residential"
-        ).order_by(VendorPricing.capacity_kw).all()
-        pricing_com = VendorPricing.query.filter_by(
-            vendor_id=v.id, project_type="Commercial"
-        ).order_by(VendorPricing.capacity_kw).all()
-        pricing_gov = VendorPricing.query.filter_by(
-            vendor_id=v.id, project_type="Government"
-        ).order_by(VendorPricing.capacity_kw).all()
+        # Ratings from eager-loaded relationship
+        ratings = v.ratings or []
+        avg_r   = round(_stat.mean(r.rating for r in ratings), 1) if ratings else 0
+
+        # Approved quotations — fetch directly
+        approved  = VendorQuotation.query.filter_by(vendor_id=v.id, status="Approved").all()
+        total_rev = sum(q.net_price  for q in approved)
+        total_com = sum(q.commission for q in approved)
+
+        # Pricing maps from eager-loaded relationship
+        pricing_res     = [p for p in (v.pricing or []) if p.project_type == "Residential"]
+        pricing_com     = [p for p in (v.pricing or []) if p.project_type == "Commercial"]
+        pricing_gov     = [p for p in (v.pricing or []) if p.project_type == "Government"]
         pricing_map_res = {p.capacity_kw: p for p in pricing_res}
         pricing_map_com = {p.capacity_kw: p for p in pricing_com}
         pricing_map_gov = {p.capacity_kw: p for p in pricing_gov}
 
-        commissions = VendorCommission.query.filter_by(vendor_id=v.id).all()
-        avg_comm = round(sum(c.hgs_commission for c in commissions) / len(commissions), 0) \
-                   if commissions else 0
+        # Average commission from pricing (residential) — use eager-loaded data
+        res_with_price = [p for p in pricing_res if p.hgs_commission]
+        avg_comm = round(sum(p.hgs_commission for p in res_with_price) / len(res_with_price), 0) \
+                   if res_with_price else 0
 
-        profile = VendorProfile.query.filter_by(vendor_id=v.id).first()
+        # Representative residential price (1 KW or first available)
+        res_price = (pricing_map_res.get(1) or (pricing_res[0] if pricing_res else None))
+        com_price = (pricing_map_com.get(1) or (pricing_com[0] if pricing_com else None))
+        gov_price = (pricing_map_gov.get(1) or (pricing_gov[0] if pricing_gov else None))
+
+        # Profile from eager-loaded relationship
+        profile = v.profile
         brands  = []
         if profile and profile.brands_supported:
             brands = [b.strip() for b in profile.brands_supported.split(",") if b.strip()]
 
-        warranty = pricing_res[0].warranty_years if pricing_res else 0
+        warranty     = pricing_res[0].warranty_years if pricing_res else 0
+        updated_date = (profile.updated_at if profile and profile.updated_at else "—")
 
         compare_data.append({
-            "vendor":      v,
-            "profile":     profile,
-            "total_leads": total_l,
-            "completed":   completed,
-            "pending":     total_l - completed,
-            "conv_pct":    conv_pct,
-            "avg_rating":  avg_r,
-            "total_rev":   total_rev,
-            "total_comm":  total_com,
-            "avg_comm":    avg_comm,
-            "pricing_map": pricing_map_res,
+            "vendor":          v,
+            "profile":         profile,
+            "total_leads":     total_l,
+            "completed":       completed,
+            "pending":         total_l - completed,
+            "conv_pct":        conv_pct,
+            "avg_rating":      avg_r,
+            "total_rev":       total_rev,
+            "total_comm":      total_com,
+            "avg_comm":        avg_comm,
+            "pricing_map":     pricing_map_res,
             "pricing_map_com": pricing_map_com,
             "pricing_map_gov": pricing_map_gov,
-            "brands":      brands,
-            "warranty":    warranty,
+            "res_price":       res_price,
+            "com_price":       com_price,
+            "gov_price":       gov_price,
+            "brands":          brands,
+            "warranty":        warranty,
+            "updated_date":    updated_date,
         })
 
     # Determine best vendor by composite score
     if compare_data:
         for row in compare_data:
-            row["score"] = row["conv_pct"] + row["avg_rating"] * 10 - (row["avg_comm"] / 10000)
+            row["score"] = row["conv_pct"] + row["avg_rating"] * 10
         best_id = max(compare_data, key=lambda x: x["score"])["vendor"].id
     else:
         best_id = None
@@ -2567,6 +2616,10 @@ def vendor_compare():
         capacities=KW_CAPACITIES,
         best_id=best_id,
         district_filter=district_filter,
+        sel_page=sel_page,
+        sel_per_page=sel_per_page,
+        all_vendors_total=all_vendors_total,
+        all_vendors_pages=all_vendors_pages,
     )
 
 
@@ -2576,49 +2629,137 @@ def vendor_compare():
 @app.route("/vendor-analytics")
 @login_required
 def vendor_analytics():
-    import json as _json, statistics as _stat
-    vendors = Vendor.query.all()
+    import statistics as _stat
+    from sqlalchemy.orm import joinedload
+
+    # BUG 7 FIX: eager-load to avoid N+1 queries
+    vendors = Vendor.query.options(
+        joinedload(Vendor.profile),
+        joinedload(Vendor.pricing),
+        joinedload(Vendor.ratings),
+    ).all()
+
+    # ── Summary stats (BUG 4 FIX: real DB values, no hardcodes) ──
+    total_vendors    = len(vendors)
+    active_vendors   = sum(1 for v in vendors if v.is_active and not v.is_deleted)
+    disabled_vendors = sum(1 for v in vendors if not v.is_active and not v.is_deleted)
+
+    # PM Surya / DISCOM counts from VendorProfile
+    pm_surya_count  = VendorProfile.query.filter_by(pm_surya_approved=True).count()
+    discom_count    = VendorProfile.query.filter_by(discom_empanelled=True).count()
+
+    # Vendors with residential / commercial / government pricing
+    res_vendor_ids  = db.session.query(VendorPricing.vendor_id.distinct())\
+                                .filter_by(project_type="Residential").count()
+    com_vendor_ids  = db.session.query(VendorPricing.vendor_id.distinct())\
+                                .filter_by(project_type="Commercial").count()
+    gov_vendor_ids  = db.session.query(VendorPricing.vendor_id.distinct())\
+                                .filter_by(project_type="Government").count()
+
+    # Average commission and price from residential pricing
+    all_res_pricing = VendorPricing.query.filter(
+        VendorPricing.project_type == "Residential",
+        VendorPricing.final_price > 0
+    ).all()
+    avg_commission = round(
+        sum(p.hgs_commission for p in all_res_pricing) / len(all_res_pricing), 0
+    ) if all_res_pricing else 0
+    avg_price = round(
+        sum(p.final_price for p in all_res_pricing) / len(all_res_pricing), 0
+    ) if all_res_pricing else 0
+
+    # Top districts by vendor count
+    _dist_rows = db.session.query(
+        Vendor.district, db.func.count(Vendor.id).label("cnt")
+    ).filter(Vendor.is_deleted != True, Vendor.district != "")\
+     .group_by(Vendor.district).order_by(db.func.count(Vendor.id).desc()).limit(10).all()
+    top_districts = [{"district": r[0], "count": r[1]} for r in _dist_rows]
+
+    # Vendor registration trend (last 12 months by created_at)
+    now = datetime.now()
+    reg_trend_labels, reg_trend_counts = [], []
+    for i in range(11, -1, -1):
+        d   = now - timedelta(days=i * 30)
+        ym  = d.strftime("%Y-%m")
+        lbl = d.strftime("%b %Y")
+        cnt = sum(1 for v in vendors if v.created_at and v.created_at[:7] == ym)
+        reg_trend_labels.append(lbl)
+        reg_trend_counts.append(cnt)
+
+    # Pre-fetch all lead counts in a single aggregated query
+    lead_counts_q = db.session.query(
+        Lead.vendor_id,
+        db.func.count(Lead.id).label("total"),
+        db.func.sum(db.case((Lead.status == "Completed", 1), else_=0)).label("completed")
+    ).group_by(Lead.vendor_id).all()
+    lead_map = {r.vendor_id: (r.total or 0, r.completed or 0) for r in lead_counts_q}
+
     rows = []
     for v in vendors:
-        leads     = Lead.query.filter_by(vendor_id=v.id).all()
-        total_l   = len(leads)
-        completed = sum(1 for l in leads if l.status == "Completed")
-        conv_pct  = round(completed / total_l * 100, 1) if total_l else 0
-        ratings   = VendorRating.query.filter_by(vendor_id=v.id).all()
-        avg_r     = round(_stat.mean(r.rating for r in ratings), 1) if ratings else 0
+        total_l, completed = lead_map.get(v.id, (0, 0))
+        conv_pct = round(completed / total_l * 100, 1) if total_l else 0
+
+        # Use eager-loaded ratings
+        ratings = v.ratings or []
+        avg_r   = round(_stat.mean(r.rating for r in ratings), 1) if ratings else 0
+
+        # Revenue from approved quotations (separate query but batched)
         approved  = VendorQuotation.query.filter_by(vendor_id=v.id, status="Approved").all()
         total_rev = sum(q.net_price  for q in approved)
         total_com = sum(q.commission for q in approved)
-        # lowest residential price across capacities
-        res_prices = VendorPricing.query.filter_by(
-            vendor_id=v.id, project_type="Residential"
-        ).filter(VendorPricing.final_price > 0).all()
+
+        # Use eager-loaded pricing
+        res_prices = [p for p in (v.pricing or [])
+                      if p.project_type == "Residential" and p.final_price > 0]
         min_price = min((p.final_price for p in res_prices), default=0)
-        avg_comm  = round(sum(p.hgs_commission for p in res_prices) / len(res_prices), 0) \
-                    if res_prices else 0
+        avg_comm  = round(
+            sum(p.hgs_commission for p in res_prices) / len(res_prices), 0
+        ) if res_prices else 0
+
         rows.append({
-            "vendor":    v, "total_leads": total_l,
-            "completed": completed, "conv_pct": conv_pct,
-            "avg_rating":avg_r, "total_rev": total_rev,
-            "total_comm":total_com, "min_price": min_price,
-            "avg_comm":  avg_comm,
+            "vendor":     v,
+            "total_leads": total_l,
+            "completed":  completed,
+            "conv_pct":   conv_pct,
+            "avg_rating": avg_r,
+            "total_rev":  total_rev,
+            "total_comm": total_com,
+            "min_price":  min_price,
+            "avg_comm":   avg_comm,
         })
 
-    top_commission  = sorted(rows, key=lambda x: -x["avg_comm"])[:10]
-    top_low_price   = [r for r in sorted(rows, key=lambda x: x["min_price"])
-                       if r["min_price"] > 0][:10]
-    top_conversion  = sorted(rows, key=lambda x: -x["conv_pct"])[:10]
-    top_rated       = sorted(rows, key=lambda x: -x["avg_rating"])[:10]
-    top_revenue     = sorted(rows, key=lambda x: -x["total_rev"])[:10]
-    top_completed   = sorted(rows, key=lambda x: -x["completed"])[:10]
+    top_commission = sorted(rows, key=lambda x: -x["avg_comm"])[:10]
+    top_low_price  = [r for r in sorted(rows, key=lambda x: x["min_price"])
+                      if r["min_price"] > 0][:10]
+    top_conversion = sorted(rows, key=lambda x: -x["conv_pct"])[:10]
+    top_rated      = sorted(rows, key=lambda x: -x["avg_rating"])[:10]
+    top_revenue    = sorted(rows, key=lambda x: -x["total_rev"])[:10]
+    top_completed  = sorted(rows, key=lambda x: -x["completed"])[:10]
+    most_active    = sorted(rows, key=lambda x: -x["total_leads"])[:10]
 
     return render_template("vendor_analytics.html",
+        # Summary stats
+        total_vendors=total_vendors,
+        active_vendors=active_vendors,
+        disabled_vendors=disabled_vendors,
+        pm_surya_count=pm_surya_count,
+        discom_count=discom_count,
+        res_vendor_count=res_vendor_ids,
+        com_vendor_count=com_vendor_ids,
+        gov_vendor_count=gov_vendor_ids,
+        avg_commission=avg_commission,
+        avg_price=avg_price,
+        top_districts=top_districts,
+        reg_trend_labels=reg_trend_labels,
+        reg_trend_counts=reg_trend_counts,
+        # Rankings
         top_commission=top_commission,
         top_low_price=top_low_price,
         top_conversion=top_conversion,
         top_rated=top_rated,
         top_revenue=top_revenue,
         top_completed=top_completed,
+        most_active=most_active,
     )
 
 

@@ -5,7 +5,319 @@
 <li class="breadcrumb-item active">Compare Vendors</li>
 {% endblock %}
 
-{% block content %}
+{% block admin %}
+<style>
+.cmp-selector{background:#fff;border-radius:12px;border:1px solid #e8f5e9;padding:20px 24px;margin-bottom:20px}
+.cmp-selector-title{font-size:14px;font-weight:800;color:#005b38;margin-bottom:12px}
+.cmp-checks{display:flex;flex-wrap:wrap;gap:8px}
+.cmp-check{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;border:2px solid #e0e0e0;background:#fff;cursor:pointer;font-size:13px;font-weight:600;transition:.15s}
+.cmp-check.selected{border-color:#005b38;background:#e8f5e9;color:#005b38}
+.cmp-apply{padding:8px 24px;background:#005b38;color:#fff;border:none;border-radius:24px;font-size:13px;font-weight:700;cursor:pointer;margin-top:12px}
+.cmp-apply:hover{background:#00a651}
+.cmp-table-wrap{overflow-x:auto;margin-bottom:24px}
+.cmp-table{width:100%;border-collapse:collapse;font-size:13px;min-width:640px}
+.cmp-table th.row-hdr{background:#f0fdf4;color:#005b38;font-size:12px;font-weight:800;padding:10px 16px;text-align:left;width:180px;border-bottom:1px solid #e0e0e0;position:sticky;left:0;z-index:1}
+.cmp-table th.vendor-hdr{background:#005b38;color:#fff;padding:12px 16px;text-align:center;min-width:180px}
+.cmp-table td{padding:10px 16px;text-align:center;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+.cmp-table tr:hover td{background:#f9fafb}
+.cmp-table .section-divider td,.cmp-table .section-divider th{background:#f0fdf4;font-size:11px;font-weight:800;color:#005b38;text-transform:uppercase;letter-spacing:.05em;padding:8px 16px}
+.cmp-best{background:#d1fae5!important;font-weight:800;color:#065f46}
+.cmp-worst{background:#fee2e2!important;color:#991b1b}
+.tag{display:inline-block;background:#e8f5e9;color:#005b38;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;margin:2px}
+.stars{color:#f59e0b}
+.cap-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.cap-tab{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid #e0e0e0;background:#fff;color:#555;transition:.15s}
+.cap-tab.active,.cap-tab:hover{background:#005b38;color:#fff;border-color:#005b38}
+.cap-section{display:none}
+.cap-section.active{display:block}
+.cmp-card{background:#fff;border-radius:12px;border:1px solid #e8f5e9;padding:20px 24px;margin-bottom:16px}
+.cmp-card-title{font-size:14px;font-weight:800;color:#005b38;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.pagination-wrap{display:flex;align-items:center;gap:6px;margin-top:14px;flex-wrap:wrap}
+.pg-btn{padding:5px 12px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;color:#333;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer}
+.pg-btn.active{background:#005b38;color:#fff;border-color:#005b38}
+.pg-btn:hover:not(.active){background:#f0fdf4}
+</style>
+
+<!-- Vendor Selector with pagination -->
+<div class="cmp-selector">
+  <div class="cmp-selector-title"><i class="fa-solid fa-scale-balanced me-2"></i>Select Vendors to Compare (max 5)
+    <span style="font-size:12px;color:#888;font-weight:400;margin-left:8px">Showing {{ all_vendors|length }} of {{ all_vendors_total }} vendors</span>
+  </div>
+  <form method="get" action="/vendor-compare" id="cmpForm">
+    <!-- Preserve selected ids across pages -->
+    {% for sid in selected_ids %}
+    <input type="hidden" name="ids" value="{{ sid }}" class="sel-hidden" id="hid-{{ sid }}">
+    {% endfor %}
+    <div class="cmp-checks">
+      {% for vv in all_vendors %}
+      <label class="cmp-check {% if vv.id in selected_ids %}selected{% endif %}">
+        <input type="checkbox" name="ids" value="{{ vv.id }}"
+               {% if vv.id in selected_ids %}checked{% endif %}
+               style="display:none" onchange="toggleVendor(this)">
+        {{ vv.company_name }} <span style="font-size:11px;color:#888">({{ vv.district }})</span>
+      </label>
+      {% endfor %}
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px">
+      <button type="submit" class="cmp-apply"><i class="fa-solid fa-arrows-left-right me-2"></i>Compare Selected</button>
+      <!-- Smart windowed pagination — max 9 visible buttons -->
+      {% if all_vendors_pages > 1 %}
+      {% set win_start = [sel_page - 2, 1] | max %}
+      {% set win_end   = [sel_page + 2, all_vendors_pages] | min %}
+      {% set win_start = [win_end - 4, 1] | max %}
+      {% set win_end   = [win_start + 4, all_vendors_pages] | min %}
+      <div class="pagination-wrap">
+        <!-- Prev -->
+        {% if sel_page > 1 %}
+        <a href="?{% for k,v in request.args.items(multi=True) %}{% if k != 'sel_page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}sel_page={{ sel_page - 1 }}" class="pg-btn">‹</a>
+        {% endif %}
+        <!-- First + ellipsis -->
+        {% if win_start > 1 %}
+        <a href="?{% for k,v in request.args.items(multi=True) %}{% if k != 'sel_page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}sel_page=1" class="pg-btn">1</a>
+        {% if win_start > 2 %}<span class="pg-btn" style="border:none;background:none;cursor:default;color:#aaa">…</span>{% endif %}
+        {% endif %}
+        <!-- Window -->
+        {% for p in range(win_start, win_end + 1) %}
+        <a href="?{% for k,v in request.args.items(multi=True) %}{% if k != 'sel_page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}sel_page={{ p }}" class="pg-btn {% if p == sel_page %}active{% endif %}">{{ p }}</a>
+        {% endfor %}
+        <!-- Last + ellipsis -->
+        {% if win_end < all_vendors_pages %}
+        {% if win_end < all_vendors_pages - 1 %}<span class="pg-btn" style="border:none;background:none;cursor:default;color:#aaa">…</span>{% endif %}
+        <a href="?{% for k,v in request.args.items(multi=True) %}{% if k != 'sel_page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}sel_page={{ all_vendors_pages }}" class="pg-btn">{{ all_vendors_pages }}</a>
+        {% endif %}
+        <!-- Next -->
+        {% if sel_page < all_vendors_pages %}
+        <a href="?{% for k,v in request.args.items(multi=True) %}{% if k != 'sel_page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}sel_page={{ sel_page + 1 }}" class="pg-btn">›</a>
+        {% endif %}
+        <span style="font-size:12px;color:#888;margin-left:4px">Page {{ sel_page }} / {{ all_vendors_pages }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+{% if compare_data %}
+<!-- ═══ MAIN COMPARISON TABLE ═══ -->
+<div class="cmp-card">
+  <div class="cmp-card-title"><i class="fa-solid fa-table-columns"></i> Full Vendor Comparison</div>
+  <div class="cmp-table-wrap">
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th class="row-hdr">Attribute</th>
+          {% for d in compare_data %}
+          <th class="vendor-hdr">
+            {{ d.vendor.company_name }}<br>
+            <span style="font-size:11px;opacity:.8;font-weight:400">{{ d.vendor.district }}</span>
+            {% if d.vendor.id == best_id %}<br><span style="font-size:10px;background:#ffd700;color:#7c4d00;border-radius:10px;padding:1px 8px;font-weight:800">★ Best</span>{% endif %}
+          </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        <!-- General -->
+        <tr class="section-divider"><th class="row-hdr">General</th>{% for d in compare_data %}<td></td>{% endfor %}</tr>
+        <tr><th class="row-hdr">Vendor</th>{% for d in compare_data %}<td><a href="/vendor-detail/{{ d.vendor.id }}" style="color:#005b38;font-weight:700">{{ d.vendor.company_name }}</a></td>{% endfor %}</tr>
+        <tr><th class="row-hdr">Company</th>{% for d in compare_data %}<td>{{ d.vendor.company_name }}</td>{% endfor %}</tr>
+        <tr><th class="row-hdr">District</th>{% for d in compare_data %}<td>{{ d.vendor.district }}</td>{% endfor %}</tr>
+        <tr><th class="row-hdr">Status</th>{% for d in compare_data %}<td>{{ '✅ Active' if d.vendor.is_active else '❌ Inactive' }}</td>{% endfor %}</tr>
+        <tr><th class="row-hdr">Experience</th>{% for d in compare_data %}<td>{{ (d.profile.years_experience if d.profile else 0) or 0 }} yrs</td>{% endfor %}</tr>
+        <tr><th class="row-hdr">Updated Date</th>{% for d in compare_data %}<td style="font-size:12px">{{ d.updated_date }}</td>{% endfor %}</tr>
+
+        <!-- Pricing -->
+        <tr class="section-divider"><th class="row-hdr">Pricing (base)</th>{% for d in compare_data %}<td></td>{% endfor %}</tr>
+        {% set res_prices = [] %}{% for d in compare_data %}{% set p = d.res_price %}{% if res_prices.append(p.final_price if p and p.final_price else 0) %}{% endif %}{% endfor %}
+        {% set min_res = res_prices | select('greaterthan', 0) | min if (res_prices | select('greaterthan', 0) | list) else 0 %}
+        <tr>
+          <th class="row-hdr">Residential Price</th>
+          {% for d in compare_data %}{% set p = d.res_price %}
+          <td class="{{ 'cmp-best' if p and p.final_price and p.final_price == min_res else '' }}">
+            {% if p and p.final_price %}₹{{ '{:,.0f}'.format(p.final_price) }}{% else %}<span style="color:#ccc">—</span>{% endif %}
+          </td>{% endfor %}
+        </tr>
+        {% set com_prices = [] %}{% for d in compare_data %}{% set p = d.com_price %}{% if com_prices.append(p.final_price if p and p.final_price else 0) %}{% endif %}{% endfor %}
+        {% set min_com = com_prices | select('greaterthan', 0) | min if (com_prices | select('greaterthan', 0) | list) else 0 %}
+        <tr>
+          <th class="row-hdr">Commercial Price</th>
+          {% for d in compare_data %}{% set p = d.com_price %}
+          <td class="{{ 'cmp-best' if p and p.final_price and p.final_price == min_com else '' }}">
+            {% if p and p.final_price %}₹{{ '{:,.0f}'.format(p.final_price) }}{% else %}<span style="color:#ccc">—</span>{% endif %}
+          </td>{% endfor %}
+        </tr>
+        {% set gov_prices = [] %}{% for d in compare_data %}{% set p = d.gov_price %}{% if gov_prices.append(p.final_price if p and p.final_price else 0) %}{% endif %}{% endfor %}
+        {% set min_gov = gov_prices | select('greaterthan', 0) | min if (gov_prices | select('greaterthan', 0) | list) else 0 %}
+        <tr>
+          <th class="row-hdr">Government Price</th>
+          {% for d in compare_data %}{% set p = d.gov_price %}
+          <td class="{{ 'cmp-best' if p and p.final_price and p.final_price == min_gov else '' }}">
+            {% if p and p.final_price %}₹{{ '{:,.0f}'.format(p.final_price) }}{% else %}<span style="color:#ccc">—</span>{% endif %}
+          </td>{% endfor %}
+        </tr>
+        {% set max_avgcomm = compare_data | map(attribute='avg_comm') | max %}
+        <tr>
+          <th class="row-hdr">Commission (avg)</th>
+          {% for d in compare_data %}
+          <td class="{{ 'cmp-best' if d.avg_comm == max_avgcomm and max_avgcomm > 0 else '' }}">
+            {% if d.avg_comm %}₹{{ '{:,.0f}'.format(d.avg_comm) }}{% else %}<span style="color:#ccc">—</span>{% endif %}
+          </td>{% endfor %}
+        </tr>
+        <tr>
+          <th class="row-hdr">Final Customer Price</th>
+          {% for d in compare_data %}{% set p = d.res_price %}
+          <td>{% if p and p.final_price %}₹{{ '{:,.0f}'.format(p.final_price) }}{% else %}<span style="color:#ccc">—</span>{% endif %}</td>
+          {% endfor %}
+        </tr>
+
+        <!-- Compliance -->
+        <tr class="section-divider"><th class="row-hdr">Compliance</th>{% for d in compare_data %}<td></td>{% endfor %}</tr>
+        <tr>
+          <th class="row-hdr">PM Surya Ghar</th>
+          {% for d in compare_data %}
+          <td>{{ '✅ Yes' if (d.profile and d.profile.pm_surya_approved) else '❌ No' }}</td>
+          {% endfor %}
+        </tr>
+        <tr>
+          <th class="row-hdr">DISCOM Empanelled</th>
+          {% for d in compare_data %}
+          <td>{{ '✅ Yes' if (d.profile and d.profile.discom_empanelled) else '❌ No' }}</td>
+          {% endfor %}
+        </tr>
+
+        <!-- Performance -->
+        <tr class="section-divider"><th class="row-hdr">Performance</th>{% for d in compare_data %}<td></td>{% endfor %}</tr>
+        {% set max_rating = compare_data | map(attribute='avg_rating') | max %}
+        <tr>
+          <th class="row-hdr">Rating</th>
+          {% for d in compare_data %}
+          <td class="{{ 'cmp-best' if d.avg_rating == max_rating and max_rating > 0 else '' }}">
+            <span class="stars">{% for i in range(d.avg_rating|int) %}★{% endfor %}</span> {{ d.avg_rating }}
+          </td>{% endfor %}
+        </tr>
+        {% set max_conv = compare_data | map(attribute='conv_pct') | max %}
+        <tr>
+          <th class="row-hdr">Completion %</th>
+          {% for d in compare_data %}
+          <td class="{{ 'cmp-best' if d.conv_pct == max_conv and max_conv > 0 else '' }}"><strong>{{ d.conv_pct }}%</strong></td>
+          {% endfor %}
+        </tr>
+        {% set max_leads = compare_data | map(attribute='total_leads') | max %}
+        <tr>
+          <th class="row-hdr">Total Leads</th>
+          {% for d in compare_data %}
+          <td class="{{ 'cmp-best' if d.total_leads == max_leads and max_leads > 0 else '' }}">{{ d.total_leads }}</td>
+          {% endfor %}
+        </tr>
+
+        <!-- Warranty & Brands -->
+        <tr class="section-divider"><th class="row-hdr">Products</th>{% for d in compare_data %}<td></td>{% endfor %}</tr>
+        {% set max_war = compare_data | map(attribute='warranty') | max %}
+        <tr>
+          <th class="row-hdr">Warranty</th>
+          {% for d in compare_data %}
+          <td class="{{ 'cmp-best' if d.warranty == max_war and max_war > 0 else '' }}">{{ d.warranty }} yrs</td>
+          {% endfor %}
+        </tr>
+        <tr>
+          <th class="row-hdr">Brands</th>
+          {% for d in compare_data %}
+          <td>{% for b in d.brands %}<span class="tag" style="background:#e3f2fd;color:#1565c0">{{ b }}</span>{% else %}<span style="color:#ccc">—</span>{% endfor %}</td>
+          {% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="font-size:11px;color:#888;margin-top:8px">
+    <span style="background:#d1fae5;padding:2px 8px;border-radius:4px;font-weight:700;color:#065f46">Green</span> = Best in category &nbsp;|&nbsp;
+    <span style="background:#ffd700;padding:2px 8px;border-radius:4px;font-weight:700;color:#7c4d00">★ Best</span> = Top overall vendor
+  </div>
+</div>
+
+<!-- ═══ PRICING BY CAPACITY ═══ -->
+<div class="cmp-card">
+  <div class="cmp-card-title"><i class="fa-solid fa-indian-rupee-sign"></i> Pricing Comparison by Capacity (Residential)</div>
+  <div class="cap-tabs">
+    {% for cap in capacities %}
+    <div class="cap-tab {% if loop.first %}active{% endif %}" onclick="capTab(this,'cap{{ cap }}')">{{ cap }} KW</div>
+    {% endfor %}
+  </div>
+  {% for cap in capacities %}
+  <div class="cap-section {% if loop.first %}active{% endif %}" id="cap{{ cap }}">
+    <div class="cmp-table-wrap">
+      <table class="cmp-table">
+        <thead>
+          <tr>
+            <th class="row-hdr">Field</th>
+            {% for d in compare_data %}
+            <th class="vendor-hdr">{{ d.vendor.company_name }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% set pr_list = [] %}
+          {% for d in compare_data %}{% set p = d.pricing_map.get(cap) %}{% if pr_list.append(p) %}{% endif %}{% endfor %}
+
+          {% set prices = [] %}
+          {% for p in pr_list %}{% if p and p.final_price %}{% if prices.append(p.final_price) %}{% endif %}{% endif %}{% endfor %}
+          {% set min_p = prices | min if prices else 0 %}
+
+          <tr>
+            <th class="row-hdr">Final Price</th>
+            {% for p in pr_list %}
+            {% if p and p.final_price %}
+            <td class="{{ 'cmp-best' if p.final_price == min_p else '' }}"><strong>₹{{ '{:,.0f}'.format(p.final_price) }}</strong></td>
+            {% else %}<td style="color:#ccc">—</td>{% endif %}
+            {% endfor %}
+          </tr>
+          <tr>
+            <th class="row-hdr">Vendor Price</th>
+            {% for p in pr_list %}<td>{% if p %}₹{{ '{:,.0f}'.format(p.vendor_price or 0) }}{% else %}—{% endif %}</td>{% endfor %}
+          </tr>
+          <tr>
+            <th class="row-hdr">HGS Commission</th>
+            {% for p in pr_list %}<td>{% if p %}₹{{ '{:,.0f}'.format(p.hgs_commission or 0) }}{% else %}—{% endif %}</td>{% endfor %}
+          </tr>
+          <tr>
+            <th class="row-hdr">Brand</th>
+            {% for p in pr_list %}<td>{% if p and p.brand %}{{ p.brand }}{% else %}—{% endif %}</td>{% endfor %}
+          </tr>
+          <tr>
+            <th class="row-hdr">Warranty</th>
+            {% for p in pr_list %}<td>{% if p %}{{ p.warranty_years or 0 }} yrs{% else %}—{% endif %}</td>{% endfor %}
+          </tr>
+          <tr>
+            <th class="row-hdr">GST %</th>
+            {% for p in pr_list %}<td>{% if p %}{{ p.gst_percent or 0 }}%{% else %}—{% endif %}</td>{% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="font-size:11px;color:#888;margin-top:4px"><span style="background:#d1fae5;padding:2px 8px;border-radius:4px;font-weight:700;color:#065f46">Green</span> = Lowest price (best for customer)</div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div style="background:#fff;border-radius:12px;padding:40px;text-align:center;color:#888;border:1px solid #e8f5e9">
+  <i class="fa-solid fa-scale-balanced" style="font-size:40px;color:#e0e0e0;margin-bottom:12px;display:block"></i>
+  Select vendors above to start comparing.
+</div>
+{% endif %}
+
+<script>
+function capTab(el, id){
+  var parent = el.closest('.cmp-card');
+  parent.querySelectorAll('.cap-tab').forEach(function(t){t.classList.remove('active')});
+  parent.querySelectorAll('.cap-section').forEach(function(s){s.classList.remove('active')});
+  el.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+
+function toggleVendor(cb){
+  var checked = document.querySelectorAll('.cmp-check input:checked');
+  if(checked.length > 5){ cb.checked=false; cb.closest('label').classList.remove('selected'); alert('Max 5 vendors can be compared.'); return; }
+  cb.closest('label').classList.toggle('selected', cb.checked);
+}
+</script>
 <style>
 .cmp-selector{background:#fff;border-radius:12px;border:1px solid #e8f5e9;padding:20px 24px;margin-bottom:20px}
 .cmp-selector-title{font-size:14px;font-weight:800;color:#005b38;margin-bottom:12px}
