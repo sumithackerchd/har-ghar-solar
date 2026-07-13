@@ -54,6 +54,16 @@
         <span class="link-text">Import Vendors</span>
       </a>
 
+      <a href="/vendor-compare" class="sidebar-link {% if request.path == '/vendor-compare' %}active{% endif %}" title="Compare Vendors">
+        <span class="link-icon"><i class="bi bi-arrow-left-right"></i></span>
+        <span class="link-text">Compare Vendors</span>
+      </a>
+
+      <a href="/vendor-analytics" class="sidebar-link {% if request.path == '/vendor-analytics' %}active{% endif %}" title="Vendor Analytics">
+        <span class="link-icon"><i class="bi bi-bar-chart-line"></i></span>
+        <span class="link-text">Vendor Analytics</span>
+      </a>
+
       <div class="nav-section-label nav-divider">ANALYTICS</div>
 
       <a href="/admin/quotations" class="sidebar-link {% if request.path == '/admin/quotations' %}active{% endif %}" title="Quotations">

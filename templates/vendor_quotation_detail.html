@@ -132,13 +132,60 @@
     {% set comps = q.components_json | fromjson %}
   {% endif %}
 
+  {# ── Build component list from snapshot if components_json is empty ── #}
+  {# This covers quotations created before v15 or where JSON was empty   #}
   {% if not comps %}
-  <!-- No component data: show warning -->
-  <div class="warn-box">
-    &#9888; Vendor has not configured pricing. Component-wise breakdown is unavailable.
-    Gross price is shown as entered.
-  </div>
+    {% set comps = [] %}
+    {% if q.snap_panel_price and q.snap_panel_price > 0 %}
+      {% set panel_qty = q.snap_panel_quantity if q.snap_panel_quantity else q.capacity_kw %}
+      {% set _ = comps.append({
+          "item": "Solar Panel",
+          "details": (q.snap_brand or q.panel_brand or "—") ~ " | " ~ (q.snap_panel_wattage|string if q.snap_panel_wattage else "—") ~ " W | Qty: " ~ panel_qty,
+          "unit_price": q.snap_panel_price,
+          "qty": panel_qty,
+          "amount": q.snap_panel_price * panel_qty
+      }) %}
+    {% endif %}
+    {% if q.snap_inverter_price and q.snap_inverter_price > 0 %}
+      {% set _ = comps.append({
+          "item": "Inverter",
+          "details": (q.snap_inverter_brand or q.inverter_brand or "—") ~ " | " ~ (q.snap_inverter_cap or (q.capacity_kw|string ~ " KW")),
+          "unit_price": q.snap_inverter_price,
+          "qty": 1,
+          "amount": q.snap_inverter_price
+      }) %}
+    {% endif %}
+    {% if q.snap_structure_price and q.snap_structure_price > 0 %}
+      {% set _ = comps.append({
+          "item": "Structure",
+          "details": q.snap_structure_type or q.structure_type or "—",
+          "unit_price": q.snap_structure_price,
+          "qty": 1,
+          "amount": q.snap_structure_price
+      }) %}
+    {% endif %}
+    {% if q.snap_install_charge and q.snap_install_charge > 0 %}
+      {% set _ = comps.append({"item": "Installation Charge", "details": "—", "unit_price": q.snap_install_charge, "qty": 1, "amount": q.snap_install_charge}) %}
+    {% endif %}
+    {% if q.snap_elec_material and q.snap_elec_material > 0 %}
+      {% set _ = comps.append({"item": "Electrical Material", "details": "—", "unit_price": q.snap_elec_material, "qty": 1, "amount": q.snap_elec_material}) %}
+    {% endif %}
+    {% if q.snap_net_meter and q.snap_net_meter > 0 %}
+      {% set _ = comps.append({"item": "Net Meter Charge", "details": "—", "unit_price": q.snap_net_meter, "qty": 1, "amount": q.snap_net_meter}) %}
+    {% endif %}
+    {% if q.snap_transportation and q.snap_transportation > 0 %}
+      {% set _ = comps.append({"item": "Transportation", "details": "—", "unit_price": q.snap_transportation, "qty": 1, "amount": q.snap_transportation}) %}
+    {% endif %}
+    {% if q.snap_documentation and q.snap_documentation > 0 %}
+      {% set _ = comps.append({"item": "Documentation", "details": "—", "unit_price": q.snap_documentation, "qty": 1, "amount": q.snap_documentation}) %}
+    {% endif %}
+    {% if q.snap_miscellaneous and q.snap_miscellaneous > 0 %}
+      {% set _ = comps.append({"item": "Miscellaneous", "details": "—", "unit_price": q.snap_miscellaneous, "qty": 1, "amount": q.snap_miscellaneous}) %}
+    {% endif %}
   {% endif %}
+
+  {# Compute sub_total from comps if not stored #}
+  {% set display_sub_total = q.sub_total if q.sub_total else namespace(v=0) %}
 
   <!-- Pricing Table -->
   <table class="price-table">
@@ -170,10 +217,12 @@
           <td class="right"><strong>₹{{ '{:,.0f}'.format(q.sub_total or 0) }}</strong></td>
         </tr>
         <!-- GST -->
-        {% if q.gst_percent %}
+        {% set gst_pct = q.gst_percent or q.snap_gst_percent or 0 %}
+        {% set gst_amt = q.gst_amount or 0 %}
+        {% if gst_pct %}
         <tr class="gst-row">
-          <td colspan="4">GST @ {{ q.gst_percent | int }}%</td>
-          <td class="right">+ ₹{{ '{:,.0f}'.format(q.gst_amount or 0) }}</td>
+          <td colspan="4">GST @ {{ gst_pct | int }}%</td>
+          <td class="right">+ ₹{{ '{:,.0f}'.format(gst_amt) }}</td>
         </tr>
         {% endif %}
         <!-- Gross -->
@@ -182,7 +231,7 @@
           <td class="right"><strong>₹{{ '{:,.0f}'.format(q.gross_price) }}</strong></td>
         </tr>
       {% else %}
-        <!-- Fallback: just show gross -->
+        {# No components at all — just show gross, never show "not configured" warning #}
         <tr class="gross-row">
           <td colspan="4"><strong>Gross System Price</strong></td>
           <td class="right"><strong>₹{{ '{:,.0f}'.format(q.gross_price) }}</strong></td>
@@ -212,6 +261,17 @@
       </tr>
     </tbody>
   </table>
+
+  <!-- Snapshot Info Bar -->
+  {% if q.snap_pricing_found %}
+  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 16px;font-size:12px;color:#166534;margin-bottom:12px">
+    <i>&#128204;</i> Pricing snapshot saved at quotation creation.
+    Brand: <strong>{{ q.snap_brand or q.panel_brand or '—' }}</strong> &bull;
+    Warranty: <strong>{{ q.snap_warranty_years or 0 }} yrs</strong> &bull;
+    Vendor Price: <strong>₹{{ '{:,.0f}'.format(q.snap_vendor_price or 0) }}</strong> &bull;
+    Commission: <strong>₹{{ '{:,.0f}'.format(q.snap_hgs_commission or 0) }}</strong>
+  </div>
+  {% endif %}
 
   {% if q.remarks %}
   <div class="remarks-box">

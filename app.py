@@ -351,17 +351,41 @@ class VendorQuotation(db.Model):
     net_price      = db.Column(db.Float, default=0)
     commission     = db.Column(db.Float, default=0)
     remarks        = db.Column(db.Text, default="")
-    status         = db.Column(db.String(30), default="Pending")  # Pending/Approved/Rejected/Revision
+    status         = db.Column(db.String(30), default="Pending")
     admin_remarks  = db.Column(db.Text, default="")
     created_at     = db.Column(db.String(50), default="")
     updated_at     = db.Column(db.String(50), default="")
     # Item-wise breakdown stored as JSON
-    components_json = db.Column(db.Text, default="")   # JSON list of {item,details,amount}
+    components_json = db.Column(db.Text, default="")
     gst_amount      = db.Column(db.Float, default=0)
     sub_total       = db.Column(db.Float, default=0)
     gst_percent     = db.Column(db.Float, default=0)
-    vendor          = db.relationship("Vendor", backref="quotations")
-    lead            = db.relationship("Lead", backref="quotations")
+    # ── Pricing Snapshot ─────────────────────────────────────────────────────
+    # All fields copied from VendorPricing at quotation-creation time.
+    # Quotation detail MUST read these — never re-query VendorPricing.
+    snap_pricing_found   = db.Column(db.Boolean, default=False)
+    snap_vendor_price    = db.Column(db.Float, default=0)
+    snap_hgs_commission  = db.Column(db.Float, default=0)
+    snap_final_price     = db.Column(db.Float, default=0)
+    snap_brand           = db.Column(db.String(100), default="")
+    snap_warranty_years  = db.Column(db.Integer, default=0)
+    snap_panel_price     = db.Column(db.Float, default=0)
+    snap_panel_wattage   = db.Column(db.Integer, default=0)
+    snap_panel_quantity  = db.Column(db.Integer, default=0)
+    snap_inverter_price  = db.Column(db.Float, default=0)
+    snap_inverter_brand  = db.Column(db.String(100), default="")
+    snap_inverter_cap    = db.Column(db.String(50), default="")
+    snap_structure_price = db.Column(db.Float, default=0)
+    snap_structure_type  = db.Column(db.String(100), default="")
+    snap_install_charge  = db.Column(db.Float, default=0)
+    snap_elec_material   = db.Column(db.Float, default=0)
+    snap_net_meter       = db.Column(db.Float, default=0)
+    snap_transportation  = db.Column(db.Float, default=0)
+    snap_documentation   = db.Column(db.Float, default=0)
+    snap_miscellaneous   = db.Column(db.Float, default=0)
+    snap_gst_percent     = db.Column(db.Float, default=0)
+    vendor               = db.relationship("Vendor", backref="quotations")
+    lead                 = db.relationship("Lead", backref="quotations")
 
 
 # ==========================
@@ -580,17 +604,39 @@ with app.app_context():
             if col not in vpr2:
                 cur2.execute(f"ALTER TABLE vendor_pricing ADD COLUMN {col} {defn}")
 
-        # VendorQuotation — add missing columns
+        # VendorQuotation — add missing columns (including full pricing snapshot)
         cur2.execute("PRAGMA table_info(vendor_quotation)")
         vq2 = [r[1] for r in cur2.fetchall()]
         new_vq_cols = [
-            ("battery",          "VARCHAR(100) DEFAULT ''"),
-            ("gst_percent",      "FLOAT DEFAULT 0"),
-            ("validity_days",    "INTEGER DEFAULT 30"),
-            ("vendor_profit",    "FLOAT DEFAULT 0"),
-            ("components_json",  "TEXT DEFAULT ''"),
-            ("gst_amount",       "FLOAT DEFAULT 0"),
-            ("sub_total",        "FLOAT DEFAULT 0"),
+            ("battery",              "VARCHAR(100) DEFAULT ''"),
+            ("gst_percent",          "FLOAT DEFAULT 0"),
+            ("validity_days",        "INTEGER DEFAULT 30"),
+            ("vendor_profit",        "FLOAT DEFAULT 0"),
+            ("components_json",      "TEXT DEFAULT ''"),
+            ("gst_amount",           "FLOAT DEFAULT 0"),
+            ("sub_total",            "FLOAT DEFAULT 0"),
+            # Pricing snapshot columns
+            ("snap_pricing_found",   "BOOLEAN DEFAULT 0"),
+            ("snap_vendor_price",    "FLOAT DEFAULT 0"),
+            ("snap_hgs_commission",  "FLOAT DEFAULT 0"),
+            ("snap_final_price",     "FLOAT DEFAULT 0"),
+            ("snap_brand",           "VARCHAR(100) DEFAULT ''"),
+            ("snap_warranty_years",  "INTEGER DEFAULT 0"),
+            ("snap_panel_price",     "FLOAT DEFAULT 0"),
+            ("snap_panel_wattage",   "INTEGER DEFAULT 0"),
+            ("snap_panel_quantity",  "INTEGER DEFAULT 0"),
+            ("snap_inverter_price",  "FLOAT DEFAULT 0"),
+            ("snap_inverter_brand",  "VARCHAR(100) DEFAULT ''"),
+            ("snap_inverter_cap",    "VARCHAR(50) DEFAULT ''"),
+            ("snap_structure_price", "FLOAT DEFAULT 0"),
+            ("snap_structure_type",  "VARCHAR(100) DEFAULT ''"),
+            ("snap_install_charge",  "FLOAT DEFAULT 0"),
+            ("snap_elec_material",   "FLOAT DEFAULT 0"),
+            ("snap_net_meter",       "FLOAT DEFAULT 0"),
+            ("snap_transportation",  "FLOAT DEFAULT 0"),
+            ("snap_documentation",   "FLOAT DEFAULT 0"),
+            ("snap_miscellaneous",   "FLOAT DEFAULT 0"),
+            ("snap_gst_percent",     "FLOAT DEFAULT 0"),
         ]
         for col, defn in new_vq_cols:
             if col not in vq2:
@@ -769,7 +815,25 @@ def admin():
             Lead.district.like(like)
         ))
 
-    leads   = query.order_by(Lead.id.desc()).all()
+    # ── Pagination ────────────────────────────────────────────
+    try:
+        page     = max(1, int(request.args.get("page", 1)))
+        per_page = int(request.args.get("per_page", 25))
+        if per_page not in (10, 25, 50, 100):
+            per_page = 25
+    except (ValueError, TypeError):
+        page = 1; per_page = 25
+
+    leads_total_count = query.count()
+    leads_total_pages = max(1, (leads_total_count + per_page - 1) // per_page)
+    page              = min(page, leads_total_pages)
+    leads             = query.order_by(Lead.id.desc()).offset((page - 1) * per_page).limit(per_page).all()
+
+    from flask import url_for as _uf
+    leads_base_url = _uf("admin",
+        district=f_district, vendor=f_vendor,
+        status=f_status, date=f_date, search=f_search)
+
     users   = User.query.all()
     vendors = Vendor.query.filter_by(is_active=True).all()
 
@@ -897,7 +961,11 @@ def admin():
         overdue_followups=overdue_followups,
         # filters
         f_district=f_district, f_vendor=f_vendor,
-        f_status=f_status, f_date=f_date, f_search=f_search
+        f_status=f_status, f_date=f_date, f_search=f_search,
+        # pagination
+        page=page, per_page=per_page,
+        leads_total_count=leads_total_count, leads_total_pages=leads_total_pages,
+        leads_base_url=leads_base_url
     )
 
 # ==========================
@@ -1388,55 +1456,161 @@ def vendor_pricing():
 @vendor_required
 def vendor_pricing_save():
     vendor_id = session["vendor_id"]
-    now = datetime.now().strftime("%d-%m-%Y %H:%M")
+    now  = datetime.now().strftime("%d-%m-%Y %H:%M")
     data = request.get_json()
     if not data:
         return jsonify({"ok": False, "error": "No data received."}), 400
+
+    saved_records = []
+
     for row in data:
-        cap = int(row.get("capacity_kw", 0)) if str(row.get("capacity_kw","")).isdigit() else 0
+        # ── Capacity ──
+        raw_cap = str(row.get("capacity_kw", "")).strip()
+        cap = int(raw_cap) if raw_cap.isdigit() and int(raw_cap) > 0 else 0
         if not cap:
             continue
-        def _f(key):
-            try: return float(row.get(key) or 0)
-            except (ValueError, TypeError): return 0.0
-        def _i(key):
-            try: return int(row.get(key) or 0)
-            except (ValueError, TypeError): return 0
-        for ptype in ("Residential", "Commercial", "Government"):
-            price_key = {"Residential": "residential_price",
-                         "Commercial":  "commercial_price",
-                         "Government":  "govt_price"}[ptype]
-            existing = VendorPricing.query.filter_by(
-                vendor_id=vendor_id, project_type=ptype, capacity_kw=cap
-            ).first()
-            if not existing:
-                existing = VendorPricing(vendor_id=vendor_id, project_type=ptype, capacity_kw=cap)
-                db.session.add(existing)
-            existing.system_price      = _f(price_key)
-            existing.brand             = row.get("brand", "").strip()
-            existing.warranty_years    = _i("warranty_years")
-            existing.vendor_price      = _f("vendor_selling_price")
-            existing.hgs_commission    = _f("hgs_commission")
-            existing.final_price       = round(_f("vendor_selling_price") + _f("hgs_commission"), 2)
-            # Component pricing
-            existing.panel_price       = _f("panel_price")
-            existing.panel_wattage     = _i("panel_wattage")
-            existing.panel_quantity    = _i("panel_quantity")
-            existing.inverter_price    = _f("inverter_price")
-            existing.inverter_brand    = row.get("inverter_brand", "").strip()
-            existing.inverter_capacity = row.get("inverter_capacity", "").strip()
-            existing.structure_price   = _f("structure_price")
-            existing.structure_type    = row.get("structure_type", "").strip()
-            existing.install_charge    = _f("install_charge")
-            existing.elec_material     = _f("elec_material")
-            existing.net_meter_charge  = _f("net_meter_charge")
-            existing.transportation    = _f("transportation")
-            existing.documentation     = _f("documentation")
-            existing.miscellaneous     = _f("miscellaneous")
-            existing.gst_percent       = _f("gst_percent")
-            existing.updated_at        = now
-    db.session.commit()
-    return jsonify({"ok": True, "message": "Pricing saved."})
+
+        ptype = row.get("ptype", "Residential").strip()
+        if ptype not in ("Residential", "Commercial", "Government"):
+            continue
+
+        # ── Safe float/int helpers: ignore empty strings, keep existing value otherwise ──
+        def _f(key, existing_val=0.0):
+            v = row.get(key)
+            if v is None or str(v).strip() == "":
+                return existing_val  # do not overwrite with empty
+            try:
+                result = float(v)
+                return result if result >= 0 else existing_val
+            except (ValueError, TypeError):
+                return existing_val
+
+        def _i(key, existing_val=0):
+            v = row.get(key)
+            if v is None or str(v).strip() == "":
+                return existing_val
+            try:
+                result = int(float(v))
+                return result if result >= 0 else existing_val
+            except (ValueError, TypeError):
+                return existing_val
+
+        def _s(key, existing_val=""):
+            v = row.get(key)
+            if v is None:
+                return existing_val
+            stripped = str(v).strip()
+            return stripped if stripped else existing_val
+
+        # ── Upsert: find or create — never duplicate ──
+        rec = VendorPricing.query.filter_by(
+            vendor_id=vendor_id, project_type=ptype, capacity_kw=cap
+        ).first()
+        is_new = rec is None
+        if is_new:
+            rec = VendorPricing(vendor_id=vendor_id, project_type=ptype, capacity_kw=cap)
+            db.session.add(rec)
+            db.session.flush()  # get rec populated before reading existing vals
+
+        # ── Validate selling price (must be present and positive for the row to be saved) ──
+        vp_raw = row.get("vendor_selling_price")
+        if vp_raw is None or str(vp_raw).strip() == "":
+            if is_new:
+                db.session.expunge(rec)
+                continue
+            # For existing record keep current value — skip overwrite
+        else:
+            try:
+                vp = float(vp_raw)
+                if vp < 0:
+                    return jsonify({"ok": False, "error": f"Vendor selling price cannot be negative for {cap} KW {ptype}."}), 400
+            except (ValueError, TypeError):
+                return jsonify({"ok": False, "error": f"Invalid selling price for {cap} KW {ptype}."}), 400
+
+        hgs_raw = row.get("hgs_commission")
+        hgs = 0.0
+        if hgs_raw is not None and str(hgs_raw).strip() != "":
+            try:
+                hgs = float(hgs_raw)
+                if hgs < 0:
+                    return jsonify({"ok": False, "error": f"Commission cannot be negative for {cap} KW {ptype}."}), 400
+            except (ValueError, TypeError):
+                hgs = rec.hgs_commission or 0.0
+
+        vp_final = _f("vendor_selling_price", rec.vendor_price or 0.0)
+        if hgs > vp_final and vp_final > 0:
+            return jsonify({"ok": False,
+                "error": f"Commission (₹{hgs:,.0f}) cannot exceed selling price (₹{vp_final:,.0f}) for {cap} KW {ptype}."}), 400
+
+        # ── Apply fields: only overwrite when new value is provided ──
+        rec.vendor_price      = vp_final
+        rec.hgs_commission    = _f("hgs_commission",      rec.hgs_commission    or 0.0)
+        rec.final_price       = round(rec.vendor_price + rec.hgs_commission, 2)
+        rec.brand             = _s("brand",               rec.brand             or "")
+        rec.warranty_years    = _i("warranty_years",      rec.warranty_years    or 0)
+        rec.system_price      = rec.vendor_price  # keep in sync
+
+        # Component fields — only overwrite if provided
+        rec.panel_price       = _f("panel_price",         rec.panel_price       or 0.0)
+        rec.panel_wattage     = _i("panel_wattage",       rec.panel_wattage     or 0)
+        rec.panel_quantity    = _i("panel_quantity",      rec.panel_quantity    or 0)
+        rec.inverter_price    = _f("inverter_price",      rec.inverter_price    or 0.0)
+        rec.inverter_brand    = _s("inverter_brand",      rec.inverter_brand    or "")
+        rec.inverter_capacity = _s("inverter_capacity",   rec.inverter_capacity or "")
+        rec.structure_price   = _f("structure_price",     rec.structure_price   or 0.0)
+        rec.structure_type    = _s("structure_type",      rec.structure_type    or "")
+        rec.install_charge    = _f("install_charge",      rec.install_charge    or 0.0)
+        rec.elec_material     = _f("elec_material",       rec.elec_material     or 0.0)
+        rec.net_meter_charge  = _f("net_meter_charge",    rec.net_meter_charge  or 0.0)
+        rec.transportation    = _f("transportation",      rec.transportation    or 0.0)
+        rec.documentation     = _f("documentation",       rec.documentation     or 0.0)
+        rec.miscellaneous     = _f("miscellaneous",       rec.miscellaneous     or 0.0)
+        rec.gst_percent       = _f("gst_percent",         rec.gst_percent       or 0.0)
+        rec.updated_at        = now
+
+    # ── Single commit for all rows ──
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.error("Pricing save error: %s", e)
+        return jsonify({"ok": False, "error": "Database error. Please try again."}), 500
+
+    # ── Re-read from DB and return all saved values so JS can reload the card ──
+    cap_to_return = None
+    if data:
+        raw_cap = str(data[0].get("capacity_kw", "")).strip()
+        cap_to_return = int(raw_cap) if raw_cap.isdigit() else None
+
+    result_map = {}
+    if cap_to_return:
+        records = VendorPricing.query.filter_by(vendor_id=vendor_id, capacity_kw=cap_to_return).all()
+        for r in records:
+            result_map[r.project_type] = {
+                "brand":            r.brand or "",
+                "warranty_years":   r.warranty_years or 0,
+                "vendor_price":     r.vendor_price or 0,
+                "hgs_commission":   r.hgs_commission or 0,
+                "final_price":      r.final_price or 0,
+                "panel_price":      r.panel_price or 0,
+                "panel_wattage":    r.panel_wattage or 0,
+                "panel_quantity":   r.panel_quantity or 0,
+                "inverter_price":   r.inverter_price or 0,
+                "inverter_brand":   r.inverter_brand or "",
+                "inverter_capacity":r.inverter_capacity or "",
+                "structure_price":  r.structure_price or 0,
+                "structure_type":   r.structure_type or "",
+                "install_charge":   r.install_charge or 0,
+                "elec_material":    r.elec_material or 0,
+                "net_meter_charge": r.net_meter_charge or 0,
+                "transportation":   r.transportation or 0,
+                "documentation":    r.documentation or 0,
+                "miscellaneous":    r.miscellaneous or 0,
+                "gst_percent":      r.gst_percent or 0,
+                "updated_at":       r.updated_at or "",
+            }
+
+    return jsonify({"ok": True, "message": "Pricing saved successfully.", "saved": result_map})
 
 
 # ==========================
@@ -1626,80 +1800,149 @@ def vendor_quotation_create():
     import json as _json
     vendor_id = session["vendor_id"]
     now = datetime.now().strftime("%d-%m-%Y %H:%M")
+
+    # ── Parse form inputs ──────────────────────────────────────────────────
     try:
         cap    = int(request.form.get("capacity_kw") or 0)
-        ptype  = request.form.get("project_type", "Residential")
-        subsidy= float(request.form.get("subsidy_amount") or 0)
-        comm   = float(request.form.get("commission") or 0)
     except (ValueError, TypeError):
-        cap = 0; subsidy = comm = 0.0; ptype = "Residential"
+        cap = 0
+    try:
+        subsidy = float(request.form.get("subsidy_amount") or 0)
+    except (ValueError, TypeError):
+        subsidy = 0.0
+    try:
+        # commission is sent from JS as _qPricing.hgs_commission — trust it directly
+        comm = float(request.form.get("commission") or 0)
+    except (ValueError, TypeError):
+        comm = 0.0
+    # form_gross comes from vendor_pricing_get calculation in JS (_qPricing.gross_price)
+    # It is the AUTHORITATIVE value when the backend's component sum is unreliable
+    try:
+        form_gross = float(request.form.get("gross_price") or 0)
+    except (ValueError, TypeError):
+        form_gross = 0.0
 
-    # Load vendor pricing for this capacity+type to build component breakdown
+    ptype = (request.form.get("project_type") or "Residential").strip()
+    if ptype not in ("Residential", "Commercial", "Government"):
+        ptype = "Residential"
+
+    # ── Load VendorPricing row — 3-level fallback ──────────────────────────
     pricing = VendorPricing.query.filter_by(
         vendor_id=vendor_id, project_type=ptype, capacity_kw=cap
     ).first()
+    if not pricing and cap:
+        pricing = VendorPricing.query.filter_by(
+            vendor_id=vendor_id, project_type=ptype
+        ).order_by(db.func.abs(VendorPricing.capacity_kw - cap)).first()
+    if not pricing:
+        pricing = VendorPricing.query.filter_by(vendor_id=vendor_id).first()
 
+    pricing_found = pricing is not None
+    p = pricing  # alias — safe to use from here on (may be None)
+
+    # ── Build itemised component list ─────────────────────────────────────
     components = []
-    pricing_missing = False
+    sub_total  = 0.0
+    gst_pct    = 0.0
+    gst_amt    = 0.0
+    gross      = 0.0
 
-    if pricing:
-        panel_qty   = pricing.panel_quantity or cap  # fallback: 1 panel per KW
-        panel_total = round((pricing.panel_price or 0) * panel_qty, 2)
+    if pricing_found:
+        panel_qty   = (p.panel_quantity or 0) if p.panel_quantity else max(1, cap)
+        panel_price = p.panel_price or 0.0
+        panel_total = round(panel_price * panel_qty, 2)
+
         if panel_total > 0:
             components.append({
-                "item": "Solar Panel",
-                "details": f"{pricing.brand or request.form.get('panel_brand','—')} | "
-                           f"{pricing.panel_wattage or '—'} W | Qty: {panel_qty}",
-                "unit_price": pricing.panel_price or 0,
-                "qty": panel_qty,
-                "amount": panel_total
+                "item":       "Solar Panel",
+                "details":    f"{p.brand or '—'} | {p.panel_wattage or '—'} W × {panel_qty}",
+                "unit_price": panel_price,
+                "qty":        panel_qty,
+                "amount":     panel_total,
             })
-        if pricing.inverter_price:
+        if (p.inverter_price or 0) > 0:
             components.append({
-                "item": "Inverter",
-                "details": f"{pricing.inverter_brand or request.form.get('inverter_brand','—')} | "
-                           f"{pricing.inverter_capacity or f'{cap} KW'}",
-                "unit_price": pricing.inverter_price,
-                "qty": 1,
-                "amount": pricing.inverter_price
+                "item":       "Inverter",
+                "details":    f"{p.inverter_brand or '—'} | {p.inverter_capacity or f'{cap} KW'}",
+                "unit_price": p.inverter_price,
+                "qty":        1,
+                "amount":     p.inverter_price,
             })
-        if pricing.structure_price:
+        if (p.structure_price or 0) > 0:
             components.append({
-                "item": "Structure",
-                "details": pricing.structure_type or request.form.get("structure_type", "—"),
-                "unit_price": pricing.structure_price,
-                "qty": 1,
-                "amount": pricing.structure_price
+                "item":       "Structure",
+                "details":    p.structure_type or "—",
+                "unit_price": p.structure_price,
+                "qty":        1,
+                "amount":     p.structure_price,
             })
         for label, field in [
-            ("Installation Charge",   "install_charge"),
-            ("Electrical Material",   "elec_material"),
-            ("Net Meter Charge",      "net_meter_charge"),
-            ("Transportation",        "transportation"),
-            ("Documentation",         "documentation"),
-            ("Miscellaneous",         "miscellaneous"),
+            ("Installation Charge", "install_charge"),
+            ("Electrical Material", "elec_material"),
+            ("Net Meter Charge",    "net_meter_charge"),
+            ("Transportation",      "transportation"),
+            ("Documentation",       "documentation"),
+            ("Miscellaneous",       "miscellaneous"),
         ]:
-            val = getattr(pricing, field, 0) or 0
-            if val:
-                components.append({"item": label, "details": "—", "unit_price": val, "qty": 1, "amount": val})
+            val = float(getattr(p, field, 0) or 0)
+            if val > 0:
+                components.append({
+                    "item": label, "details": "—",
+                    "unit_price": val, "qty": 1, "amount": val,
+                })
 
-        sub_total = round(sum(c["amount"] for c in components), 2)
-        gst_pct   = pricing.gst_percent or 0
-        gst_amt   = round(sub_total * gst_pct / 100, 2)
-        gross     = round(sub_total + gst_amt, 2)
+        # ── Gross from itemised sum ────────────────────────────────────────
+        sub_total_comps = round(sum(c["amount"] for c in components), 2)
+        gst_pct         = float(p.gst_percent or 0)
+        gst_amt_comps   = round(sub_total_comps * gst_pct / 100, 2)
+        gross_comps     = round(sub_total_comps + gst_amt_comps, 2)
+
+        if gross_comps > 0:
+            # Full itemised breakdown is available — use it
+            sub_total = sub_total_comps
+            gst_amt   = gst_amt_comps
+            gross     = gross_comps
+        else:
+            # Component fields not filled — use vendor_price as authoritative gross
+            # (vendor_price is set by the vendor in the pricing form)
+            vp = float(p.vendor_price or 0)
+            if vp > 0:
+                gst_amt   = round(vp * gst_pct / 100, 2)
+                gross     = round(vp + gst_amt, 2)
+                sub_total = vp
+                components = [{
+                    "item":       f"{cap} KW Solar System",
+                    "details":    f"{p.brand or ptype} | {p.warranty_years or 0} yr warranty",
+                    "unit_price": vp,
+                    "qty":        1,
+                    "amount":     vp,
+                }]
+            else:
+                # vendor_price also not set — last resort: trust the form value
+                # (form_gross was calculated by vendor_pricing_get on the frontend)
+                gross     = form_gross
+                sub_total = form_gross
+                gst_pct   = 0.0
+                gst_amt   = 0.0
+
+        # ── Final safety: if gross is still 0 but form sent a valid value, use it ──
+        if gross == 0 and form_gross > 0:
+            gross     = form_gross
+            sub_total = form_gross
+            gst_pct   = float(p.gst_percent or 0) if p else 0.0
+            gst_amt   = round(gross * gst_pct / 100, 2)
     else:
-        # No pricing configured — use manually supplied gross price
-        pricing_missing = True
-        try:
-            gross = float(request.form.get("gross_price") or 0)
-        except (ValueError, TypeError):
-            gross = 0.0
-        sub_total = gross
+        # No pricing record at all — use manually entered gross from form
+        gross     = form_gross
+        sub_total = form_gross
         gst_pct   = 0.0
         gst_amt   = 0.0
 
-    net = round(gross - subsidy + comm, 2)
+    # ── Derived totals ────────────────────────────────────────────────────
+    gross   = round(gross, 2)
+    net     = round(gross - subsidy + comm, 2)
 
+    # ── Build VendorQuotation row ──────────────────────────────────────────
     q = VendorQuotation(
         vendor_id       = vendor_id,
         lead_id         = request.form.get("lead_id") or None,
@@ -1707,10 +1950,10 @@ def vendor_quotation_create():
         customer_phone  = request.form.get("customer_phone", "").strip(),
         capacity_kw     = cap,
         project_type    = ptype,
-        brand           = request.form.get("brand", "").strip(),
-        panel_brand     = (pricing.brand if pricing else request.form.get("panel_brand", "")).strip(),
-        inverter_brand  = (pricing.inverter_brand if pricing else request.form.get("inverter_brand", "")).strip(),
-        structure_type  = (pricing.structure_type if pricing else request.form.get("structure_type", "")).strip(),
+        brand           = (p.brand or "") if p else request.form.get("brand", "").strip(),
+        panel_brand     = (p.brand or "") if p else request.form.get("panel_brand", "").strip(),
+        inverter_brand  = (p.inverter_brand or "") if p else request.form.get("inverter_brand", "").strip(),
+        structure_type  = (p.structure_type or "") if p else request.form.get("structure_type", "").strip(),
         subsidy_amount  = subsidy,
         gross_price     = gross,
         net_price       = net,
@@ -1723,12 +1966,39 @@ def vendor_quotation_create():
         gst_percent     = gst_pct,
         created_at      = now,
         updated_at      = now,
+        # ── Full pricing snapshot — frozen at creation, never changes ──────
+        snap_pricing_found   = pricing_found,
+        snap_vendor_price    = float(p.vendor_price    or 0) if p else 0.0,
+        snap_hgs_commission  = float(p.hgs_commission  or 0) if p else 0.0,
+        snap_final_price     = float(p.final_price     or 0) if p else 0.0,
+        snap_brand           = (p.brand           or "") if p else "",
+        snap_warranty_years  = int(p.warranty_years   or 0) if p else 0,
+        snap_panel_price     = float(p.panel_price    or 0) if p else 0.0,
+        snap_panel_wattage   = int(p.panel_wattage    or 0) if p else 0,
+        snap_panel_quantity  = int(p.panel_quantity   or 0) if p else 0,
+        snap_inverter_price  = float(p.inverter_price or 0) if p else 0.0,
+        snap_inverter_brand  = (p.inverter_brand  or "") if p else "",
+        snap_inverter_cap    = (p.inverter_capacity or "") if p else "",
+        snap_structure_price = float(p.structure_price or 0) if p else 0.0,
+        snap_structure_type  = (p.structure_type  or "") if p else "",
+        snap_install_charge  = float(p.install_charge  or 0) if p else 0.0,
+        snap_elec_material   = float(p.elec_material   or 0) if p else 0.0,
+        snap_net_meter       = float(p.net_meter_charge or 0) if p else 0.0,
+        snap_transportation  = float(p.transportation  or 0) if p else 0.0,
+        snap_documentation   = float(p.documentation  or 0) if p else 0.0,
+        snap_miscellaneous   = float(p.miscellaneous   or 0) if p else 0.0,
+        snap_gst_percent     = float(p.gst_percent     or 0) if p else 0.0,
     )
     db.session.add(q)
     db.session.commit()
-    warn = " (Warning: Vendor pricing not configured — prices may be incomplete.)" if pricing_missing else ""
-    return jsonify({"ok": True, "id": q.id, "message": f"Quotation created.{warn}",
-                    "pricing_missing": pricing_missing})
+
+    return jsonify({
+        "ok":              True,
+        "id":              q.id,
+        "message":         f"Quotation #{q.id} created. Gross: ₹{gross:,.0f}",
+        "gross_price":     gross,
+        "pricing_missing": not pricing_found,
+    })
 
 
 @app.route("/vendor-quotation/<int:qid>")
@@ -1738,6 +2008,33 @@ def vendor_quotation_detail(qid):
     if q.vendor_id != session["vendor_id"]:
         abort(403)
     vendor = Vendor.query.get_or_404(session["vendor_id"])
+
+    # ── Recalc gross from snapshot if it was saved as 0 ──────────────────
+    # This repairs quotations created before the gross-price fix.
+    if (not q.gross_price or q.gross_price == 0):
+        recalc = 0.0
+        # 1) Try summing component breakdown from components_json
+        try:
+            import json as _j
+            comps = _j.loads(q.components_json or "[]")
+            if comps:
+                recalc = sum(float(c.get("amount", 0)) for c in comps)
+        except Exception:
+            recalc = 0.0
+        # 2) Fall back to snap_vendor_price (always reliable)
+        if recalc == 0 and (q.snap_vendor_price or 0) > 0:
+            recalc = float(q.snap_vendor_price)
+        # 3) Apply GST on top of recalc base
+        if recalc > 0:
+            gst_pct = float(q.snap_gst_percent or q.gst_percent or 0)
+            gst_on  = round(recalc * gst_pct / 100, 2)
+            q.gross_price = round(recalc + gst_on, 2)
+            if not q.sub_total or q.sub_total == 0:
+                q.sub_total  = recalc
+                q.gst_amount = gst_on
+            q.net_price   = round(q.gross_price - (q.subsidy_amount or 0) + (q.commission or 0), 2)
+            db.session.commit()
+
     return render_template("vendor_quotation_detail.html", q=q, vendor=vendor)
 
 
@@ -1747,9 +2044,35 @@ def vendor_quotation_detail(qid):
 @app.route("/admin/quotations")
 @login_required
 def admin_quotations():
-    quotes = VendorQuotation.query.order_by(VendorQuotation.id.desc()).all()
-    return render_template("admin_quotations.html", quotes=quotes)
+    try:
+        page     = max(1, int(request.args.get("page", 1)))
+        per_page = int(request.args.get("per_page", 25))
+        if per_page not in (10, 25, 50, 100):
+            per_page = 25
+    except (ValueError, TypeError):
+        page = 1; per_page = 25
 
+    f_status = request.args.get("status", "")
+    f_vendor = request.args.get("vendor_id", "")
+    query    = VendorQuotation.query
+    if f_status:
+        query = query.filter(VendorQuotation.status == f_status)
+    if f_vendor and str(f_vendor).isdigit():
+        query = query.filter(VendorQuotation.vendor_id == int(f_vendor))
+
+    total_count = query.count()
+    total_pages = max(1, (total_count + per_page - 1) // per_page)
+    page        = min(page, total_pages)
+    quotes      = query.order_by(VendorQuotation.id.desc()).offset((page - 1) * per_page).limit(per_page).all()
+
+    from flask import url_for as _uf
+    base_url = _uf("admin_quotations", status=f_status, vendor_id=f_vendor)
+
+    return render_template("admin_quotations.html", quotes=quotes,
+        page=page, per_page=per_page,
+        total_count=total_count, total_pages=total_pages,
+        base_url=base_url,
+        f_status=f_status, f_vendor=f_vendor)
 
 
 
@@ -1760,46 +2083,167 @@ def admin_quotations():
 @app.route("/vendor-bulk", methods=["POST"])
 @login_required
 def vendor_bulk():
-    action  = request.form.get("action")
+    """Legacy form-based bulk — kept for backward compat; redirects to vendor_list."""
+    return redirect(url_for("vendor_list"))
+
+
+@app.route("/vendor-bulk-ajax", methods=["POST"])
+@login_required
+def vendor_bulk_ajax():
+    """AJAX bulk operations — returns JSON for enable/disable/delete; file for export."""
+    import json as _json
+    action  = request.form.get("action", "").strip()
     ids_raw = request.form.getlist("vendor_ids")
-    if not ids_raw or not action:
-        flash("No vendors selected.", "warning")
-        return redirect(url_for("vendor_list"))
-    ids = [int(i) for i in ids_raw if i.isdigit()]
+    if not ids_raw:
+        return jsonify({"ok": False, "error": "No vendors selected."}), 400
+    if not action:
+        return jsonify({"ok": False, "error": "No action specified."}), 400
+    ids     = [int(i) for i in ids_raw if str(i).isdigit()]
     vendors = Vendor.query.filter(Vendor.id.in_(ids)).all()
-    if action == "delete":
-        for v in vendors:
-            db.session.delete(v)
-        db.session.commit()
-        flash(f"Deleted {len(vendors)} vendor(s).", "success")
-    elif action == "enable":
+    count   = len(vendors)
+
+    if action == "enable":
         for v in vendors:
             v.is_active = True
         db.session.commit()
-        flash(f"Enabled {len(vendors)} vendor(s).", "success")
+        return jsonify({"ok": True, "message": f"Enabled {count} vendor(s) successfully.",
+                        "action": "enable", "ids": ids})
+
     elif action == "disable":
         for v in vendors:
             v.is_active = False
         db.session.commit()
-        flash(f"Disabled {len(vendors)} vendor(s).", "success")
+        return jsonify({"ok": True, "message": f"Disabled {count} vendor(s) successfully.",
+                        "action": "disable", "ids": ids})
+
+    elif action == "delete":
+        for v in vendors:
+            db.session.delete(v)
+        db.session.commit()
+        return jsonify({"ok": True, "message": f"Deleted {count} vendor(s) successfully.",
+                        "action": "delete", "ids": ids})
+
     elif action == "export":
         wb = Workbook()
         ws = wb.active
         ws.title = "Vendors"
-        headers = ["ID", "Company", "Owner", "Mobile", "Email", "District",
-                   "Username", "Vendor Code", "Status", "Created At"]
+        headers = ["Company", "Owner", "Mobile", "Email", "District",
+                   "Username", "Status", "Total Leads", "Completed Leads",
+                   "Pending Leads", "Rating"]
         ws.append(headers)
+        # Style header row
+        from openpyxl.styles import Font, PatternFill, Alignment
+        green_fill = PatternFill("solid", fgColor="005B38")
+        for cell in ws[1]:
+            cell.font      = Font(bold=True, color="FFFFFF")
+            cell.fill      = green_fill
+            cell.alignment = Alignment(horizontal="center")
         for v in vendors:
-            ws.append([v.id, v.company_name, v.owner_name, v.mobile,
-                       v.email, v.district, v.username, v.vendor_code,
-                       "Active" if v.is_active else "Inactive", v.created_at])
+            total     = Lead.query.filter_by(vendor_id=v.id).count()
+            completed = Lead.query.filter_by(vendor_id=v.id, status="Completed").count()
+            pending   = Lead.query.filter(
+                Lead.vendor_id == v.id,
+                Lead.status.notin_(["Completed", "Cancelled"])
+            ).count()
+            ratings   = VendorRating.query.filter_by(vendor_id=v.id).all()
+            avg_rating = round(sum(r.rating for r in ratings) / len(ratings), 1) if ratings else 0
+            ws.append([
+                v.company_name, v.owner_name, v.mobile, v.email or "",
+                v.district, v.username,
+                "Active" if v.is_active else "Inactive",
+                total, completed, pending, avg_rating
+            ])
+        # Auto-width
+        for col in ws.columns:
+            max_len = max((len(str(cell.value or "")) for cell in col), default=10)
+            ws.column_dimensions[col[0].column_letter].width = min(max_len + 4, 40)
         buf = io.BytesIO()
         wb.save(buf)
         buf.seek(0)
         return send_file(buf, as_attachment=True,
             download_name="vendors_export.xlsx",
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    return redirect(url_for("vendor_list"))
+
+    return jsonify({"ok": False, "error": "Unknown action."}), 400
+
+
+# ==========================
+# VENDOR PRICING DATA API
+# ==========================
+@app.route("/vendor-pricing/get")
+@vendor_required
+def vendor_pricing_get():
+    """Return pricing JSON for auto-fill in quotation builder."""
+    vendor_id = session["vendor_id"]
+    try:
+        cap   = int(request.args.get("cap", 0))
+        ptype = request.args.get("type", "Residential")
+    except (ValueError, TypeError):
+        return jsonify({"ok": False, "error": "Invalid parameters."}), 400
+
+    p = VendorPricing.query.filter_by(
+        vendor_id=vendor_id, project_type=ptype, capacity_kw=cap
+    ).first()
+
+    if not p:
+        return jsonify({"ok": False, "error": "No pricing configured for this capacity and type."})
+
+    # ── Component-wise sub-total ──────────────────────────────────────────
+    panel_qty   = (p.panel_quantity or 0) if p.panel_quantity else max(1, cap)
+    panel_total = round(float(p.panel_price or 0) * panel_qty, 2)
+    inv_total   = float(p.inverter_price   or 0)
+    str_total   = float(p.structure_price  or 0)
+    comp_total  = round(
+        panel_total + inv_total + str_total +
+        float(p.install_charge   or 0) +
+        float(p.elec_material    or 0) +
+        float(p.net_meter_charge or 0) +
+        float(p.transportation   or 0) +
+        float(p.documentation    or 0) +
+        float(p.miscellaneous    or 0),
+        2
+    )
+    gst_pct = float(p.gst_percent or 0)
+    gst_amt = round(comp_total * gst_pct / 100, 2)
+    gross   = round(comp_total + gst_amt, 2)
+
+    # ── Authoritative gross fallback: when component fields not filled,
+    #    use vendor_price (what the vendor actually charges) ───────────────
+    vendor_price = float(p.vendor_price or 0)
+    if gross == 0 and vendor_price > 0:
+        gst_amt = round(vendor_price * gst_pct / 100, 2)
+        gross   = round(vendor_price + gst_amt, 2)
+        comp_total = vendor_price   # treat vendor_price as the sub-total
+
+    final_cust = round(vendor_price + float(p.hgs_commission or 0), 2)
+
+    return jsonify({
+        "ok":               True,
+        "brand":            p.brand or "",
+        "warranty_years":   int(p.warranty_years or 0),
+        "vendor_price":     vendor_price,
+        "hgs_commission":   float(p.hgs_commission or 0),
+        "final_price":      float(p.final_price or 0) or final_cust,
+        "panel_price":      float(p.panel_price or 0),
+        "panel_wattage":    int(p.panel_wattage or 0),
+        "panel_quantity":   panel_qty,
+        "panel_total":      panel_total,
+        "inverter_price":   inv_total,
+        "inverter_brand":   p.inverter_brand or "",
+        "inverter_capacity":p.inverter_capacity or "",
+        "structure_price":  str_total,
+        "structure_type":   p.structure_type or "",
+        "install_charge":   float(p.install_charge   or 0),
+        "elec_material":    float(p.elec_material    or 0),
+        "net_meter_charge": float(p.net_meter_charge or 0),
+        "transportation":   float(p.transportation   or 0),
+        "documentation":    float(p.documentation    or 0),
+        "miscellaneous":    float(p.miscellaneous    or 0),
+        "gst_percent":      gst_pct,
+        "comp_total":       comp_total,
+        "gst_amount":       gst_amt,
+        "gross_price":      gross,   # ← this is what JS sends back as form_gross
+    })
 
 
 # ==========================
@@ -1891,12 +2335,24 @@ def vendor_dashboard():
 def vendor_list():
     f_district = request.args.get("district", "")
     f_active   = request.args.get("active", "")
+    try:
+        page     = max(1, int(request.args.get("page", 1)))
+        per_page = int(request.args.get("per_page", 25))
+        if per_page not in (10, 25, 50, 100):
+            per_page = 25
+    except (ValueError, TypeError):
+        page = 1; per_page = 25
+
     query = Vendor.query
     if f_district:
         query = query.filter(Vendor.district == f_district)
     if f_active != "":
         query = query.filter(Vendor.is_active == (f_active == "1"))
-    vendors = query.order_by(Vendor.id.desc()).all()
+
+    total_count = query.count()
+    total_pages = max(1, (total_count + per_page - 1) // per_page)
+    page        = min(page, total_pages)
+    vendors     = query.order_by(Vendor.id.desc()).offset((page - 1) * per_page).limit(per_page).all()
 
     perf = {}
     for v in vendors:
@@ -1913,12 +2369,222 @@ def vendor_list():
             "pending": pending, "cancelled": cancelled, "pct": pct
         }
 
+    # Build base_url for pagination links (preserve filters, strip page/per_page)
+    from flask import url_for as _uf
+    base_url = _uf("vendor_list", district=f_district, active=f_active)
+
     return render_template(
         "vendor_list.html",
         vendors=vendors, perf=perf,
         districts=UP_DISTRICTS,
-        f_district=f_district, f_active=f_active
+        f_district=f_district, f_active=f_active,
+        page=page, per_page=per_page,
+        total_count=total_count, total_pages=total_pages,
+        base_url=base_url
     )
+
+# ==========================
+# VENDOR DETAIL (admin)
+# ==========================
+@app.route("/vendor-detail/<int:vendor_id>")
+@login_required
+def vendor_detail(vendor_id):
+    import json as _json, statistics as _stat
+    v        = Vendor.query.get_or_404(vendor_id)
+    profile  = VendorProfile.query.filter_by(vendor_id=vendor_id).first()
+    # Guard: if vendor has no profile yet, provide an in-memory default
+    # so the template never crashes on profile.field access
+    if not profile:
+        profile = VendorProfile(vendor_id=vendor_id)
+    pricing  = VendorPricing.query.filter_by(vendor_id=vendor_id).order_by(
+                    VendorPricing.capacity_kw, VendorPricing.project_type).all()
+    commissions = VendorCommission.query.filter_by(vendor_id=vendor_id).order_by(
+                    VendorCommission.capacity_kw).all()
+    coverage = VendorCoverage.query.filter_by(vendor_id=vendor_id).first()
+    quotations = VendorQuotation.query.filter_by(vendor_id=vendor_id)\
+                    .order_by(VendorQuotation.id.desc()).all()
+    ratings  = VendorRating.query.filter_by(vendor_id=vendor_id).all()
+
+    # Lead performance
+    all_leads   = Lead.query.filter_by(vendor_id=vendor_id).all()
+    total_l     = len(all_leads)
+    completed_l = sum(1 for l in all_leads if l.status == "Completed")
+    pending_l   = sum(1 for l in all_leads if l.status not in ("Completed","Cancelled"))
+    cancelled_l = sum(1 for l in all_leads if l.status == "Cancelled")
+    conv_pct    = round(completed_l / total_l * 100, 1) if total_l else 0
+
+    # Timeline: last 15 timeline entries for this vendor's leads
+    lead_ids = [l.id for l in all_leads]
+    timeline = []
+    if lead_ids:
+        timeline = LeadTimeline.query.filter(LeadTimeline.lead_id.in_(lead_ids))\
+                       .order_by(LeadTimeline.id.desc()).limit(15).all()
+
+    # Ratings
+    avg_rating = round(_stat.mean(r.rating for r in ratings), 1) if ratings else 0
+
+    # Revenue from approved quotations
+    approved_q  = [q for q in quotations if q.status == "Approved"]
+    total_rev   = sum(q.net_price for q in approved_q)
+    total_comm  = sum(q.commission for q in approved_q)
+
+    # Coverage parsing
+    cov_districts = []
+    cov_types     = []
+    if coverage:
+        try: cov_districts = _json.loads(coverage.districts or "[]")
+        except: cov_districts = []
+        try: cov_types = _json.loads(coverage.lead_types or "[]")
+        except: cov_types = []
+
+    # Brands from profile
+    brands = []
+    if profile and profile.brands_supported:
+        brands = [b.strip() for b in profile.brands_supported.split(",") if b.strip()]
+
+    # Status breakdown
+    status_counts = {}
+    for l in all_leads:
+        status_counts[l.status] = status_counts.get(l.status, 0) + 1
+
+    return render_template("vendor_detail.html",
+        v=v, profile=profile, pricing=pricing,
+        commissions=commissions, coverage=coverage,
+        quotations=quotations, ratings=ratings,
+        timeline=timeline,
+        total_l=total_l, completed_l=completed_l,
+        pending_l=pending_l, cancelled_l=cancelled_l,
+        conv_pct=conv_pct, avg_rating=avg_rating,
+        total_rev=total_rev, total_comm=total_comm,
+        cov_districts=cov_districts, cov_types=cov_types,
+        brands=brands, status_counts=status_counts,
+        capacities=KW_CAPACITIES,
+    )
+
+
+# ==========================
+# VENDOR COMPARISON (admin)
+# ==========================
+@app.route("/vendor-compare")
+@login_required
+def vendor_compare():
+    import json as _json, statistics as _stat
+    ids_raw = request.args.getlist("ids")
+    if not ids_raw:
+        # default: first two vendors regardless of active status
+        defaults = Vendor.query.order_by(Vendor.id).limit(2).all()
+        ids_raw  = [str(v.id) for v in defaults]
+    ids     = [int(i) for i in ids_raw if str(i).isdigit()][:5]  # max 5
+    vendors = Vendor.query.filter(Vendor.id.in_(ids)).all()
+
+    all_vendors = Vendor.query.filter_by(is_active=True).order_by(Vendor.company_name).all()
+    compare_data = []
+    for v in vendors:
+        leads     = Lead.query.filter_by(vendor_id=v.id).all()
+        total_l   = len(leads)
+        completed = sum(1 for l in leads if l.status == "Completed")
+        conv_pct  = round(completed / total_l * 100, 1) if total_l else 0
+        ratings   = VendorRating.query.filter_by(vendor_id=v.id).all()
+        avg_r     = round(_stat.mean(r.rating for r in ratings), 1) if ratings else 0
+        approved  = VendorQuotation.query.filter_by(vendor_id=v.id, status="Approved").all()
+        total_rev = sum(q.net_price   for q in approved)
+        total_com = sum(q.commission  for q in approved)
+
+        # Best pricing per capacity (Residential, lowest final_price)
+        pricing_res = VendorPricing.query.filter_by(
+            vendor_id=v.id, project_type="Residential"
+        ).order_by(VendorPricing.capacity_kw).all()
+        pricing_map = {p.capacity_kw: p for p in pricing_res}
+
+        commissions = VendorCommission.query.filter_by(vendor_id=v.id).all()
+        avg_comm = round(sum(c.hgs_commission for c in commissions) / len(commissions), 0) \
+                   if commissions else 0
+
+        profile = VendorProfile.query.filter_by(vendor_id=v.id).first()
+        brands  = []
+        if profile and profile.brands_supported:
+            brands = [b.strip() for b in profile.brands_supported.split(",") if b.strip()]
+
+        # warranty from first pricing record
+        warranty = 0
+        if pricing_res:
+            warranty = pricing_res[0].warranty_years or 0
+
+        compare_data.append({
+            "vendor":      v,
+            "total_leads": total_l,
+            "completed":   completed,
+            "pending":     total_l - completed,
+            "conv_pct":    conv_pct,
+            "avg_rating":  avg_r,
+            "total_rev":   total_rev,
+            "total_comm":  total_com,
+            "avg_comm":    avg_comm,
+            "pricing_map": pricing_map,
+            "brands":      brands,
+            "warranty":    warranty,
+            "profile":     profile,
+        })
+
+    return render_template("vendor_compare.html",
+        compare_data=compare_data,
+        all_vendors=all_vendors,
+        selected_ids=ids,
+        capacities=KW_CAPACITIES,
+    )
+
+
+# ==========================
+# VENDOR ANALYTICS (admin)
+# ==========================
+@app.route("/vendor-analytics")
+@login_required
+def vendor_analytics():
+    import json as _json, statistics as _stat
+    vendors = Vendor.query.all()
+    rows = []
+    for v in vendors:
+        leads     = Lead.query.filter_by(vendor_id=v.id).all()
+        total_l   = len(leads)
+        completed = sum(1 for l in leads if l.status == "Completed")
+        conv_pct  = round(completed / total_l * 100, 1) if total_l else 0
+        ratings   = VendorRating.query.filter_by(vendor_id=v.id).all()
+        avg_r     = round(_stat.mean(r.rating for r in ratings), 1) if ratings else 0
+        approved  = VendorQuotation.query.filter_by(vendor_id=v.id, status="Approved").all()
+        total_rev = sum(q.net_price  for q in approved)
+        total_com = sum(q.commission for q in approved)
+        # lowest residential price across capacities
+        res_prices = VendorPricing.query.filter_by(
+            vendor_id=v.id, project_type="Residential"
+        ).filter(VendorPricing.final_price > 0).all()
+        min_price = min((p.final_price for p in res_prices), default=0)
+        avg_comm  = round(sum(p.hgs_commission for p in res_prices) / len(res_prices), 0) \
+                    if res_prices else 0
+        rows.append({
+            "vendor":    v, "total_leads": total_l,
+            "completed": completed, "conv_pct": conv_pct,
+            "avg_rating":avg_r, "total_rev": total_rev,
+            "total_comm":total_com, "min_price": min_price,
+            "avg_comm":  avg_comm,
+        })
+
+    top_commission  = sorted(rows, key=lambda x: -x["avg_comm"])[:10]
+    top_low_price   = [r for r in sorted(rows, key=lambda x: x["min_price"])
+                       if r["min_price"] > 0][:10]
+    top_conversion  = sorted(rows, key=lambda x: -x["conv_pct"])[:10]
+    top_rated       = sorted(rows, key=lambda x: -x["avg_rating"])[:10]
+    top_revenue     = sorted(rows, key=lambda x: -x["total_rev"])[:10]
+    top_completed   = sorted(rows, key=lambda x: -x["completed"])[:10]
+
+    return render_template("vendor_analytics.html",
+        top_commission=top_commission,
+        top_low_price=top_low_price,
+        top_conversion=top_conversion,
+        top_rated=top_rated,
+        top_revenue=top_revenue,
+        top_completed=top_completed,
+    )
+
 
 # ==========================
 # ADD VENDOR (admin)
@@ -2350,18 +3016,49 @@ def _generate_strong_password():
 @app.route("/admin-management")
 @super_admin_required
 def admin_management():
-    users   = User.query.order_by(User.id.asc()).all()
-    vendors = Vendor.query.order_by(Vendor.id.asc()).all()
-    # Annotate vendors with lead counts
+    # ── Users pagination ──
+    try:
+        u_page     = max(1, int(request.args.get("u_page", 1)))
+        u_per_page = int(request.args.get("u_per_page", 25))
+        if u_per_page not in (10, 25, 50, 100):
+            u_per_page = 25
+    except (ValueError, TypeError):
+        u_page = 1; u_per_page = 25
+
+    u_total       = User.query.count()
+    u_total_pages = max(1, (u_total + u_per_page - 1) // u_per_page)
+    u_page        = min(u_page, u_total_pages)
+    users         = User.query.order_by(User.id.asc())\
+                        .offset((u_page - 1) * u_per_page).limit(u_per_page).all()
+
+    # ── Vendors pagination ──
+    try:
+        v_page     = max(1, int(request.args.get("v_page", 1)))
+        v_per_page = int(request.args.get("v_per_page", 25))
+        if v_per_page not in (10, 25, 50, 100):
+            v_per_page = 25
+    except (ValueError, TypeError):
+        v_page = 1; v_per_page = 25
+
+    v_total       = Vendor.query.count()
+    v_total_pages = max(1, (v_total + v_per_page - 1) // v_per_page)
+    v_page        = min(v_page, v_total_pages)
+    vendors       = Vendor.query.order_by(Vendor.id.asc())\
+                        .offset((v_page - 1) * v_per_page).limit(v_per_page).all()
     for v in vendors:
         v._total_leads     = Lead.query.filter_by(vendor_id=v.id).count()
         v._completed_leads = Lead.query.filter_by(vendor_id=v.id, status="Completed").count()
+
+    from flask import url_for as _uf
+    u_base_url = _uf("admin_management", v_page=v_page, v_per_page=v_per_page)
+    v_base_url = _uf("admin_management", u_page=u_page, u_per_page=u_per_page)
+
     return render_template(
         "admin_management.html",
-        users=users,
-        vendors=vendors,
-        districts=UP_DISTRICTS,
-        is_super=True
+        users=users, vendors=vendors,
+        districts=UP_DISTRICTS, is_super=True,
+        u_page=u_page, u_per_page=u_per_page, u_total=u_total, u_total_pages=u_total_pages, u_base_url=u_base_url,
+        v_page=v_page, v_per_page=v_per_page, v_total=v_total, v_total_pages=v_total_pages, v_base_url=v_base_url,
     )
 
 # ---- Admin CRUD ----

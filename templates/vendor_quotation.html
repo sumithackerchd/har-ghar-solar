@@ -194,9 +194,11 @@
 
 <!-- NEW QUOTATION MODAL -->
 <div id="qModal" class="modal-overlay" onclick="if(event.target===this)this.style.display='none'">
-  <div class="modal-box">
+  <div class="modal-box" style="max-width:640px;">
     <h5><i class="fa-solid fa-file-plus me-2"></i>New Quotation</h5>
     <div id="qAlert" style="display:none;padding:10px 14px;border-radius:10px;margin-bottom:14px;font-size:14px;font-weight:600;"></div>
+
+    <!-- Step 1: Customer + Capacity -->
     <div class="form-grid">
       <div class="form-group">
         <label>Customer Name *</label>
@@ -207,8 +209,12 @@
         <input type="text" id="q_phone" placeholder="Mobile number">
       </div>
       <div class="form-group">
+        <label>Customer Address</label>
+        <input type="text" id="q_address" placeholder="Address">
+      </div>
+      <div class="form-group">
         <label>Capacity (KW) *</label>
-        <select id="q_cap">
+        <select id="q_cap" onchange="autoFillPricing()">
           {% for c in capacities %}
           <option value="{{ c }}">{{ c }} KW</option>
           {% endfor %}
@@ -216,7 +222,7 @@
       </div>
       <div class="form-group">
         <label>Project Type</label>
-        <select id="q_type">
+        <select id="q_type" onchange="autoFillPricing()">
           <option>Residential</option>
           <option>Commercial</option>
           <option>Industrial</option>
@@ -224,50 +230,62 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Brand</label>
-        <select id="q_brand">
-          <option value="">— Select —</option>
-          {% for b in brands %}
-          <option value="{{ b }}">{{ b }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Panel Brand</label>
-        <input type="text" id="q_panel" placeholder="e.g. Waaree">
-      </div>
-      <div class="form-group">
-        <label>Inverter Brand</label>
-        <input type="text" id="q_inverter" placeholder="e.g. Havells">
-      </div>
-      <div class="form-group">
-        <label>Structure Type</label>
-        <input type="text" id="q_structure" placeholder="e.g. GI / MS">
-      </div>
-      <div class="form-group">
-        <label>Gross Price (₹) *</label>
-        <input type="number" id="q_gross" placeholder="0" min="0" oninput="calcNet()">
-      </div>
-      <div class="form-group">
-        <label>Subsidy Amount (₹)</label>
-        <input type="number" id="q_subsidy" placeholder="0" min="0" oninput="calcNet()">
-      </div>
-      <div class="form-group">
-        <label>Commission for HGS (₹)</label>
-        <input type="number" id="q_commission" placeholder="0" min="0">
+        <label>Remarks</label>
+        <input type="text" id="q_remarks" placeholder="Any notes…">
       </div>
     </div>
-    <div class="price-row">
-      <div><div class="amount" id="disp_gross">₹0</div><div class="lbl">Gross Price</div></div>
-      <div style="font-size:22px;color:#aaa">−</div>
-      <div><div class="amount" id="disp_subsidy" style="color:#f57c00">₹0</div><div class="lbl">Subsidy</div></div>
-      <div style="font-size:22px;color:#aaa">=</div>
-      <div><div class="amount" id="disp_net" style="color:#1565c0">₹0</div><div class="lbl">Net Price</div></div>
+
+    <!-- Auto-filled pricing section -->
+    <div id="pricingPreview" style="display:none;background:#f0f7f4;border-radius:12px;padding:14px 18px;margin:10px 0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <strong style="color:#005b38;font-size:13px;"><i class="fa-solid fa-circle-check me-1"></i>Pricing loaded from your configured rates</strong>
+        <span id="pricingBrand" style="font-size:12px;color:#888;"></span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;font-size:12px;">
+        <div><div style="color:#888;font-size:10px;font-weight:700;text-transform:uppercase">Component Total</div>
+          <strong id="p_comp_total" style="color:#1565c0">₹0</strong></div>
+        <div><div style="color:#888;font-size:10px;font-weight:700;text-transform:uppercase">GST</div>
+          <strong id="p_gst_amt" style="color:#e65100">₹0</strong></div>
+        <div><div style="color:#888;font-size:10px;font-weight:700;text-transform:uppercase">Gross Price</div>
+          <strong id="p_gross" style="color:#333">₹0</strong></div>
+        <div><div style="color:#888;font-size:10px;font-weight:700;text-transform:uppercase">Vendor Selling</div>
+          <strong id="p_vendor_selling" style="color:#333">₹0</strong></div>
+        <div><div style="color:#888;font-size:10px;font-weight:700;text-transform:uppercase">HGS Commission</div>
+          <strong id="p_hgs_comm" style="color:#333">₹0</strong></div>
+        <div><div style="color:#888;font-size:10px;font-weight:700;text-transform:uppercase">Customer Final</div>
+          <strong id="p_final" style="color:#005b38;font-size:14px">₹0</strong></div>
+      </div>
+      <div style="margin-top:10px;">
+        <label style="font-size:12px;font-weight:700;color:#555;">Govt Subsidy (₹)</label>
+        <input type="number" id="q_subsidy" placeholder="0" min="0" style="width:160px;padding:6px 10px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;margin-left:8px;" oninput="recalcFinal()">
+        <span style="font-size:12px;color:#888;margin-left:8px;">Customer pays: <strong id="p_net_final" style="color:#005b38">₹0</strong></span>
+      </div>
     </div>
-    <div class="form-group full-col" style="margin-top:14px;">
-      <label>Remarks</label>
-      <textarea id="q_remarks" placeholder="Any additional notes..."></textarea>
+
+    <!-- Fallback manual gross (shown only when no pricing configured) -->
+    <div id="manualPricingSection" style="display:none;background:#fff3cd;border-radius:12px;padding:12px 16px;margin:10px 0;font-size:13px;color:#856404;font-weight:600;">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i>
+      No pricing configured for this capacity and type. Enter gross price manually.
+      <div style="margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:3px;">Gross Price (₹) *</label>
+          <input type="number" id="q_gross_manual" placeholder="0" min="0" style="padding:7px 10px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;width:140px;" oninput="calcManualNet()">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:3px;">Subsidy (₹)</label>
+          <input type="number" id="q_subsidy_manual" placeholder="0" min="0" style="padding:7px 10px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;width:120px;" oninput="calcManualNet()">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:3px;">HGS Commission (₹)</label>
+          <input type="number" id="q_comm_manual" placeholder="0" min="0" style="padding:7px 10px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;width:140px;">
+        </div>
+      </div>
     </div>
+
+    <div id="qLoadingSpinner" style="display:none;text-align:center;padding:10px;color:#005b38;font-size:13px;font-weight:700;">
+      <i class="fa-solid fa-spinner fa-spin me-2"></i>Loading pricing…
+    </div>
+
     <div class="modal-footer">
       <button class="btn-cancel" onclick="document.getElementById('qModal').style.display='none'">Cancel</button>
       <button class="btn-save" id="qSaveBtn" onclick="createQuotation()">
@@ -278,50 +296,123 @@
 </div>
 
 <script>
-function calcNet() {
-  var gross   = parseFloat(document.getElementById('q_gross').value)   || 0;
-  var subsidy = parseFloat(document.getElementById('q_subsidy').value) || 0;
-  var net = gross - subsidy;
-  document.getElementById('disp_gross').textContent   = '₹' + gross.toLocaleString('en-IN');
-  document.getElementById('disp_subsidy').textContent = '₹' + subsidy.toLocaleString('en-IN');
-  document.getElementById('disp_net').textContent     = '₹' + net.toLocaleString('en-IN');
+var _qPricing = null; // cached pricing data
+
+function autoFillPricing() {
+  var cap   = document.getElementById('q_cap').value;
+  var ptype = document.getElementById('q_type').value;
+  var preview  = document.getElementById('pricingPreview');
+  var manual   = document.getElementById('manualPricingSection');
+  var spinner  = document.getElementById('qLoadingSpinner');
+
+  preview.style.display = 'none';
+  manual.style.display  = 'none';
+  spinner.style.display = 'block';
+
+  fetch('/vendor-pricing/get?cap=' + cap + '&type=' + encodeURIComponent(ptype))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      spinner.style.display = 'none';
+      if (d.ok) {
+        _qPricing = d;
+        document.getElementById('pricingBrand').textContent =
+          (d.brand || '') + (d.warranty_years ? ' | ' + d.warranty_years + 'yr warranty' : '');
+        document.getElementById('p_comp_total').textContent   = '₹' + (d.comp_total   || 0).toLocaleString('en-IN');
+        document.getElementById('p_gst_amt').textContent      = '₹' + (d.gst_amount   || 0).toLocaleString('en-IN');
+        document.getElementById('p_gross').textContent        = '₹' + (d.gross_price  || 0).toLocaleString('en-IN');
+        document.getElementById('p_vendor_selling').textContent='₹' + (d.vendor_price || 0).toLocaleString('en-IN');
+        document.getElementById('p_hgs_comm').textContent     = '₹' + (d.hgs_commission||0).toLocaleString('en-IN');
+        document.getElementById('p_final').textContent        = '₹' + (d.final_price  || 0).toLocaleString('en-IN');
+        document.getElementById('q_subsidy').value            = '';
+        recalcFinal();
+        preview.style.display = 'block';
+      } else {
+        _qPricing = null;
+        manual.style.display = 'block';
+      }
+    })
+    .catch(function(){
+      spinner.style.display = 'none';
+      _qPricing = null;
+      manual.style.display = 'block';
+    });
+}
+
+function recalcFinal() {
+  if (!_qPricing) return;
+  var subsidy  = parseFloat(document.getElementById('q_subsidy').value) || 0;
+  var finalAmt = (_qPricing.final_price || 0) - subsidy;
+  document.getElementById('p_net_final').textContent = '₹' + Math.max(0, finalAmt).toLocaleString('en-IN');
+}
+
+function calcManualNet() {
+  // For manual section — no display element needed, just used on submit
 }
 
 function createQuotation() {
-  var alert = document.getElementById('qAlert');
-  var btn   = document.getElementById('qSaveBtn');
-  var name  = document.getElementById('q_name').value.trim();
-  var gross = document.getElementById('q_gross').value;
-  if (!name || !gross) {
-    alert.style.display='block'; alert.style.background='#fff3cd'; alert.style.color='#856404';
-    alert.textContent='Customer name and gross price are required.'; return;
+  var alertEl = document.getElementById('qAlert');
+  var btn     = document.getElementById('qSaveBtn');
+  var name    = document.getElementById('q_name').value.trim();
+  if (!name) {
+    alertEl.style.display='block'; alertEl.style.background='#fff3cd'; alertEl.style.color='#856404';
+    alertEl.textContent='Customer name is required.'; return;
   }
-  btn.disabled=true; btn.textContent='Saving…';
+
   var fd = new FormData();
   fd.append('customer_name',  name);
   fd.append('customer_phone', document.getElementById('q_phone').value);
   fd.append('capacity_kw',    document.getElementById('q_cap').value);
   fd.append('project_type',   document.getElementById('q_type').value);
-  fd.append('brand',          document.getElementById('q_brand').value);
-  fd.append('panel_brand',    document.getElementById('q_panel').value);
-  fd.append('inverter_brand', document.getElementById('q_inverter').value);
-  fd.append('structure_type', document.getElementById('q_structure').value);
-  fd.append('gross_price',    gross);
-  fd.append('subsidy_amount', document.getElementById('q_subsidy').value);
-  fd.append('commission',     document.getElementById('q_commission').value);
   fd.append('remarks',        document.getElementById('q_remarks').value);
+
+  if (_qPricing) {
+    // Auto-fill from pricing
+    fd.append('subsidy_amount', document.getElementById('q_subsidy').value || 0);
+    fd.append('commission',     _qPricing.hgs_commission || 0);
+    fd.append('gross_price',    _qPricing.gross_price    || 0);
+  } else {
+    // Manual
+    var gross = document.getElementById('q_gross_manual').value;
+    if (!gross) {
+      alertEl.style.display='block'; alertEl.style.background='#fff3cd'; alertEl.style.color='#856404';
+      alertEl.textContent='Gross price is required.'; return;
+    }
+    fd.append('gross_price',    gross);
+    fd.append('subsidy_amount', document.getElementById('q_subsidy_manual').value || 0);
+    fd.append('commission',     document.getElementById('q_comm_manual').value    || 0);
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Saving…';
+
   fetch('/vendor-quotation/create', { method:'POST', body:fd })
-    .then(r => r.json())
-    .then(d => {
-      btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-floppy-disk me-2"></i>Create Quotation';
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Create Quotation';
       if (d.ok) {
         location.reload();
       } else {
-        alert.style.display='block'; alert.style.background='#f8d7da'; alert.style.color='#842029';
-        alert.textContent = d.error || 'Error creating quotation.';
+        alertEl.style.display='block'; alertEl.style.background='#f8d7da'; alertEl.style.color='#842029';
+        alertEl.textContent = d.error || 'Error creating quotation.';
       }
+    })
+    .catch(function(){
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Create Quotation';
+      alertEl.style.display='block'; alertEl.style.background='#f8d7da'; alertEl.style.color='#842029';
+      alertEl.textContent = 'Network error. Please try again.';
     });
 }
+
+// Trigger auto-fill on modal open
+document.addEventListener('DOMContentLoaded', function() {
+  var openBtn = document.querySelector('[onclick*="qModal"]');
+  if (openBtn) {
+    var orig = openBtn.getAttribute('onclick');
+    openBtn.setAttribute('onclick', orig + '; autoFillPricing();');
+  }
+});
 </script>
 
 <!-- ── REJECT MODAL ── -->

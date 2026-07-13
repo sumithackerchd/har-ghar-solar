@@ -1,4 +1,5 @@
 {% extends 'admin_base.html' %}
+{% from 'partials/pagination.html' import smart_pagination %}
 {% block page_title %}Vendor Management{% endblock %}
 {% block breadcrumb %}
   <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
@@ -15,6 +16,12 @@
   <div class="d-flex gap-2 flex-wrap">
     <a href="/vendor-add" class="btn-crm-primary">
       <i class="bi bi-person-plus-fill me-1"></i> Add Vendor
+    </a>
+    <a href="/vendor-analytics" class="btn-crm-secondary">
+      <i class="fa-solid fa-chart-bar me-1"></i> Analytics
+    </a>
+    <a href="/vendor-compare" class="btn-crm-secondary">
+      <i class="fa-solid fa-scale-balanced me-1"></i> Compare
     </a>
     <a href="/import-vendors" class="btn-crm-secondary">
       <i class="bi bi-file-earmark-arrow-up me-1"></i> Import Excel
@@ -140,7 +147,14 @@
                   title="Actions">
             <i class="bi bi-three-dots-vertical"></i>
           </button>
-          <div class="actions-menu" id="vmenu-{{ v.id }}" style="display:none;min-width:160px">
+          <div class="actions-menu" id="vmenu-{{ v.id }}" style="display:none;min-width:175px">
+            <a href="/vendor-detail/{{ v.id }}" class="actions-item">
+              <i class="fa-solid fa-eye me-2"></i>View Vendor
+            </a>
+            <a href="/vendor-compare?ids={{ v.id }}" class="actions-item">
+              <i class="fa-solid fa-scale-balanced me-2"></i>Compare
+            </a>
+            <div class="actions-divider"></div>
             <a href="/vendor-edit/{{ v.id }}" class="actions-item">
               <i class="bi bi-pencil-square me-2"></i>Edit Vendor
             </a>
@@ -166,8 +180,45 @@
     </tbody>
   </table>
 </div>
+{{ smart_pagination(page, total_pages, total_count, per_page, base_url) }}
+
+<!-- TOAST -->
+<div id="bulkToast" style="
+  position:fixed;bottom:28px;right:28px;z-index:9999;
+  min-width:280px;max-width:380px;padding:14px 20px;
+  border-radius:12px;font-size:14px;font-weight:700;
+  box-shadow:0 6px 24px rgba(0,0,0,.18);display:none;
+  transition:opacity .3s;opacity:0;">
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div id="deleteConfirmModal" style="
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:9998;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:16px;padding:32px 36px;
+    max-width:420px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.2);text-align:center;">
+    <div style="font-size:40px;margin-bottom:12px;">&#9888;&#65039;</div>
+    <h5 style="color:#c62828;font-weight:900;margin-bottom:8px;">Delete Vendors?</h5>
+    <p style="color:#555;font-size:14px;margin-bottom:24px;" id="deleteConfirmMsg">
+      This will permanently delete the selected vendors and unassign their leads.
+    </p>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button onclick="document.getElementById('deleteConfirmModal').style.display='none'"
+        style="padding:10px 24px;border-radius:10px;border:2px solid #ccc;
+          background:white;font-weight:700;cursor:pointer;font-size:14px;">
+        Cancel
+      </button>
+      <button id="confirmDeleteBtn"
+        style="padding:10px 24px;border-radius:10px;border:none;
+          background:#dc3545;color:white;font-weight:700;cursor:pointer;font-size:14px;">
+        Yes, Delete
+      </button>
+    </div>
+  </div>
+</div>
 
 <script>
+/* ── DROPDOWN MENU ── */
 function toggleVendorMenu(btn, id) {
   document.querySelectorAll('.actions-menu').forEach(function(m) {
     if (m.id !== 'vmenu-' + id) m.style.display = 'none';
@@ -180,6 +231,125 @@ function toggleVendorMenu(btn, id) {
       document.removeEventListener('click', closeMenu);
     }
   });
+}
+
+/* ── SELECT ALL ── */
+document.getElementById('selectAll').addEventListener('change', function() {
+  var checked = this.checked;
+  document.querySelectorAll('.vendor-cb').forEach(function(cb) { cb.checked = checked; });
+  updateBulkBar();
+});
+
+function updateBulkBar() {
+  var checked = document.querySelectorAll('.vendor-cb:checked');
+  var bar     = document.getElementById('bulkBar');
+  var selAll  = document.getElementById('selectAll');
+  var total   = document.querySelectorAll('.vendor-cb').length;
+  bar.style.display = checked.length > 0 ? 'flex' : 'none';
+  selAll.indeterminate = checked.length > 0 && checked.length < total;
+  selAll.checked       = checked.length === total && total > 0;
+}
+
+function getSelectedIds() {
+  return Array.from(document.querySelectorAll('.vendor-cb:checked')).map(function(cb) {
+    return cb.value;
+  });
+}
+
+/* ── TOAST ── */
+function showToast(msg, isErr) {
+  var t = document.getElementById('bulkToast');
+  t.style.background = isErr ? '#f8d7da' : '#d1e7dd';
+  t.style.color      = isErr ? '#842029' : '#0a3622';
+  t.style.border     = '1.5px solid ' + (isErr ? '#f5c2c7' : '#a3cfbb');
+  t.textContent      = msg;
+  t.style.display    = 'block';
+  setTimeout(function() { t.style.opacity = '1'; }, 10);
+  setTimeout(function() {
+    t.style.opacity = '0';
+    setTimeout(function() { t.style.display = 'none'; }, 320);
+  }, 3200);
+}
+
+/* ── BULK ACTION ── */
+function bulkAction(action) {
+  var ids = getSelectedIds();
+  if (!ids.length) { showToast('No vendors selected.', true); return; }
+
+  if (action === 'delete') {
+    var modal = document.getElementById('deleteConfirmModal');
+    document.getElementById('deleteConfirmMsg').textContent =
+      'This will permanently delete ' + ids.length + ' vendor(s) and unassign their leads.';
+    modal.style.display = 'flex';
+    document.getElementById('confirmDeleteBtn').onclick = function() {
+      modal.style.display = 'none';
+      executeBulk('delete', ids);
+    };
+    return;
+  }
+
+  if (action === 'export') {
+    // Export = file download via hidden form POST
+    var form = document.getElementById('bulkForm');
+    document.getElementById('bulkAction').value = 'export';
+    var container = document.getElementById('bulkIds');
+    container.innerHTML = '';
+    ids.forEach(function(id) {
+      var inp = document.createElement('input');
+      inp.type = 'hidden'; inp.name = 'vendor_ids'; inp.value = id;
+      container.appendChild(inp);
+    });
+    form.action = '/vendor-bulk-ajax';
+    form.method = 'POST';
+    form.submit();
+    return;
+  }
+
+  executeBulk(action, ids);
+}
+
+function executeBulk(action, ids) {
+  var fd = new FormData();
+  fd.append('action', action);
+  ids.forEach(function(id) { fd.append('vendor_ids', id); });
+
+  fetch('/vendor-bulk-ajax', { method: 'POST', body: fd })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        showToast('✓ ' + d.message, false);
+        refreshVendorRows(d);
+      } else {
+        showToast('✗ ' + (d.error || 'Error.'), true);
+      }
+    })
+    .catch(function() { showToast('✗ Network error. Please try again.', true); });
+}
+
+function refreshVendorRows(d) {
+  var ids = d.ids || [];
+  if (d.action === 'delete') {
+    ids.forEach(function(id) {
+      var row = document.querySelector('.vendor-cb[value="' + id + '"]');
+      if (row) row.closest('tr').remove();
+    });
+  } else if (d.action === 'enable' || d.action === 'disable') {
+    var isActive = d.action === 'enable';
+    ids.forEach(function(id) {
+      var cb = document.querySelector('.vendor-cb[value="' + id + '"]');
+      if (!cb) return;
+      var badge = cb.closest('tr').querySelector('td:nth-child(8) .crm-badge');
+      if (badge) {
+        badge.textContent = isActive ? 'Active' : 'Inactive';
+        badge.className   = 'crm-badge ' + (isActive ? 'crm-badge-completed' : 'crm-badge-cancelled');
+      }
+    });
+  }
+  // Uncheck all after action
+  document.querySelectorAll('.vendor-cb').forEach(function(cb) { cb.checked = false; });
+  document.getElementById('selectAll').checked = false;
+  document.getElementById('selectAll').indeterminate = false;
+  document.getElementById('bulkBar').style.display = 'none';
 }
 </script>
 

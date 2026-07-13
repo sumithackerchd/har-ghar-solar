@@ -1,0 +1,110 @@
+{# ── Smart Pagination Macro ─────────────────────────────────────────────────
+   Usage:
+     {% from 'partials/pagination.html' import smart_pagination %}
+     {{ smart_pagination(page, total_pages, total_count, per_page, base_url) }}
+
+   base_url : URL with existing query params BUT without page= and per_page=
+              e.g.  url_for('vendor_list', district=f_district, active=f_active)
+#}
+{% macro smart_pagination(page, total_pages, total_count, per_page, base_url) %}
+{% if total_count > 0 %}
+{# ── helpers ── #}
+{% set start_rec = (page - 1) * per_page + 1 %}
+{% set end_rec   = [page * per_page, total_count] | min %}
+
+<div class="smart-pag-wrap">
+  <!-- Count label -->
+  <div class="spag-info">
+    Showing <strong>{{ start_rec }}–{{ end_rec }}</strong> of <strong>{{ total_count }}</strong> records
+  </div>
+
+  <!-- Navigation -->
+  <div class="spag-nav" id="spagNav">
+    {# Prev #}
+    {% if page > 1 %}
+      <a class="spag-btn" href="{{ base_url }}&page={{ page - 1 }}&per_page={{ per_page }}">&laquo; Prev</a>
+    {% else %}
+      <span class="spag-btn spag-disabled">&laquo; Prev</span>
+    {% endif %}
+
+    {# Page window: first, ...window..., last #}
+    {% set window = 2 %}
+    {% for p in range(1, total_pages + 1) %}
+      {% if p == 1 or p == total_pages
+           or (p >= page - window and p <= page + window) %}
+        {# Insert ellipsis before window start #}
+        {% if p == page - window and p > 2 %}
+          <span class="spag-ellipsis">…</span>
+        {% endif %}
+
+        {% if p == page %}
+          <span class="spag-btn spag-active">{{ p }}</span>
+        {% else %}
+          <a class="spag-btn" href="{{ base_url }}&page={{ p }}&per_page={{ per_page }}">{{ p }}</a>
+        {% endif %}
+
+        {# Insert ellipsis after window end #}
+        {% if p == page + window and p < total_pages - 1 %}
+          <span class="spag-ellipsis">…</span>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {# Next #}
+    {% if page < total_pages %}
+      <a class="spag-btn" href="{{ base_url }}&page={{ page + 1 }}&per_page={{ per_page }}">Next &raquo;</a>
+    {% else %}
+      <span class="spag-btn spag-disabled">Next &raquo;</span>
+    {% endif %}
+  </div>
+
+  <!-- Controls: rows-per-page + go-to-page -->
+  <div class="spag-controls">
+    <label class="spag-label">Rows:</label>
+    <select class="spag-select" onchange="spagPerPage(this, '{{ base_url }}', {{ page }})">
+      {% for n in [10, 25, 50, 100] %}
+        <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>{{ n }}</option>
+      {% endfor %}
+    </select>
+    <label class="spag-label" style="margin-left:12px">Go:</label>
+    <input type="number" class="spag-go-input" id="spagGoInput_{{ page }}"
+           min="1" max="{{ total_pages }}" placeholder="{{ page }}"
+           onkeydown="if(event.key==='Enter')spagGo(this,'{{ base_url }}',{{ per_page }},{{ total_pages }})">
+    <button class="spag-go-btn"
+            onclick="spagGo(document.getElementById('spagGoInput_{{ page }}'),'{{ base_url }}',{{ per_page }},{{ total_pages }})">Go</button>
+  </div>
+</div>
+
+<style>
+.smart-pag-wrap{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:18px 0 8px;padding:10px 16px;background:#f9fafb;border-radius:12px;border:1px solid #e8f5e9}
+.spag-info{font-size:13px;color:#555;flex:1 1 200px}
+.spag-nav{display:flex;gap:3px;flex-wrap:wrap;align-items:center}
+.spag-btn{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:32px;padding:0 8px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;color:#005b38;background:#fff;border:1.5px solid #e0e0e0;cursor:pointer;transition:.15s}
+.spag-btn:hover{background:#e8f5e9;border-color:#005b38}
+.spag-active{background:#005b38!important;color:#fff!important;border-color:#005b38!important;cursor:default}
+.spag-disabled{color:#bbb;cursor:not-allowed;background:#f5f5f5;border-color:#e8e8e8}
+.spag-ellipsis{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:32px;font-size:14px;color:#aaa;font-weight:700}
+.spag-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.spag-label{font-size:12px;font-weight:700;color:#555}
+.spag-select{padding:5px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;cursor:pointer;outline:none}
+.spag-select:focus{border-color:#005b38}
+.spag-go-input{width:60px;padding:5px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;text-align:center}
+.spag-go-input:focus{border-color:#005b38}
+.spag-go-btn{padding:5px 14px;background:#005b38;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+.spag-go-btn:hover{background:#00a651}
+</style>
+<script>
+function spagPerPage(sel, base, curPage) {
+  var pp = sel.value;
+  // Recalculate page to keep roughly same position
+  window.location.href = base + '&page=1&per_page=' + pp;
+}
+function spagGo(inp, base, pp, maxPage) {
+  var p = parseInt(inp.value);
+  if (isNaN(p) || p < 1) p = 1;
+  if (p > maxPage) p = maxPage;
+  window.location.href = base + '&page=' + p + '&per_page=' + pp;
+}
+</script>
+{% endif %}
+{% endmacro %}

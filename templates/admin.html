@@ -1,5 +1,5 @@
 {% extends 'admin_base.html' %}
-
+{% from 'partials/pagination.html' import smart_pagination %}
 {% block page_title %}Dashboard{% endblock %}
 {% block breadcrumb %}<li class="breadcrumb-item active">Dashboard</li>{% endblock %}
 
@@ -354,7 +354,7 @@
   </div>
 
   <!-- PAGINATION -->
-  <div class="table-pagination" id="tablePagination"></div>
+  {{ smart_pagination(page, leads_total_pages, leads_total_count, per_page, leads_base_url) }}
 </div>
 
 <!-- ============ FOLLOW UP MODAL ============ -->

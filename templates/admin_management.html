@@ -1,5 +1,5 @@
 {% extends 'admin_base.html' %}
-
+{% from 'partials/pagination.html' import smart_pagination %}
 {% block page_title %}User Management{% endblock %}
 {% block breadcrumb %}
   <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
@@ -141,8 +141,8 @@
         </div>
       </div>
     </div>
-    <!-- Admin Pagination -->
-    <div id="adminPagination" class="d-flex gap-1 justify-content-end mt-3 flex-wrap"></div>
+    <!-- Users Pagination -->
+    {{ smart_pagination(u_page, u_total_pages, u_total, u_per_page, u_base_url) }}
   </div>
 
   <!-- ================================================
@@ -234,8 +234,8 @@
         </div>
       </div>
     </div>
-    <!-- Vendor Pagination -->
-    <div id="vendorPagination" class="d-flex gap-1 justify-content-end mt-3 flex-wrap"></div>
+    <!-- Vendors Pagination -->
+    {{ smart_pagination(v_page, v_total_pages, v_total, v_per_page, v_base_url) }}
   </div>
 
 </div><!-- /.tab-content -->
@@ -896,3 +896,4 @@
 }());
 </script>
 {% endblock %}
+

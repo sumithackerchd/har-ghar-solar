@@ -7,90 +7,62 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
-    * { box-sizing: border-box; }
-    body { background: #eef4f2; font-family: 'Segoe UI', sans-serif; margin: 0; }
-    .v-sidebar {
-      width: 220px; height: 100vh; position: fixed; left: 0; top: 0;
-      background: #1a3c2f; padding: 28px 18px; color: white; overflow-y: auto;
-    }
-    .v-sidebar .brand { font-size: 22px; font-weight: 900; color: #ffc107; margin-bottom: 10px; }
-    .v-sidebar .vendor-info { font-size: 12px; color: #a5d6a7; margin-bottom: 28px; line-height: 1.6; }
-    .v-sidebar a {
-      display: flex; align-items: center; gap: 10px; color: white; text-decoration: none;
-      font-weight: 700; font-size: 14px; padding: 11px 12px; border-radius: 12px; margin-bottom: 6px; transition: .2s;
-    }
-    .v-sidebar a:hover, .v-sidebar a.active { background: rgba(255,255,255,.15); }
-    .v-sidebar a.logout { margin-top: 30px; background: rgba(255,50,50,.15); }
-    .v-content { margin-left: 220px; padding: 22px 24px; }
-    .page-title { font-size: 24px; font-weight: 900; color: #005b38; margin-bottom: 6px; }
-    .page-sub { font-size: 12.5px; color: #888; margin-bottom: 16px; }
-
-    /* Tab bar */
-    .tab-bar { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
-    .tab-btn {
-      padding: 8px 18px; border-radius: 10px; font-weight: 700; font-size: 13px;
-      border: 2px solid #e0e0e0; background: white; cursor: pointer; transition: .15s; color: #555;
-    }
-    .tab-btn.active { background: #005b38; color: white; border-color: #005b38; }
-
-    /* Cards */
-    .pricing-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,.08); margin-bottom: 18px; }
-    .pricing-card .card-head {
-      background: #005b38; color: white; padding: 10px 18px;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .pricing-card .card-head h6 { margin: 0; font-weight: 800; font-size: 14px; }
-
-    /* Summary table */
-    table.ptable { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-    table.ptable th {
-      background: #f5f5f5; color: #333; padding: 8px 10px;
-      font-weight: 700; text-align: center; border-bottom: 2px solid #e0e0e0; white-space: nowrap;
-    }
-    table.ptable th.cap-col { text-align: left; }
-    table.ptable td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; text-align: center; }
-    table.ptable tr:last-child td { border-bottom: none; }
-    table.ptable tr:hover td { background: #f9fff9; }
-    .kw-label { font-weight: 800; color: #005b38; font-size: 13px; }
-    .final-price { font-weight: 800; color: #005b38; font-size: 13px; }
-
-    /* Inputs */
-    .mini-input {
-      width: 100%; min-width: 72px; max-width: 120px; padding: 5px 8px;
-      border: 1.5px solid #e0e0e0; border-radius: 7px; font-size: 12px;
-      outline: none; text-align: right;
-    }
-    .mini-input:focus { border-color: #00a651; }
-    .mini-input.txt { text-align: left; max-width: 130px; }
-    .mini-select {
-      padding: 5px 6px; border: 1.5px solid #e0e0e0; border-radius: 7px;
-      font-size: 12px; outline: none; min-width: 90px; max-width: 140px; width: 100%;
-    }
-    .mini-select:focus { border-color: #00a651; }
-
-    /* Component section */
-    .comp-section { padding: 16px 20px; }
-    .comp-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 12px; margin-bottom: 14px;
-    }
-    .comp-item label { font-size: 11px; font-weight: 700; color: #555; display: block; margin-bottom: 4px; }
-    .comp-item input, .comp-item select {
-      width: 100%; padding: 7px 10px; border: 1.5px solid #e0e0e0; border-radius: 8px;
-      font-size: 13px; outline: none;
-    }
-    .comp-item input:focus, .comp-item select:focus { border-color: #00a651; }
-    .comp-section-title {
-      font-size: 12px; font-weight: 800; color: #005b38; text-transform: uppercase;
-      letter-spacing: .4px; margin: 14px 0 8px; border-bottom: 1.5px solid #e8f5e9; padding-bottom: 4px;
-    }
-
-    .save-btn {
-      background: #005b38; color: white; border: none; border-radius: 10px;
-      padding: 10px 26px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 6px;
-    }
-    .save-btn:hover { background: #00a651; }
-    #alertBox { display:none; padding:11px 16px; border-radius:10px; margin-bottom:14px; font-weight:600; font-size:13px; }
+    *{box-sizing:border-box}
+    body{background:#eef4f2;font-family:'Segoe UI',sans-serif;margin:0}
+    /* ── Sidebar ── */
+    .v-sidebar{width:220px;height:100vh;position:fixed;left:0;top:0;background:#1a3c2f;padding:28px 18px;color:#fff;overflow-y:auto;z-index:100}
+    .v-sidebar .brand{font-size:22px;font-weight:900;color:#ffc107;margin-bottom:10px}
+    .v-sidebar .vendor-info{font-size:12px;color:#a5d6a7;margin-bottom:28px;line-height:1.6}
+    .v-sidebar a{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 12px;border-radius:12px;margin-bottom:6px;transition:.2s}
+    .v-sidebar a:hover,.v-sidebar a.active{background:rgba(255,255,255,.15)}
+    .v-sidebar a.logout{margin-top:30px;background:rgba(255,50,50,.15)}
+    .v-content{margin-left:220px;padding:22px 24px 100px}
+    /* ── Page header ── */
+    .page-title{font-size:24px;font-weight:900;color:#005b38;margin-bottom:4px}
+    .page-sub{font-size:12.5px;color:#888;margin-bottom:18px}
+    /* ── Alert ── */
+    #alertBox{display:none;padding:12px 18px;border-radius:10px;font-weight:700;font-size:13px;margin-bottom:16px}
+    /* ── Unsaved badge ── */
+    #unsavedBadge{display:none;background:#fff3cd;color:#856404;border:1.5px solid #ffc107;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-left:12px;vertical-align:middle}
+    /* ── Capacity tabs ── */
+    .cap-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+    .cap-tab{padding:8px 18px;border-radius:10px;font-weight:700;font-size:13px;border:2px solid #e0e0e0;background:#fff;cursor:pointer;transition:.15s;color:#555}
+    .cap-tab.active{background:#005b38;color:#fff;border-color:#005b38}
+    /* ── Card ── */
+    .p-card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.08);margin-bottom:18px}
+    .p-card-head{background:#005b38;color:#fff;padding:11px 20px;display:flex;justify-content:space-between;align-items:center}
+    .p-card-head h6{margin:0;font-weight:800;font-size:14px}
+    /* ── Base pricing table ── */
+    table.bpt{width:100%;border-collapse:collapse;font-size:13px}
+    table.bpt th{background:#f5f5f5;color:#333;padding:9px 12px;font-weight:700;text-align:center;border-bottom:2px solid #e0e0e0;white-space:nowrap}
+    table.bpt th.lft{text-align:left}
+    table.bpt td{padding:8px 10px;border-bottom:1px solid #f0f0f0;vertical-align:middle;text-align:center}
+    table.bpt tr:last-child td{border-bottom:none}
+    .ptype-label{font-weight:800;color:#005b38;font-size:13px;text-align:left}
+    .final-disp{font-weight:800;color:#005b38;font-size:13px}
+    .err-msg{display:none;font-size:11px;color:#dc3545;margin-top:2px;text-align:left}
+    /* ── Inputs ── */
+    .pi{width:100%;padding:6px 9px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;text-align:right;min-width:80px}
+    .pi:focus{border-color:#00a651}
+    .pi.invalid{border-color:#dc3545}
+    .pi.txt{text-align:left}
+    .ps{padding:6px 7px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;width:100%;min-width:100px}
+    .ps:focus{border-color:#00a651}
+    /* ── Advanced section ── */
+    .adv-toggle{width:100%;text-align:left;background:#f9f9f9;border:none;border-top:2px solid #e8f5e9;padding:10px 20px;font-weight:700;font-size:13px;color:#005b38;cursor:pointer;display:flex;align-items:center;gap:8px}
+    .adv-toggle:hover{background:#edf7f2}
+    .adv-body{display:none;padding:18px 20px 20px}
+    .adv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px}
+    .adv-item label{font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px}
+    .adv-item input,.adv-item select{width:100%;padding:7px 10px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none}
+    .adv-item input:focus,.adv-item select:focus{border-color:#00a651}
+    .adv-sec-title{font-size:11px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:.4px;margin:14px 0 8px;grid-column:1/-1;border-bottom:1px solid #eee;padding-bottom:4px}
+    /* ── Sticky save bar ── */
+    .sticky-save{position:fixed;bottom:0;left:220px;right:0;background:#fff;border-top:2px solid #e8f5e9;padding:12px 28px;display:flex;align-items:center;gap:16px;z-index:200;box-shadow:0 -4px 20px rgba(0,0,0,.08)}
+    .sticky-save-btn{background:#005b38;color:#fff;border:none;border-radius:12px;padding:12px 36px;font-size:15px;font-weight:800;cursor:pointer;transition:.15s;min-width:180px}
+    .sticky-save-btn:hover{background:#00a651}
+    .sticky-save-btn:disabled{background:#94c9aa;cursor:not-allowed}
+    .save-hint{font-size:12px;color:#888}
   </style>
 </head>
 <body>
@@ -112,256 +84,478 @@
 </div>
 
 <div class="v-content">
-  <div class="page-title"><i class="fa-solid fa-tags me-2"></i>My Pricing</div>
-  <p class="page-sub">
-    Set capacity-wise prices and component costs. Quotations are auto-calculated from these values.
-    <strong>Final Customer Price = Vendor Selling Price + HGS Commission.</strong>
-  </p>
+  <div class="page-title">
+    <i class="fa-solid fa-tags me-2"></i>My Pricing
+    <span id="unsavedBadge">&#128394; Unsaved Changes</span>
+  </div>
+  <p class="page-sub">Set capacity-wise prices. Quotations auto-calculate from these values. <strong>Final Price = Vendor Selling Price + HGS Commission.</strong></p>
   <div id="alertBox"></div>
 
-  <!-- Tab selector by capacity -->
-  <div class="tab-bar" id="capTabs">
+  <!-- Capacity tabs -->
+  <div class="cap-tabs" id="capTabs">
     {% for cap in capacities %}
-    <button class="tab-btn {% if loop.first %}active{% endif %}"
+    <button class="cap-tab {% if loop.first %}active{% endif %}"
             onclick="showCap({{ cap }}, this)">{{ cap }} KW</button>
     {% endfor %}
   </div>
 
   {% for cap in capacities %}
   {% set r = pricing_map.get(('Residential', cap)) %}
-  <div class="pricing-card cap-section" id="cap-{{ cap }}" style="{{ 'display:block' if loop.first else 'display:none' }}">
-    <div class="card-head">
-      <h6><i class="fa-solid fa-solar-panel me-2"></i>{{ cap }} KW — Pricing &amp; Components</h6>
-      <button class="save-btn" onclick="saveCap({{ cap }})" style="padding:6px 18px;font-size:12px;">
-        <i class="fa-solid fa-floppy-disk me-1"></i> Save {{ cap }} KW
-      </button>
+  <div class="p-card cap-section" id="cap-{{ cap }}" style="{{ 'display:block' if loop.first else 'display:none' }}">
+    <div class="p-card-head">
+      <h6><i class="fa-solid fa-solar-panel me-2"></i>{{ cap }} KW System Pricing</h6>
+      <span style="font-size:12px;opacity:.8">Select type below to set price</span>
     </div>
 
-    <div class="comp-section" data-cap="{{ cap }}">
-
-      <!-- SUMMARY ROW -->
-      <div class="comp-section-title">Base Pricing (by Type)</div>
-      <table class="ptable" style="margin-bottom:14px;">
+    <!-- BASE PRICING TABLE -->
+    <div style="padding:16px 20px 0">
+      <table class="bpt" data-cap="{{ cap }}">
         <thead>
           <tr>
-            <th class="cap-col">Type</th>
-            <th>Brand</th>
-            <th>Warranty (yr)</th>
-            <th>Type Price ₹</th>
-            <th>Vendor Selling ₹</th>
-            <th>HGS Commission ₹</th>
-            <th>Final Customer ₹</th>
+            <th class="lft" style="width:110px">Project Type</th>
+            <th style="width:130px">Brand *</th>
+            <th style="width:100px">Warranty (yr)</th>
+            <th style="width:120px">Vendor Selling ₹ *</th>
+            <th style="width:120px">HGS Commission ₹</th>
+            <th style="width:130px">Customer Final ₹</th>
           </tr>
         </thead>
         <tbody>
-          {% for ptype, pkey in [('Residential','residential_price'),('Commercial','commercial_price'),('Government','govt_price')] %}
+          {% for ptype in ['Residential','Commercial','Government'] %}
           {% set pr = pricing_map.get((ptype, cap)) %}
           <tr data-ptype="{{ ptype }}">
-            <td style="text-align:left;"><span class="kw-label">{{ ptype }}</span></td>
+            <td class="ptype-label">{{ ptype }}</td>
             <td>
-              <select class="mini-select p_brand">
-                <option value="">—</option>
-                {% for b in brands %}<option value="{{ b }}" {% if pr and pr.brand==b %}selected{% endif %}>{{ b }}</option>{% endfor %}
-              </select>
+              <div>
+                <select class="ps p_brand" onchange="markDirty()">
+                  <option value="">— Brand —</option>
+                  {% for b in brands %}
+                  <option value="{{ b }}" {% if pr and pr.brand==b %}selected{% endif %}>{{ b }}</option>
+                  {% endfor %}
+                </select>
+                <div class="err-msg brand-err">Brand is required.</div>
+              </div>
             </td>
-            <td><input type="number" class="mini-input p_warranty" style="max-width:68px;text-align:center;" value="{{ pr.warranty_years if pr else '' }}" placeholder="25" min="0"></td>
-            <td><input type="number" class="mini-input p_type_price" min="0" step="1000" value="{{ pr.system_price if pr and pr.system_price else '' }}" placeholder="0"></td>
-            <td><input type="number" class="mini-input p_vendor_price" min="0" step="1000" value="{{ pr.vendor_price if pr and pr.vendor_price else '' }}" placeholder="0" oninput="calcFinal(this)"></td>
-            <td><input type="number" class="mini-input p_hgs_comm" min="0" step="100" value="{{ pr.hgs_commission if pr and pr.hgs_commission else '' }}" placeholder="0" oninput="calcFinal(this)"></td>
-            <td><span class="final-price p_final">{% if pr and pr.final_price %}&#8377;{{ '{:,.0f}'.format(pr.final_price) }}{% else %}—{% endif %}</span></td>
+            <td>
+              <input type="number" class="pi p_warranty" min="0" max="50" step="1"
+                value="{{ pr.warranty_years if pr and pr.warranty_years else '' }}"
+                placeholder="25" oninput="validateWarranty(this);markDirty()">
+              <div class="err-msg warranty-err">Enter 1–50 years.</div>
+            </td>
+            <td>
+              <input type="number" class="pi p_vendor_price" min="0" step="1000"
+                value="{{ pr.vendor_price if pr and pr.vendor_price else '' }}"
+                placeholder="0" oninput="calcFinal(this);markDirty()">
+              <div class="err-msg vp-err">Selling price required.</div>
+            </td>
+            <td>
+              <input type="number" class="pi p_hgs_comm" min="0" step="500"
+                value="{{ pr.hgs_commission if pr and pr.hgs_commission else '' }}"
+                placeholder="0" oninput="calcFinal(this);markDirty()">
+              <div class="err-msg comm-err">Commission cannot exceed selling price.</div>
+            </td>
+            <td>
+              <span class="final-disp p_final">
+                {% if pr and pr.final_price %}&#8377;{{ '{:,.0f}'.format(pr.final_price) }}{% else %}—{% endif %}
+              </span>
+            </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
+    </div>
 
-      <!-- COMPONENT PRICING (shared across types for this KW) -->
-      <div class="comp-section-title">Component Prices (used in Quotation breakdown)</div>
-
-      <div class="comp-grid">
-        <div class="comp-item">
+    <!-- ADVANCED SETTINGS (collapsed) -->
+    <button class="adv-toggle" onclick="toggleAdv(this)">
+      <i class="fa-solid fa-sliders me-2"></i>
+      Advanced Settings — Component Prices &amp; Details
+      <i class="fa-solid fa-chevron-down ms-auto adv-chevron"></i>
+    </button>
+    <div class="adv-body" data-cap="{{ cap }}">
+      <div class="adv-grid">
+        <div class="adv-sec-title">Solar Panel</div>
+        <div class="adv-item">
           <label>Panel Unit Price (₹)</label>
           <input type="number" class="c_panel_price" min="0" step="100"
-            value="{{ r.panel_price if r and r.panel_price else '' }}" placeholder="e.g. 12000">
+            value="{{ r.panel_price if r and r.panel_price else '' }}" placeholder="e.g. 12000"
+            oninput="calcComponents(this.closest('.p-card'));markDirty()">
         </div>
-        <div class="comp-item">
+        <div class="adv-item">
           <label>Panel Wattage (W)</label>
           <input type="number" class="c_panel_wattage" min="0" step="5"
-            value="{{ r.panel_wattage if r and r.panel_wattage else '' }}" placeholder="e.g. 540">
+            value="{{ r.panel_wattage if r and r.panel_wattage else '' }}" placeholder="e.g. 540"
+            oninput="markDirty()">
         </div>
-        <div class="comp-item">
+        <div class="adv-item">
           <label>Panel Quantity</label>
           <input type="number" class="c_panel_qty" min="0"
-            value="{{ r.panel_quantity if r and r.panel_quantity else '' }}" placeholder="e.g. 4">
+            value="{{ r.panel_quantity if r and r.panel_quantity else '' }}" placeholder="e.g. 4"
+            oninput="calcComponents(this.closest('.p-card'));markDirty()">
         </div>
-      </div>
-
-      <div class="comp-grid">
-        <div class="comp-item">
+        <div class="adv-sec-title">Inverter</div>
+        <div class="adv-item">
           <label>Inverter Price (₹)</label>
           <input type="number" class="c_inv_price" min="0" step="100"
-            value="{{ r.inverter_price if r and r.inverter_price else '' }}" placeholder="e.g. 25000">
+            value="{{ r.inverter_price if r and r.inverter_price else '' }}" placeholder="e.g. 25000"
+            oninput="calcComponents(this.closest('.p-card'));markDirty()">
         </div>
-        <div class="comp-item">
+        <div class="adv-item">
           <label>Inverter Brand</label>
           <input type="text" class="c_inv_brand"
-            value="{{ r.inverter_brand if r and r.inverter_brand else '' }}" placeholder="e.g. Havells">
+            value="{{ r.inverter_brand if r and r.inverter_brand else '' }}" placeholder="e.g. Havells"
+            oninput="markDirty()">
         </div>
-        <div class="comp-item">
+        <div class="adv-item">
           <label>Inverter Capacity</label>
           <input type="text" class="c_inv_cap"
-            value="{{ r.inverter_capacity if r and r.inverter_capacity else '' }}" placeholder="e.g. 5 KW">
+            value="{{ r.inverter_capacity if r and r.inverter_capacity else '' }}" placeholder="e.g. 5 KW"
+            oninput="markDirty()">
         </div>
-      </div>
-
-      <div class="comp-grid">
-        <div class="comp-item">
+        <div class="adv-sec-title">Structure</div>
+        <div class="adv-item">
           <label>Structure Price (₹)</label>
           <input type="number" class="c_struct_price" min="0" step="100"
-            value="{{ r.structure_price if r and r.structure_price else '' }}" placeholder="e.g. 8000">
+            value="{{ r.structure_price if r and r.structure_price else '' }}" placeholder="e.g. 8000"
+            oninput="calcComponents(this.closest('.p-card'));markDirty()">
         </div>
-        <div class="comp-item">
+        <div class="adv-item">
           <label>Structure Type</label>
           <input type="text" class="c_struct_type"
-            value="{{ r.structure_type if r and r.structure_type else '' }}" placeholder="e.g. GI / MS">
+            value="{{ r.structure_type if r and r.structure_type else '' }}" placeholder="e.g. GI / MS"
+            oninput="markDirty()">
         </div>
-      </div>
-
-      <div class="comp-section-title">Other Charges</div>
-      <div class="comp-grid">
-        <div class="comp-item">
+        <div class="adv-sec-title">Other Charges</div>
+        <div class="adv-item">
           <label>Installation Charge (₹)</label>
           <input type="number" class="c_install" min="0" step="100"
-            value="{{ r.install_charge if r and r.install_charge else '' }}" placeholder="0">
+            value="{{ r.install_charge if r and r.install_charge else '' }}" placeholder="0"
+            oninput="calcComponents(this.closest('.p-card'));markDirty()">
         </div>
-        <div class="comp-item">
+        <div class="adv-item">
           <label>Electrical Material (₹)</label>
           <input type="number" class="c_elec" min="0" step="100"
-            value="{{ r.elec_material if r and r.elec_material else '' }}" placeholder="0">
+            value="{{ r.elec_material if r and r.elec_material else '' }}" placeholder="0"
+            oninput="calcComponents(this.closest('.p-card'));markDirty()">
         </div>
-        <div class="comp-item">
+        <div class="adv-item">
           <label>Net Meter Charge (₹)</label>
           <input type="number" class="c_netmeter" min="0" step="100"
-            value="{{ r.net_meter_charge if r and r.net_meter_charge else '' }}" placeholder="0">
+            value="{{ r.net_meter_charge if r and r.net_meter_charge else '' }}" placeholder="0"
+            oninput="calcComponents(this.closest('.p-card'));markDirty()">
         </div>
-        <div class="comp-item">
+        <div class="adv-item">
           <label>Transportation (₹)</label>
           <input type="number" class="c_transport" min="0" step="100"
-            value="{{ r.transportation if r and r.transportation else '' }}" placeholder="0">
+            value="{{ r.transportation if r and r.transportation else '' }}" placeholder="0"
+            oninput="calcComponents(this.closest('.p-card'));markDirty()">
         </div>
-        <div class="comp-item">
+        <div class="adv-item">
           <label>Documentation (₹)</label>
           <input type="number" class="c_docs" min="0" step="100"
-            value="{{ r.documentation if r and r.documentation else '' }}" placeholder="0">
+            value="{{ r.documentation if r and r.documentation else '' }}" placeholder="0"
+            oninput="calcComponents(this.closest('.p-card'));markDirty()">
         </div>
-        <div class="comp-item">
+        <div class="adv-item">
           <label>Miscellaneous (₹)</label>
           <input type="number" class="c_misc" min="0" step="100"
-            value="{{ r.miscellaneous if r and r.miscellaneous else '' }}" placeholder="0">
+            value="{{ r.miscellaneous if r and r.miscellaneous else '' }}" placeholder="0"
+            oninput="calcComponents(this.closest('.p-card'));markDirty()">
         </div>
-        <div class="comp-item">
+        <div class="adv-item">
           <label>GST %</label>
           <input type="number" class="c_gst" min="0" max="100" step="0.5"
-            value="{{ r.gst_percent if r and r.gst_percent else '' }}" placeholder="e.g. 13.8">
+            value="{{ r.gst_percent if r and r.gst_percent else '' }}" placeholder="e.g. 13.8"
+            oninput="calcComponents(this.closest('.p-card'));markDirty()">
+        </div>
+        <div class="adv-item">
+          <label>Battery</label>
+          <input type="text" class="c_battery" placeholder="e.g. Luminous 150Ah" oninput="markDirty()">
+        </div>
+        <div class="adv-item">
+          <label>AMC (Annual ₹)</label>
+          <input type="number" class="c_amc" min="0" step="100" placeholder="0" oninput="markDirty()">
         </div>
       </div>
-
-    </div><!-- /comp-section -->
-  </div><!-- /pricing-card -->
+      <!-- Component total preview -->
+      <div style="margin-top:16px;padding:12px 16px;background:#f0f7f4;border-radius:10px;font-size:13px;display:flex;gap:24px;flex-wrap:wrap">
+        <div><span style="color:#888;font-size:11px;font-weight:700;display:block;text-transform:uppercase">Component Total</span>
+          <strong class="comp-total-disp" style="color:#005b38;font-size:15px">₹0</strong></div>
+        <div><span style="color:#888;font-size:11px;font-weight:700;display:block;text-transform:uppercase">GST Amount</span>
+          <strong class="gst-amt-disp" style="color:#e65100;font-size:15px">₹0</strong></div>
+        <div><span style="color:#888;font-size:11px;font-weight:700;display:block;text-transform:uppercase">Gross Price</span>
+          <strong class="gross-disp" style="color:#1565c0;font-size:15px">₹0</strong></div>
+      </div>
+    </div>
+  </div><!-- /p-card -->
   {% endfor %}
+</div><!-- /v-content -->
+
+<!-- STICKY SAVE BAR -->
+<div class="sticky-save">
+  <button class="sticky-save-btn" id="saveBtn" onclick="saveCurrentCap()">
+    <i class="fa-solid fa-floppy-disk me-2"></i> Save Pricing
+  </button>
+  <span class="save-hint">Changes are saved per capacity block.</span>
 </div>
 
 <script>
+var _dirty = false;
+var _currentCap = {{ capacities[0] }};
+
 function showCap(cap, btn) {
   document.querySelectorAll('.cap-section').forEach(function(el){ el.style.display='none'; });
-  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.cap-tab').forEach(function(b){ b.classList.remove('active'); });
   document.getElementById('cap-'+cap).style.display = 'block';
   btn.classList.add('active');
+  _currentCap = cap;
+}
+
+function toggleAdv(btn) {
+  var body = btn.nextElementSibling;
+  var chev = btn.querySelector('.adv-chevron');
+  var open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  chev.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function markDirty() {
+  _dirty = true;
+  document.getElementById('unsavedBadge').style.display = 'inline';
+  document.getElementById('saveBtn').textContent = '💾 Save Pricing *';
+}
+function clearDirty() {
+  _dirty = false;
+  document.getElementById('unsavedBadge').style.display = 'none';
+  document.getElementById('saveBtn').innerHTML = '<i class="fa-solid fa-check me-2"></i> Pricing Saved!';
+  setTimeout(function(){
+    document.getElementById('saveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i> Save Pricing';
+  }, 2500);
 }
 
 function calcFinal(el) {
-  var row      = el.closest('tr');
-  var vp       = parseFloat(row.querySelector('.p_vendor_price').value) || 0;
-  var hgs      = parseFloat(row.querySelector('.p_hgs_comm').value)     || 0;
-  var final    = vp + hgs;
-  row.querySelector('.p_final').textContent = final > 0 ? '&#8377;' + final.toLocaleString('en-IN') : '—';
+  var row  = el.closest('tr');
+  var vp   = parseFloat(row.querySelector('.p_vendor_price').value) || 0;
+  var hgs  = parseFloat(row.querySelector('.p_hgs_comm').value)    || 0;
+  var comm = row.querySelector('.comm-err');
+  if (hgs > vp && vp > 0) {
+    comm.style.display = 'block';
+    row.querySelector('.p_hgs_comm').classList.add('invalid');
+  } else {
+    comm.style.display = 'none';
+    row.querySelector('.p_hgs_comm').classList.remove('invalid');
+  }
+  var fin = vp + hgs;
+  row.querySelector('.p_final').textContent = fin > 0 ? '₹' + fin.toLocaleString('en-IN') : '—';
 }
 
-function saveCap(cap) {
-  var section  = document.getElementById('cap-'+cap);
-  var alertBox = document.getElementById('alertBox');
-  var rows     = [];
+function calcComponents(card) {
+  var adv   = card.querySelector('.adv-body');
+  if (!adv) return;
+  var pp    = parseFloat(adv.querySelector('.c_panel_price').value) || 0;
+  var pq    = parseFloat(adv.querySelector('.c_panel_qty').value)   || 0;
+  var inv   = parseFloat(adv.querySelector('.c_inv_price').value)   || 0;
+  var str   = parseFloat(adv.querySelector('.c_struct_price').value)|| 0;
+  var inst  = parseFloat(adv.querySelector('.c_install').value)     || 0;
+  var elec  = parseFloat(adv.querySelector('.c_elec').value)        || 0;
+  var net   = parseFloat(adv.querySelector('.c_netmeter').value)    || 0;
+  var trans = parseFloat(adv.querySelector('.c_transport').value)   || 0;
+  var docs  = parseFloat(adv.querySelector('.c_docs').value)        || 0;
+  var misc  = parseFloat(adv.querySelector('.c_misc').value)        || 0;
+  var gstPct= parseFloat(adv.querySelector('.c_gst').value)         || 0;
+  var compTotal = (pp * pq) + inv + str + inst + elec + net + trans + docs + misc;
+  var gstAmt    = compTotal * gstPct / 100;
+  var gross     = compTotal + gstAmt;
+  adv.querySelector('.comp-total-disp').textContent = '₹' + Math.round(compTotal).toLocaleString('en-IN');
+  adv.querySelector('.gst-amt-disp').textContent    = '₹' + Math.round(gstAmt).toLocaleString('en-IN');
+  adv.querySelector('.gross-disp').textContent      = '₹' + Math.round(gross).toLocaleString('en-IN');
+}
 
-  // Base pricing rows
-  section.querySelectorAll('tbody tr[data-ptype]').forEach(function(row) {
-    rows.push({
-      capacity_kw:          cap,
-      project_type_override: row.dataset.ptype,
-      brand:                row.querySelector('.p_brand').value,
-      warranty_years:       parseInt(row.querySelector('.p_warranty').value) || 0,
-      type_price_key:       row.dataset.ptype === 'Residential' ? 'residential_price'
-                          : row.dataset.ptype === 'Commercial'  ? 'commercial_price' : 'govt_price',
-      type_price_val:       parseFloat(row.querySelector('.p_type_price').value) || 0,
-      vendor_selling_price: parseFloat(row.querySelector('.p_vendor_price').value) || 0,
-      hgs_commission:       parseFloat(row.querySelector('.p_hgs_comm').value)    || 0,
-    });
+function validateWarranty(el) {
+  var v = parseInt(el.value);
+  var err = el.parentElement.querySelector('.warranty-err');
+  var bad = el.value !== '' && (isNaN(v) || v < 1 || v > 50);
+  el.classList.toggle('invalid', bad);
+  if (err) err.style.display = bad ? 'block' : 'none';
+}
+
+function validateRow(row) {
+  var ok = true;
+  var brand  = row.querySelector('.p_brand').value;
+  var vp     = parseFloat(row.querySelector('.p_vendor_price').value);
+  var hgs    = parseFloat(row.querySelector('.p_hgs_comm').value) || 0;
+  var war    = row.querySelector('.p_warranty').value;
+
+  // Only validate rows that have any data entered
+  if (!brand && !vp) return true; // skip empty rows
+
+  if (!brand) {
+    row.querySelector('.brand-err').style.display = 'block';
+    row.querySelector('.p_brand').classList.add('invalid'); ok = false;
+  } else {
+    row.querySelector('.brand-err').style.display = 'none';
+    row.querySelector('.p_brand').classList.remove('invalid');
+  }
+  if (!vp || vp <= 0) {
+    row.querySelector('.vp-err').style.display = 'block';
+    row.querySelector('.p_vendor_price').classList.add('invalid'); ok = false;
+  } else {
+    row.querySelector('.vp-err').style.display = 'none';
+    row.querySelector('.p_vendor_price').classList.remove('invalid');
+  }
+  if (hgs > vp) {
+    row.querySelector('.comm-err').style.display = 'block';
+    row.querySelector('.p_hgs_comm').classList.add('invalid'); ok = false;
+  } else {
+    row.querySelector('.comm-err').style.display = 'none';
+    row.querySelector('.p_hgs_comm').classList.remove('invalid');
+  }
+  if (war !== '' && (isNaN(parseInt(war)) || parseInt(war) < 1)) {
+    row.querySelector('.warranty-err').style.display = 'block';
+    row.querySelector('.p_warranty').classList.add('invalid'); ok = false;
+  } else {
+    row.querySelector('.warranty-err').style.display = 'none';
+    row.querySelector('.p_warranty').classList.remove('invalid');
+  }
+  return ok;
+}
+
+function saveCurrentCap() {
+  var cap  = _currentCap;
+  var card = document.getElementById('cap-'+cap);
+  var aBox = document.getElementById('alertBox');
+
+  // Validate all rows
+  var allOk = true;
+  card.querySelectorAll('tbody tr[data-ptype]').forEach(function(row){
+    if (!validateRow(row)) allOk = false;
   });
+  if (!allOk) {
+    aBox.style.display = 'block';
+    aBox.style.background = '#f8d7da'; aBox.style.color = '#842029';
+    aBox.textContent = '✗ Please fix validation errors before saving.';
+    window.scrollTo(0,0); return;
+  }
 
-  // Component fields (shared per KW)
-  var cs = section.querySelector('.comp-section');
-  var comp = {
-    panel_price:      parseFloat(cs.querySelector('.c_panel_price').value)   || 0,
-    panel_wattage:    parseInt(cs.querySelector('.c_panel_wattage').value)   || 0,
-    panel_quantity:   parseInt(cs.querySelector('.c_panel_qty').value)       || 0,
-    inverter_price:   parseFloat(cs.querySelector('.c_inv_price').value)     || 0,
-    inverter_brand:   cs.querySelector('.c_inv_brand').value.trim(),
-    inverter_capacity:cs.querySelector('.c_inv_cap').value.trim(),
-    structure_price:  parseFloat(cs.querySelector('.c_struct_price').value)  || 0,
-    structure_type:   cs.querySelector('.c_struct_type').value.trim(),
-    install_charge:   parseFloat(cs.querySelector('.c_install').value)       || 0,
-    elec_material:    parseFloat(cs.querySelector('.c_elec').value)          || 0,
-    net_meter_charge: parseFloat(cs.querySelector('.c_netmeter').value)      || 0,
-    transportation:   parseFloat(cs.querySelector('.c_transport').value)     || 0,
-    documentation:    parseFloat(cs.querySelector('.c_docs').value)          || 0,
-    miscellaneous:    parseFloat(cs.querySelector('.c_misc').value)          || 0,
-    gst_percent:      parseFloat(cs.querySelector('.c_gst').value)           || 0,
+  var adv = card.querySelector('.adv-body');
+  var compFields = {
+    panel_price:       parseFloat(adv.querySelector('.c_panel_price').value)   || 0,
+    panel_wattage:     parseInt(adv.querySelector('.c_panel_wattage').value)   || 0,
+    panel_quantity:    parseInt(adv.querySelector('.c_panel_qty').value)       || 0,
+    inverter_price:    parseFloat(adv.querySelector('.c_inv_price').value)     || 0,
+    inverter_brand:    adv.querySelector('.c_inv_brand').value.trim(),
+    inverter_capacity: adv.querySelector('.c_inv_cap').value.trim(),
+    structure_price:   parseFloat(adv.querySelector('.c_struct_price').value)  || 0,
+    structure_type:    adv.querySelector('.c_struct_type').value.trim(),
+    install_charge:    parseFloat(adv.querySelector('.c_install').value)       || 0,
+    elec_material:     parseFloat(adv.querySelector('.c_elec').value)          || 0,
+    net_meter_charge:  parseFloat(adv.querySelector('.c_netmeter').value)      || 0,
+    transportation:    parseFloat(adv.querySelector('.c_transport').value)     || 0,
+    documentation:     parseFloat(adv.querySelector('.c_docs').value)          || 0,
+    miscellaneous:     parseFloat(adv.querySelector('.c_misc').value)          || 0,
+    gst_percent:       parseFloat(adv.querySelector('.c_gst').value)           || 0,
   };
 
-  // Build payload — one entry per type row, merge component fields
-  var payload = rows.map(function(r) {
-    var entry = Object.assign({}, comp);
-    entry.capacity_kw         = cap;
-    entry.brand               = r.brand;
-    entry.warranty_years      = r.warranty_years;
-    entry.vendor_selling_price= r.vendor_selling_price;
-    entry.hgs_commission      = r.hgs_commission;
-    // Map type price to correct key
-    entry['residential_price'] = r.type_price_key === 'residential_price' ? r.type_price_val : 0;
-    entry['commercial_price']  = r.type_price_key === 'commercial_price'  ? r.type_price_val : 0;
-    entry['govt_price']        = r.type_price_key === 'govt_price'        ? r.type_price_val : 0;
-    return entry;
+  // Build one row per ptype
+  var payload = [];
+  card.querySelectorAll('tbody tr[data-ptype]').forEach(function(row) {
+    var ptype = row.dataset.ptype;
+    var entry = Object.assign({ capacity_kw: cap, ptype: ptype }, compFields);
+    entry.brand                = row.querySelector('.p_brand').value;
+    entry.warranty_years       = parseInt(row.querySelector('.p_warranty').value) || 0;
+    entry.vendor_selling_price = parseFloat(row.querySelector('.p_vendor_price').value) || 0;
+    entry.hgs_commission       = parseFloat(row.querySelector('.p_hgs_comm').value) || 0;
+    payload.push(entry);
   });
+
+  var btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Saving…';
 
   fetch('/vendor-pricing/save', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(payload)
-  }).then(r => r.json()).then(d => {
-    alertBox.style.display = 'block';
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i> Save Pricing';
+
     if (d.ok) {
-      alertBox.style.background = '#d1e7dd'; alertBox.style.color = '#0a3622';
-      alertBox.textContent = '&#10003; ' + d.message;
+      // ── Re-load all saved values from DB response into the card ──
+      var saved = d.saved || {};
+      card.querySelectorAll('tbody tr[data-ptype]').forEach(function(row) {
+        var pt = row.dataset.ptype;
+        var r  = saved[pt];
+        if (!r) return;
+        if (r.brand !== undefined)          row.querySelector('.p_brand').value = r.brand;
+        if (r.warranty_years !== undefined) row.querySelector('.p_warranty').value = r.warranty_years || '';
+        if (r.vendor_price !== undefined)   row.querySelector('.p_vendor_price').value = r.vendor_price || '';
+        if (r.hgs_commission !== undefined) row.querySelector('.p_hgs_comm').value = r.hgs_commission || '';
+        // Update final price display
+        var fin = (r.vendor_price || 0) + (r.hgs_commission || 0);
+        row.querySelector('.p_final').textContent = fin > 0 ? '₹' + fin.toLocaleString('en-IN') : '—';
+      });
+
+      // ── Re-load advanced fields from first ptype response ──
+      var firstPt = saved['Residential'] || saved['Commercial'] || saved['Government'];
+      if (firstPt) {
+        var fields = [
+          ['.c_panel_price',   firstPt.panel_price],
+          ['.c_panel_wattage', firstPt.panel_wattage],
+          ['.c_panel_qty',     firstPt.panel_quantity],
+          ['.c_inv_price',     firstPt.inverter_price],
+          ['.c_inv_brand',     firstPt.inverter_brand],
+          ['.c_inv_cap',       firstPt.inverter_capacity],
+          ['.c_struct_price',  firstPt.structure_price],
+          ['.c_struct_type',   firstPt.structure_type],
+          ['.c_install',       firstPt.install_charge],
+          ['.c_elec',          firstPt.elec_material],
+          ['.c_netmeter',      firstPt.net_meter_charge],
+          ['.c_transport',     firstPt.transportation],
+          ['.c_docs',          firstPt.documentation],
+          ['.c_misc',          firstPt.miscellaneous],
+          ['.c_gst',           firstPt.gst_percent],
+        ];
+        fields.forEach(function(pair) {
+          var el = adv.querySelector(pair[0]);
+          if (el && pair[1] !== undefined && pair[1] !== null) el.value = pair[1] || '';
+        });
+        calcComponents(card);
+      }
+
+      // ── Persistent success toast ──
+      aBox.style.display   = 'block';
+      aBox.style.background= '#d1e7dd';
+      aBox.style.color     = '#0a3622';
+      aBox.innerHTML = '<i class="fa-solid fa-circle-check me-2"></i> Pricing Saved Successfully! <small style="font-weight:400;margin-left:8px;color:#155724">(stored in database)</small>';
+      clearDirty();
+      // Auto-hide after 5s (longer than before so user can see it)
+      setTimeout(function(){ aBox.style.display='none'; }, 5000);
+
     } else {
-      alertBox.style.background = '#f8d7da'; alertBox.style.color = '#842029';
-      alertBox.textContent = '&#10007; ' + (d.error || 'Error saving pricing.');
+      aBox.style.display   = 'block';
+      aBox.style.background= '#f8d7da';
+      aBox.style.color     = '#842029';
+      aBox.textContent     = '✗ ' + (d.error || 'Error saving pricing.');
     }
-    window.scrollTo(0, 0);
-    setTimeout(function(){ alertBox.style.display = 'none'; }, 3000);
-  }).catch(function() {
-    alertBox.style.display = 'block';
-    alertBox.style.background = '#f8d7da'; alertBox.style.color = '#842029';
-    alertBox.textContent = '&#10007; Network error. Please try again.';
+    window.scrollTo(0,0);
+  })
+  .catch(function(){
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i> Save Pricing';
+    aBox.style.display   = 'block';
+    aBox.style.background= '#f8d7da';
+    aBox.style.color     = '#842029';
+    aBox.textContent     = '✗ Network error. Please try again.';
+    window.scrollTo(0,0);
   });
 }
+
+// Warn on page leave if dirty
+window.onbeforeunload = function() {
+  if (_dirty) return 'You have unsaved pricing changes. Leave anyway?';
+};
 </script>
 </body>
 </html>
