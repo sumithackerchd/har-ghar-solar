@@ -186,10 +186,12 @@ class Vendor(db.Model):
     password      = db.Column(db.String(300), nullable=False)
     district      = db.Column(db.String(100), nullable=False)
     is_active     = db.Column(db.Boolean, default=True)
+    is_deleted    = db.Column(db.Boolean, default=False)   # soft-delete flag
     created_at    = db.Column(db.String(50), default="")
     vendor_code   = db.Column(db.String(50), default="")
     address       = db.Column(db.Text, default="")
     approved_date = db.Column(db.String(50), default="")
+    admin_remarks = db.Column(db.Text, default="")         # admin-only notes
 
 
 class Lead(db.Model):
@@ -449,6 +451,10 @@ with app.app_context():
             cur.execute("ALTER TABLE vendor ADD COLUMN address TEXT DEFAULT ''")
         if "approved_date" not in vendor_cols:
             cur.execute("ALTER TABLE vendor ADD COLUMN approved_date VARCHAR(50) DEFAULT ''")
+        if "is_deleted" not in vendor_cols:
+            cur.execute("ALTER TABLE vendor ADD COLUMN is_deleted BOOLEAN DEFAULT 0")
+        if "admin_remarks" not in vendor_cols:
+            cur.execute("ALTER TABLE vendor ADD COLUMN admin_remarks TEXT DEFAULT ''")
 
         # VendorProfile migration
         cur.execute("PRAGMA table_info(vendor_profile)")
@@ -2076,6 +2082,8 @@ def admin_quotations():
 
 
 
+
+
 # ==========================
 # VENDOR BULK OPERATIONS
 # ==========================
@@ -2469,14 +2477,27 @@ def vendor_detail(vendor_id):
 def vendor_compare():
     import json as _json, statistics as _stat
     ids_raw = request.args.getlist("ids")
+    district_filter = request.args.get("district", "")
+
+    # If single vendor id + district requested, auto-load all peers from that district
+    if district_filter and len(ids_raw) == 1:
+        anchor_id = int(ids_raw[0])
+        peers = Vendor.query.filter_by(district=district_filter, is_active=True)\
+                            .filter(Vendor.is_deleted != True).all()
+        # ensure anchor is first
+        ids_raw = [str(anchor_id)] + [str(p.id) for p in peers if p.id != anchor_id]
+
     if not ids_raw:
-        # default: first two vendors regardless of active status
-        defaults = Vendor.query.order_by(Vendor.id).limit(2).all()
-        ids_raw  = [str(v.id) for v in defaults]
-    ids     = [int(i) for i in ids_raw if str(i).isdigit()][:5]  # max 5
+        defaults = Vendor.query.filter(Vendor.is_deleted != True)\
+                               .order_by(Vendor.id).limit(2).all()
+        ids_raw = [str(v.id) for v in defaults]
+
+    ids     = [int(i) for i in ids_raw if str(i).isdigit()][:6]
     vendors = Vendor.query.filter(Vendor.id.in_(ids)).all()
 
-    all_vendors = Vendor.query.filter_by(is_active=True).order_by(Vendor.company_name).all()
+    all_vendors = Vendor.query.filter_by(is_active=True)\
+                              .filter(Vendor.is_deleted != True)\
+                              .order_by(Vendor.company_name).all()
     compare_data = []
     for v in vendors:
         leads     = Lead.query.filter_by(vendor_id=v.id).all()
@@ -2489,11 +2510,18 @@ def vendor_compare():
         total_rev = sum(q.net_price   for q in approved)
         total_com = sum(q.commission  for q in approved)
 
-        # Best pricing per capacity (Residential, lowest final_price)
         pricing_res = VendorPricing.query.filter_by(
             vendor_id=v.id, project_type="Residential"
         ).order_by(VendorPricing.capacity_kw).all()
-        pricing_map = {p.capacity_kw: p for p in pricing_res}
+        pricing_com = VendorPricing.query.filter_by(
+            vendor_id=v.id, project_type="Commercial"
+        ).order_by(VendorPricing.capacity_kw).all()
+        pricing_gov = VendorPricing.query.filter_by(
+            vendor_id=v.id, project_type="Government"
+        ).order_by(VendorPricing.capacity_kw).all()
+        pricing_map_res = {p.capacity_kw: p for p in pricing_res}
+        pricing_map_com = {p.capacity_kw: p for p in pricing_com}
+        pricing_map_gov = {p.capacity_kw: p for p in pricing_gov}
 
         commissions = VendorCommission.query.filter_by(vendor_id=v.id).all()
         avg_comm = round(sum(c.hgs_commission for c in commissions) / len(commissions), 0) \
@@ -2504,13 +2532,11 @@ def vendor_compare():
         if profile and profile.brands_supported:
             brands = [b.strip() for b in profile.brands_supported.split(",") if b.strip()]
 
-        # warranty from first pricing record
-        warranty = 0
-        if pricing_res:
-            warranty = pricing_res[0].warranty_years or 0
+        warranty = pricing_res[0].warranty_years if pricing_res else 0
 
         compare_data.append({
             "vendor":      v,
+            "profile":     profile,
             "total_leads": total_l,
             "completed":   completed,
             "pending":     total_l - completed,
@@ -2519,17 +2545,28 @@ def vendor_compare():
             "total_rev":   total_rev,
             "total_comm":  total_com,
             "avg_comm":    avg_comm,
-            "pricing_map": pricing_map,
+            "pricing_map": pricing_map_res,
+            "pricing_map_com": pricing_map_com,
+            "pricing_map_gov": pricing_map_gov,
             "brands":      brands,
             "warranty":    warranty,
-            "profile":     profile,
         })
+
+    # Determine best vendor by composite score
+    if compare_data:
+        for row in compare_data:
+            row["score"] = row["conv_pct"] + row["avg_rating"] * 10 - (row["avg_comm"] / 10000)
+        best_id = max(compare_data, key=lambda x: x["score"])["vendor"].id
+    else:
+        best_id = None
 
     return render_template("vendor_compare.html",
         compare_data=compare_data,
         all_vendors=all_vendors,
         selected_ids=ids,
         capacities=KW_CAPACITIES,
+        best_id=best_id,
+        district_filter=district_filter,
     )
 
 
@@ -2650,22 +2687,19 @@ def vendor_add():
 # EDIT VENDOR (admin)
 # ==========================
 @app.route("/vendor-edit/<int:vendor_id>", methods=["GET", "POST"])
-@login_required
+@admin_required
 def vendor_edit(vendor_id):
-    vendor = Vendor.query.get_or_404(vendor_id)
+    vendor = Vendor.query.filter(Vendor.id == vendor_id, Vendor.is_deleted != True)\
+                         .first_or_404()
     if request.method == "POST":
-        vendor.company_name = request.form["company_name"]
-        vendor.owner_name   = request.form["owner_name"]
-        vendor.mobile       = request.form["mobile"]
-        vendor.email        = request.form.get("email", "")
-        vendor.district     = request.form["district"]
-        vendor.is_active    = request.form.get("is_active") == "1"
-        new_pass = request.form.get("password", "").strip()
-        if new_pass:
-            vendor.password = generate_password_hash(new_pass)
+        vendor.is_active     = request.form.get("is_active") == "1"
+        vendor.approved_date = request.form.get("approved_date", vendor.approved_date).strip()
+        vendor.district      = request.form.get("district", vendor.district)
+        vendor.vendor_code   = request.form.get("vendor_code", vendor.vendor_code or "").strip()
+        vendor.admin_remarks = request.form.get("admin_remarks", "").strip()
         db.session.commit()
         flash("Vendor updated successfully.", "success")
-        return redirect(url_for("vendor_list"))
+        return redirect(url_for("vendor_detail", vendor_id=vendor_id))
     return render_template("vendor_edit.html", vendor=vendor, districts=UP_DISTRICTS)
 
 # ==========================
@@ -2701,17 +2735,26 @@ def vendor_toggle(vendor_id):
 @app.route("/vendor-reset-password/<int:vendor_id>", methods=["POST"])
 @login_required
 def vendor_reset_password(vendor_id):
-    """Super-admin only: reset a vendor's password to a new value."""
+    """Admin only: auto-generate a strong temporary password, hash + save it, return plain text once."""
+    import secrets, string as _string
     user = User.query.get(session.get("user_id"))
-    if not user or not user.is_super:
-        return jsonify({"ok": False, "error": "Super-admin access required."}), 403
-    vendor = Vendor.query.get_or_404(vendor_id)
-    new_pw = request.form.get("new_password", "").strip()
-    if len(new_pw) < 6:
-        return jsonify({"ok": False, "error": "Password must be at least 6 characters."}), 400
-    vendor.password = generate_password_hash(new_pw)
+    if not user or session.get("role") != "admin":
+        return jsonify({"ok": False, "error": "Admin access required."}), 403
+    vendor = Vendor.query.filter(Vendor.id == vendor_id, Vendor.is_deleted != True).first_or_404()
+    # Generate strong 12-char temp password
+    alphabet  = _string.ascii_letters + _string.digits + "!@#$%"
+    temp_pw   = "".join(secrets.choice(alphabet) for _ in range(12))
+    vendor.password = generate_password_hash(temp_pw)
     db.session.commit()
-    return jsonify({"ok": True, "message": f"Password for {vendor.company_name} has been reset."})
+    return jsonify({
+        "ok": True,
+        "temp_password": temp_pw,
+        "username": vendor.username,
+        "company": vendor.company_name,
+        "email": vendor.email or "",
+        "mobile": vendor.mobile,
+        "message": f"Password for {vendor.company_name} has been reset."
+    })
 
 # ==========================
 # SUPER-ADMIN: ENABLE / DISABLE VENDOR (JSON)
@@ -2719,11 +2762,10 @@ def vendor_reset_password(vendor_id):
 @app.route("/vendor-setstatus/<int:vendor_id>", methods=["POST"])
 @login_required
 def vendor_setstatus(vendor_id):
-    """Super-admin: enable or disable a vendor via JSON endpoint."""
-    user = User.query.get(session.get("user_id"))
-    if not user or not user.is_super:
-        return jsonify({"ok": False, "error": "Super-admin access required."}), 403
-    vendor = Vendor.query.get_or_404(vendor_id)
+    """Admin: enable or disable a vendor via JSON endpoint."""
+    if session.get("role") != "admin":
+        return jsonify({"ok": False, "error": "Admin access required."}), 403
+    vendor = Vendor.query.filter(Vendor.id == vendor_id, Vendor.is_deleted != True).first_or_404()
     action = request.form.get("action", "")
     if action == "enable":
         vendor.is_active = True
@@ -2741,15 +2783,18 @@ def vendor_setstatus(vendor_id):
 @app.route("/vendor-delete-ajax/<int:vendor_id>", methods=["POST"])
 @login_required
 def vendor_delete_ajax(vendor_id):
-    """Super-admin: delete vendor via AJAX from detail page."""
-    user = User.query.get(session.get("user_id"))
-    if not user or not user.is_super:
-        return jsonify({"ok": False, "error": "Super-admin access required."}), 403
+    """Admin: soft-delete vendor (keeps quotations + lead history)."""
+    if session.get("role") != "admin":
+        return jsonify({"ok": False, "error": "Admin access required."}), 403
     vendor = Vendor.query.get_or_404(vendor_id)
-    Lead.query.filter_by(vendor_id=vendor_id).update({"vendor_id": None, "status": "New"})
-    db.session.delete(vendor)
+    vendor.is_deleted = True
+    vendor.is_active  = False
+    # Unassign pending leads but keep history
+    Lead.query.filter(Lead.vendor_id == vendor_id,
+                      Lead.status.notin_(["Completed", "Cancelled"]))\
+              .update({"vendor_id": None, "status": "New"}, synchronize_session=False)
     db.session.commit()
-    return jsonify({"ok": True, "message": f"Vendor {vendor.company_name} deleted."})
+    return jsonify({"ok": True, "message": f"Vendor {vendor.company_name} has been deleted."})
 
 # ==========================
 # IMPORT VENDORS FROM EXCEL
@@ -3646,7 +3691,6 @@ def forbidden(e):
 @app.errorhandler(404)
 def not_found(e):
     return render_template("errors/404.html"), 404
-
 
 @app.errorhandler(429)
 def too_many_requests(e):
