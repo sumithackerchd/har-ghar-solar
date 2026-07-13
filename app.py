@@ -2076,7 +2076,6 @@ def admin_quotations():
 
 
 
-
 # ==========================
 # VENDOR BULK OPERATIONS
 # ==========================
@@ -2695,6 +2694,62 @@ def vendor_toggle(vendor_id):
     db.session.commit()
     flash(f"Vendor {'enabled' if vendor.is_active else 'disabled'}.", "success")
     return redirect(url_for("vendor_list"))
+
+# ==========================
+# SUPER-ADMIN: RESET VENDOR PASSWORD
+# ==========================
+@app.route("/vendor-reset-password/<int:vendor_id>", methods=["POST"])
+@login_required
+def vendor_reset_password(vendor_id):
+    """Super-admin only: reset a vendor's password to a new value."""
+    user = User.query.get(session.get("user_id"))
+    if not user or not user.is_super:
+        return jsonify({"ok": False, "error": "Super-admin access required."}), 403
+    vendor = Vendor.query.get_or_404(vendor_id)
+    new_pw = request.form.get("new_password", "").strip()
+    if len(new_pw) < 6:
+        return jsonify({"ok": False, "error": "Password must be at least 6 characters."}), 400
+    vendor.password = generate_password_hash(new_pw)
+    db.session.commit()
+    return jsonify({"ok": True, "message": f"Password for {vendor.company_name} has been reset."})
+
+# ==========================
+# SUPER-ADMIN: ENABLE / DISABLE VENDOR (JSON)
+# ==========================
+@app.route("/vendor-setstatus/<int:vendor_id>", methods=["POST"])
+@login_required
+def vendor_setstatus(vendor_id):
+    """Super-admin: enable or disable a vendor via JSON endpoint."""
+    user = User.query.get(session.get("user_id"))
+    if not user or not user.is_super:
+        return jsonify({"ok": False, "error": "Super-admin access required."}), 403
+    vendor = Vendor.query.get_or_404(vendor_id)
+    action = request.form.get("action", "")
+    if action == "enable":
+        vendor.is_active = True
+    elif action == "disable":
+        vendor.is_active = False
+    else:
+        return jsonify({"ok": False, "error": "Invalid action."}), 400
+    db.session.commit()
+    return jsonify({"ok": True, "is_active": vendor.is_active,
+                    "message": f"Vendor {'enabled' if vendor.is_active else 'disabled'}."})
+
+# ==========================
+# SUPER-ADMIN: DELETE VENDOR (JSON)
+# ==========================
+@app.route("/vendor-delete-ajax/<int:vendor_id>", methods=["POST"])
+@login_required
+def vendor_delete_ajax(vendor_id):
+    """Super-admin: delete vendor via AJAX from detail page."""
+    user = User.query.get(session.get("user_id"))
+    if not user or not user.is_super:
+        return jsonify({"ok": False, "error": "Super-admin access required."}), 403
+    vendor = Vendor.query.get_or_404(vendor_id)
+    Lead.query.filter_by(vendor_id=vendor_id).update({"vendor_id": None, "status": "New"})
+    db.session.delete(vendor)
+    db.session.commit()
+    return jsonify({"ok": True, "message": f"Vendor {vendor.company_name} deleted."})
 
 # ==========================
 # IMPORT VENDORS FROM EXCEL
@@ -3591,6 +3646,7 @@ def forbidden(e):
 @app.errorhandler(404)
 def not_found(e):
     return render_template("errors/404.html"), 404
+
 
 @app.errorhandler(429)
 def too_many_requests(e):
