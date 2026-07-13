@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Profile — {{ vendor.company_name }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #eef4f2; font-family: 'Segoe UI', sans-serif; margin: 0; }
+    .v-sidebar {
+      width: 220px; height: 100vh; position: fixed; left: 0; top: 0;
+      background: #1a3c2f; padding: 28px 18px; color: white; overflow-y: auto;
+    }
+    .v-sidebar .brand { font-size: 22px; font-weight: 900; color: #ffc107; margin-bottom: 10px; }
+    .v-sidebar .vendor-info { font-size: 12px; color: #a5d6a7; margin-bottom: 28px; line-height: 1.6; }
+    .v-sidebar a {
+      display: flex; align-items: center; gap: 10px;
+      color: white; text-decoration: none; font-weight: 700; font-size: 14px;
+      padding: 11px 12px; border-radius: 12px; margin-bottom: 6px; transition: .2s;
+    }
+    .v-sidebar a:hover, .v-sidebar a.active { background: rgba(255,255,255,.15); }
+    .v-sidebar a.logout { margin-top: 30px; background: rgba(255,50,50,.15); }
+    .v-content { margin-left: 220px; padding: 28px; }
+    .page-title { font-size: 26px; font-weight: 900; color: #005b38; margin-bottom: 22px; }
+    .card-section {
+      background: white; border-radius: 18px; padding: 26px 28px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.08); margin-bottom: 22px;
+    }
+    .card-section h5 { font-weight: 800; color: #005b38; margin-bottom: 18px; border-bottom: 2px solid #e8f5e9; padding-bottom: 10px; }
+    .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .form-group label { font-size: 12px; font-weight: 700; color: #555; display: block; margin-bottom: 6px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; height: 42px; border: 2px solid #e0e0e0; border-radius: 10px;
+      padding: 0 14px; font-size: 14px; outline: none; background: white; font-family: inherit;
+    }
+    .form-group textarea { height: 80px; padding: 10px 14px; resize: vertical; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #00a651; }
+    .toggle-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+    .toggle-row label { font-size: 14px; font-weight: 700; color: #333; margin: 0; }
+    .brand-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .brand-chip {
+      display: flex; align-items: center; gap: 6px; padding: 7px 14px;
+      border: 2px solid #e0e0e0; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 600;
+      transition: .15s; user-select: none;
+    }
+    .brand-chip.selected { border-color: #00a651; background: #e8f5e9; color: #005b38; }
+    .save-btn {
+      background: #005b38; color: white; border: none; border-radius: 12px;
+      padding: 12px 32px; font-size: 15px; font-weight: 700; cursor: pointer;
+    }
+    .save-btn:hover { background: #00a651; }
+    #alertBox { display:none; padding:12px 16px; border-radius:10px; margin-bottom:16px; font-weight:600; }
+  </style>
+</head>
+<body>
+<div class="v-sidebar">
+  <div class="brand">☀ HGS CRM</div>
+  <div class="vendor-info">
+    <div><i class="fa-solid fa-building me-1"></i> {{ vendor.company_name }}</div>
+    <div><i class="fa-solid fa-location-dot me-1"></i> {{ vendor.district }}</div>
+    <div style="margin-top:6px;color:#ffc107;font-size:11px;font-weight:700">@{{ vendor.username }}</div>
+  </div>
+  <a href="/vendor-dashboard"><i class="fa-solid fa-gauge-high"></i> My Dashboard</a>
+  <a href="/vendor-profile" class="active"><i class="fa-solid fa-id-card"></i> My Profile</a>
+  <a href="/vendor-pricing"><i class="fa-solid fa-tags"></i> My Pricing</a>
+  <a href="/vendor-commission"><i class="fa-solid fa-hand-holding-dollar"></i> Commission</a>
+  <a href="/vendor-coverage"><i class="fa-solid fa-map-location-dot"></i> My Coverage</a>
+  <a href="/vendor-quotations"><i class="fa-solid fa-file-invoice"></i> Quotations</a>
+  <a href="/vendor-logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+</div>
+
+<div class="v-content">
+  <div class="page-title"><i class="fa-solid fa-id-card me-2"></i>My Profile</div>
+  <div id="alertBox"></div>
+
+  <form id="profileForm">
+    <!-- Basic Info -->
+    <div class="card-section">
+      <h5><i class="fa-solid fa-building me-2"></i>Company Information</h5>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Company Name *</label>
+          <input type="text" name="company_name" value="{{ vendor.company_name }}" required>
+        </div>
+        <div class="form-group">
+          <label>Owner / Contact Name *</label>
+          <input type="text" name="owner_name" value="{{ vendor.owner_name }}" required>
+        </div>
+        <div class="form-group">
+          <label>GST Number</label>
+          <input type="text" name="gst_number" value="{{ profile.gst_number }}" placeholder="27AABCU9603R1ZX">
+        </div>
+        <div class="form-group">
+          <label>PAN Number</label>
+          <input type="text" name="pan_number" value="{{ profile.pan_number }}" placeholder="AABCU9603R">
+        </div>
+        <div class="form-group">
+          <label>Website</label>
+          <input type="text" name="website" value="{{ profile.website }}" placeholder="https://yoursite.com">
+        </div>
+        <div class="form-group">
+          <label>Years of Experience</label>
+          <input type="number" name="years_experience" value="{{ profile.years_experience }}" min="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="card-section">
+      <h5><i class="fa-solid fa-phone me-2"></i>Contact Details</h5>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Mobile *</label>
+          <input type="text" name="mobile" value="{{ vendor.mobile }}" required>
+        </div>
+        <div class="form-group">
+          <label>Alternate Phone</label>
+          <input type="text" name="alternate_phone" value="{{ profile.alternate_phone }}">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" value="{{ vendor.email }}">
+        </div>
+        <div class="form-group">
+          <label>District *</label>
+          <select name="district">
+            {% for d in districts %}
+            <option value="{{ d }}" {% if vendor.district == d %}selected{% endif %}>{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>State</label>
+          <input type="text" name="state" value="{{ profile.state or 'Uttar Pradesh' }}">
+        </div>
+        <div class="form-group">
+          <label>Pincode</label>
+          <input type="text" name="pincode" value="{{ profile.pincode }}" placeholder="226001">
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="form-group">
+          <label>Address</label>
+          <textarea name="address">{{ vendor.address }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project Stats -->
+    <div class="card-section">
+      <h5><i class="fa-solid fa-solar-panel me-2"></i>Project Experience</h5>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Total Installed Capacity (KW)</label>
+          <input type="number" name="install_capacity_kw" value="{{ profile.install_capacity_kw }}" min="0">
+        </div>
+        <div class="form-group">
+          <label>Residential Projects</label>
+          <input type="number" name="res_projects" value="{{ profile.res_projects }}" min="0">
+        </div>
+        <div class="form-group">
+          <label>Commercial Projects</label>
+          <input type="number" name="comm_projects" value="{{ profile.comm_projects }}" min="0">
+        </div>
+        <div class="form-group">
+          <label>Industrial Projects</label>
+          <input type="number" name="ind_projects" value="{{ profile.ind_projects }}" min="0">
+        </div>
+        <div class="form-group">
+          <label>Government Projects</label>
+          <input type="number" name="govt_projects" value="{{ profile.govt_projects }}" min="0">
+        </div>
+      </div>
+      <div style="margin-top:16px; display:flex; gap:32px; flex-wrap:wrap;">
+        <div class="toggle-row">
+          <input type="hidden" name="pm_surya_approved" value="0">
+          <input type="checkbox" id="pmSurya" name="pm_surya_approved" value="1"
+            {% if profile.pm_surya_approved %}checked{% endif %}
+            style="width:20px;height:20px;accent-color:#005b38;cursor:pointer;">
+          <label for="pmSurya">PM Surya Ghar Approved</label>
+        </div>
+        <div class="toggle-row">
+          <input type="hidden" name="discom_empanelled" value="0">
+          <input type="checkbox" id="discom" name="discom_empanelled" value="1"
+            {% if profile.discom_empanelled %}checked{% endif %}
+            style="width:20px;height:20px;accent-color:#005b38;cursor:pointer;">
+          <label for="discom">DISCOM Empanelled</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Brands -->
+    <div class="card-section">
+      <h5><i class="fa-solid fa-certificate me-2"></i>Brands Supported</h5>
+      <div class="brand-grid" id="brandGrid">
+        {% set selected_brands = (profile.brands_supported or '').split(',') %}
+        {% for b in brands %}
+        <div class="brand-chip {% if b in selected_brands %}selected{% endif %}"
+             onclick="toggleBrand(this, '{{ b }}')">
+          <i class="fa-solid fa-check" style="font-size:11px;{% if b not in selected_brands %}display:none{% endif %}"></i>
+          {{ b }}
+          <input type="checkbox" name="brands_supported" value="{{ b }}"
+            {% if b in selected_brands %}checked{% endif %}
+            style="display:none">
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+<!-- Bank Details -->
+    <div class="card-section">
+      <h5><i class="fa-solid fa-building-columns me-2"></i>Bank Details</h5>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Bank Name</label>
+          <input type="text" name="bank_name" value="{{ profile.bank_name }}" placeholder="e.g. SBI, HDFC">
+        </div>
+        <div class="form-group">
+          <label>Account Holder Name</label>
+          <input type="text" name="account_holder" value="{{ profile.account_holder }}" placeholder="As per bank records">
+        </div>
+        <div class="form-group">
+          <label>Account Number</label>
+          <input type="text" name="account_number" value="{{ profile.account_number }}">
+        </div>
+        <div class="form-group">
+          <label>IFSC Code</label>
+          <input type="text" name="ifsc_code" value="{{ profile.ifsc_code }}" placeholder="SBIN0001234">
+        </div>
+        <div class="form-group">
+          <label>UPI ID</label>
+          <input type="text" name="upi_id" value="{{ profile.upi_id }}" placeholder="vendor@upi">
+        </div>
+        <div class="form-group">
+          <label>Service Radius (km)</label>
+          <input type="number" name="service_radius" value="{{ profile.service_radius }}" min="0" placeholder="e.g. 100">
+        </div>
+      </div>
+    </div>
+
+    <button type="button" onclick="saveProfile()" class="save-btn">
+      <i class="fa-solid fa-floppy-disk me-2"></i>Save Profile
+    </button>
+  </form>
+</div>
+
+<script>
+function toggleBrand(el, brand) {
+  el.classList.toggle('selected');
+  var icon = el.querySelector('i');
+  var cb   = el.querySelector('input[type=checkbox]');
+  if (el.classList.contains('selected')) {
+    icon.style.display = ''; cb.checked = true;
+  } else {
+    icon.style.display = 'none'; cb.checked = false;
+  }
+}
+
+function saveProfile() {
+  var form = document.getElementById('profileForm');
+  var fd   = new FormData(form);
+  var alert= document.getElementById('alertBox');
+  fetch('/vendor-profile', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+      alert.style.display = 'block';
+      if (d.ok) {
+        alert.style.background = '#d1e7dd'; alert.style.color = '#0a3622';
+        alert.textContent = d.message;
+      } else {
+        alert.style.background = '#f8d7da'; alert.style.color = '#842029';
+        alert.textContent = d.error || 'Error saving profile.';
+      }
+      window.scrollTo(0, 0);
+    });
+}
+</script>
+</body>
+</html>

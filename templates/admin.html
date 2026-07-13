@@ -255,18 +255,43 @@
           {% endif %}
         </td>
         <!-- ASSIGN VENDOR -->
-        <td>
-          <form method="POST" action="/assign-vendor/{{ lead.id }}" class="assign-form">
-            <select name="vendor_id" class="assign-select">
-              <option value="">— Vendor —</option>
-              {% for v in vendors %}
-              <option value="{{ v.id }}" {% if lead.vendor_id == v.id %}selected{% endif %}>{{ v.company_name }}</option>
-              {% endfor %}
-            </select>
-            <button type="submit" class="assign-btn" title="Assign Vendor">
-              <i class="bi bi-person-check"></i>
+        <td id="vendor-cell-{{ lead.id }}">
+          <div class="assign-vendor-wrap" data-lead-id="{{ lead.id }}" data-lead-district="{{ lead.district or '' }}">
+            <!-- Current vendor display -->
+            <div class="assigned-vendor-label" id="assigned-label-{{ lead.id }}">
+              {% if lead.vendor %}
+              <span class="vendor-badge">{{ lead.vendor.company_name }}</span>
+              {% else %}
+              <span class="unassigned-text">Unassigned</span>
+              {% endif %}
+            </div>
+            <!-- Tom Select container -->
+            <div class="ts-assign-container" style="display:none;">
+              <select class="ts-vendor-select" id="ts-{{ lead.id }}"
+                      data-lead-id="{{ lead.id }}"
+                      data-district="{{ lead.district or '' }}"
+                      data-current-vendor="{{ lead.vendor_id or '' }}"
+                      data-current-name="{{ lead.vendor.company_name if lead.vendor else '' }}">
+              </select>
+              <button class="assign-btn ts-assign-confirm"
+                      data-lead-id="{{ lead.id }}"
+                      title="Confirm Assignment"
+                      style="display:none;">
+                <i class="bi bi-check2"></i>
+              </button>
+              <button class="icon-btn ts-assign-cancel"
+                      onclick="cancelAssign({{ lead.id }})"
+                      title="Cancel" style="margin-left:2px;">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+            <!-- Edit button -->
+            <button class="icon-btn icon-btn-edit ts-assign-open"
+                    onclick="openAssign({{ lead.id }}, '{{ lead.district|e }}')"
+                    title="Assign/Change Vendor" style="margin-left:4px;">
+              <i class="bi bi-person-plus-fill"></i>
             </button>
-          </form>
+          </div>
         </td>
         <!-- FOLLOW UP NOTE ICON -->
         <td class="text-center">
@@ -519,7 +544,256 @@
 </script>
 {% endblock %}
 
-<!-- ============ LEAD DETAIL / EDIT MODAL ============ -->
+<!-- ======================================================
+     TOM SELECT — Searchable Vendor Assignment
+     ====================================================== -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+<style>
+/* ── Vendor Assignment Cell ── */
+.assign-vendor-wrap       { display:flex; align-items:center; gap:4px; flex-wrap:nowrap; min-width:180px; }
+.ts-assign-container      { display:flex; align-items:center; gap:4px; flex:1; min-width:200px; }
+.ts-assign-container .ts-wrapper { flex:1; min-width:160px; }
+
+/* Tom Select option card */
+.ts-vendor-option         { padding:6px 10px; line-height:1.4; }
+.ts-vendor-option .v-name { font-weight:700; font-size:13px; color:#1a1a1a; }
+.ts-vendor-option .v-meta { font-size:11px; color:#666; margin-top:1px; }
+.ts-vendor-option .v-stars{ color:#ffc107; font-size:11px; }
+.ts-vendor-option .v-badge{ background:#e8f5e9; color:#005b38; font-size:10px; font-weight:700;
+                             padding:1px 6px; border-radius:10px; margin-left:4px; }
+.ts-vendor-option .recommended-badge {
+  background:#005b38; color:#fff; font-size:10px; font-weight:800;
+  padding:2px 7px; border-radius:10px; margin-left:4px; }
+
+/* Toast */
+#assign-toast-container { position:fixed; top:20px; right:24px; z-index:99999; display:flex; flex-direction:column; gap:8px; }
+.assign-toast {
+  background:#1a3c2f; color:#fff; padding:12px 20px; border-radius:12px;
+  font-size:13px; font-weight:700; box-shadow:0 6px 20px rgba(0,0,0,.25);
+  display:flex; align-items:center; gap:10px;
+  animation: toastIn .25s ease; min-width:240px; max-width:360px;
+}
+.assign-toast.error { background:#842029; }
+.assign-toast .toast-icon { font-size:18px; }
+@keyframes toastIn { from{opacity:0;transform:translateY(-12px)} to{opacity:1;transform:translateY(0)} }
+
+/* Confirm dialog overlay */
+#assign-confirm-overlay {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,.45);
+  z-index:99990; align-items:center; justify-content:center;
+}
+#assign-confirm-overlay.show { display:flex; }
+#assign-confirm-box {
+  background:#fff; border-radius:18px; padding:28px 32px; max-width:400px;
+  width:90%; box-shadow:0 12px 40px rgba(0,0,0,.2); text-align:center;
+}
+#assign-confirm-box h5 { font-weight:800; color:#1a3c2f; margin-bottom:10px; }
+#assign-confirm-box p  { font-size:13px; color:#555; margin-bottom:20px; }
+.confirm-btn-row        { display:flex; gap:10px; justify-content:center; }
+.btn-confirm-yes { background:#005b38; color:#fff; border:none; border-radius:10px; padding:9px 24px; font-weight:700; cursor:pointer; }
+.btn-confirm-no  { background:#f0f0f0; color:#333; border:none; border-radius:10px; padding:9px 24px; font-weight:700; cursor:pointer; }
+</style>
+
+<!-- Toast container -->
+<div id="assign-toast-container"></div>
+
+<!-- Duplicate-assignment confirm dialog -->
+<div id="assign-confirm-overlay">
+  <div id="assign-confirm-box">
+    <h5>⚠️ Replace Vendor?</h5>
+    <p id="assign-confirm-msg">This lead already has a vendor assigned.</p>
+    <div class="confirm-btn-row">
+      <button class="btn-confirm-yes" id="assign-confirm-yes">Yes, Replace</button>
+      <button class="btn-confirm-no"  id="assign-confirm-no">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  SMART VENDOR ASSIGNMENT — Tom Select + AJAX
+// ═══════════════════════════════════════════════════════════
+
+var _tsInstances = {};     // lead_id → TomSelect instance
+var _pendingAssign = null; // { leadId, vendorId, force } for confirm dialog
+
+/* ── Toast helper ── */
+function showAssignToast(msg, isError) {
+  var container = document.getElementById('assign-toast-container');
+  var t = document.createElement('div');
+  t.className = 'assign-toast' + (isError ? ' error' : '');
+  t.innerHTML = '<span class="toast-icon">' + (isError ? '✗' : '✓') + '</span>' + msg;
+  container.appendChild(t);
+  setTimeout(function() { t.style.opacity='0'; t.style.transform='translateY(-8px)'; t.style.transition='.3s'; setTimeout(function(){ t.remove(); }, 310); }, 2200);
+}
+
+/* ── Open Tom Select for a lead row ── */
+function openAssign(leadId, district) {
+  var wrap  = document.querySelector('.assign-vendor-wrap[data-lead-id="'+leadId+'"]');
+  var label = document.getElementById('assigned-label-'+leadId);
+  var cont  = wrap.querySelector('.ts-assign-container');
+  var btn   = wrap.querySelector('.ts-assign-open');
+
+  label.style.display = 'none';
+  btn.style.display   = 'none';
+  cont.style.display  = 'flex';
+
+  if (_tsInstances[leadId]) {
+    _tsInstances[leadId].focus();
+    return;
+  }
+
+  var sel = document.getElementById('ts-'+leadId);
+  var currentVendorId = sel.dataset.currentVendor;
+
+  var ts = new TomSelect(sel, {
+    valueField:    'id',
+    labelField:    'company_name',
+    searchField:   ['company_name','owner_name','district','mobile'],
+    placeholder:   'Search vendor by name, district…',
+    maxOptions:    30,
+    loadThrottle:  250,
+    preload:       true,
+
+    load: function(query, callback) {
+      var url = '/vendor-search?q=' + encodeURIComponent(query)
+              + '&district=' + encodeURIComponent(district)
+              + '&lead_id='  + leadId;
+      fetch(url)
+        .then(function(r){ return r.json(); })
+        .then(function(d){ callback(d.results); })
+        .catch(function(){ callback([]); });
+    },
+
+    render: {
+      option: function(item, escape) {
+        var stars = item.stars || '';
+        var badge = item.recommended
+          ? '<span class="recommended-badge">⭐ Recommended</span>' : '';
+        return '<div class="ts-vendor-option">'
+          + '<div class="v-name">' + escape(item.company_name) + badge + '</div>'
+          + '<div class="v-meta">'
+          + '<span>' + escape(item.owner_name || '') + '</span> · '
+          + '<span>' + escape(item.district || '') + '</span>'
+          + '</div>'
+          + '<div class="v-meta">'
+          + '<span class="v-stars">' + stars + '</span>'
+          + ' <span>Completed: ' + (item.done || 0) + '</span>'
+          + ' · <span>Conv: ' + (item.conv || 0) + '%</span>'
+          + '</div>'
+          + '</div>';
+      },
+      item: function(item, escape) {
+        return '<div>' + escape(item.company_name) + ' <small style="color:#888">— ' + escape(item.district||'') + '</small></div>';
+      }
+    },
+
+    onChange: function(value) {
+      var confirmBtn = wrap.querySelector('.ts-assign-confirm');
+      if (value) {
+        confirmBtn.style.display = 'inline-flex';
+      } else {
+        confirmBtn.style.display = 'none';
+      }
+    }
+  });
+
+  // Wire confirm button
+  wrap.querySelector('.ts-assign-confirm').onclick = function() {
+    var vid = ts.getValue();
+    if (!vid) { showAssignToast('Please select a vendor.', true); return; }
+    doAssign(leadId, vid, false);
+  };
+
+  _tsInstances[leadId] = ts;
+  ts.focus();
+}
+
+/* ── Cancel / close Tom Select for a lead row ── */
+function cancelAssign(leadId) {
+  var wrap  = document.querySelector('.assign-vendor-wrap[data-lead-id="'+leadId+'"]');
+  var label = document.getElementById('assigned-label-'+leadId);
+  var cont  = wrap.querySelector('.ts-assign-container');
+  var btn   = wrap.querySelector('.ts-assign-open');
+  cont.style.display  = 'none';
+  label.style.display = '';
+  btn.style.display   = '';
+  if (_tsInstances[leadId]) {
+    try { _tsInstances[leadId].destroy(); } catch(e){}
+    _tsInstances[leadId] = null;
+    // Restore the raw select for next open
+    var newSel = document.createElement('select');
+    var oldSel = document.getElementById('ts-'+leadId);
+    newSel.className          = oldSel.className;
+    newSel.id                 = oldSel.id;
+    newSel.dataset.leadId     = oldSel.dataset.leadId;
+    newSel.dataset.district   = oldSel.dataset.district;
+    newSel.dataset.currentVendor = oldSel.dataset.currentVendor;
+    newSel.dataset.currentName   = oldSel.dataset.currentName;
+    oldSel.replaceWith(newSel);
+    wrap.querySelector('.ts-assign-confirm').style.display = 'none';
+  }
+}
+
+/* ── Core assign function ── */
+function doAssign(leadId, vendorId, force) {
+  var fd = new FormData();
+  fd.append('vendor_id', vendorId);
+  if (force) fd.append('force', '1');
+
+  fetch('/assign-vendor/' + leadId, { method:'POST', body: fd })
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      if (data.duplicate && !force) {
+        // Show confirmation dialog
+        _pendingAssign = { leadId: leadId, vendorId: vendorId };
+        document.getElementById('assign-confirm-msg').textContent =
+          'This lead is already assigned to "' + data.prev_vendor + '". Replace with new vendor?';
+        document.getElementById('assign-confirm-overlay').classList.add('show');
+        return;
+      }
+      if (!data.ok) {
+        showAssignToast(data.error || 'Assignment failed.', true);
+        return;
+      }
+      // Update only the vendor label cell — no page reload
+      var label = document.getElementById('assigned-label-'+leadId);
+      label.innerHTML = '<span class="vendor-badge">' + data.vendor_name + '</span>';
+      // Update data attribute for next open
+      var wrap = document.querySelector('.assign-vendor-wrap[data-lead-id="'+leadId+'"]');
+      var sel  = document.getElementById('ts-'+leadId) || wrap.querySelector('select');
+      if (sel) { sel.dataset.currentVendor = data.vendor_id; sel.dataset.currentName = data.vendor_name; }
+      // Close Tom Select
+      cancelAssign(leadId);
+      showAssignToast('✓ ' + data.message);
+    })
+    .catch(function(e) {
+      showAssignToast('Network error. Please try again.', true);
+    });
+}
+
+/* ── Confirm dialog buttons ── */
+document.getElementById('assign-confirm-yes').addEventListener('click', function() {
+  document.getElementById('assign-confirm-overlay').classList.remove('show');
+  if (_pendingAssign) {
+    doAssign(_pendingAssign.leadId, _pendingAssign.vendorId, true);
+    _pendingAssign = null;
+  }
+});
+document.getElementById('assign-confirm-no').addEventListener('click', function() {
+  document.getElementById('assign-confirm-overlay').classList.remove('show');
+  _pendingAssign = null;
+});
+// Close on backdrop click
+document.getElementById('assign-confirm-overlay').addEventListener('click', function(e) {
+  if (e.target === this) {
+    this.classList.remove('show');
+    _pendingAssign = null;
+  }
+});
+</script>
 <div class="modal fade" id="leadDetailModal" tabindex="-1" aria-labelledby="leadDetailModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
     <div class="modal-content crm-modal">

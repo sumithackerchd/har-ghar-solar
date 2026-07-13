@@ -54,6 +54,18 @@
         <span class="link-text">Import Vendors</span>
       </a>
 
+      <div class="nav-section-label nav-divider">ANALYTICS</div>
+
+      <a href="/admin/quotations" class="sidebar-link {% if request.path == '/admin/quotations' %}active{% endif %}" title="Quotations">
+        <span class="link-icon"><i class="bi bi-file-earmark-text"></i></span>
+        <span class="link-text">Quotations</span>
+      </a>
+
+      <a href="/admin/reports" class="sidebar-link {% if request.path == '/admin/reports' %}active{% endif %}" title="Reports">
+        <span class="link-icon"><i class="bi bi-graph-up-arrow"></i></span>
+        <span class="link-text">Reports</span>
+      </a>
+
       {% if session.get('is_super') %}
       <div class="nav-section-label nav-divider">SUPER ADMIN</div>
       <a href="/admin-management" class="sidebar-link {% if request.path == '/admin-management' %}active{% endif %}" title="User Management">
@@ -112,9 +124,22 @@
       </div>
 
       <div class="header-right">
-        <div class="header-action-btn" id="notifBtn" title="Notifications">
-          <i class="bi bi-bell"></i>
-          <span class="notif-badge" id="notifCount">0</span>
+        <!-- Notification Bell -->
+        <div style="position:relative;" id="notifWrap">
+          <div class="header-action-btn" id="notifBtn" title="Notifications" onclick="toggleNotifPanel()" style="cursor:pointer;">
+            <i class="bi bi-bell"></i>
+            <span class="notif-badge" id="notifCount" style="display:none;">0</span>
+          </div>
+          <!-- Dropdown Panel -->
+          <div id="notifPanel" style="display:none;position:absolute;right:0;top:44px;width:340px;background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.15);z-index:9999;overflow:hidden;">
+            <div style="padding:14px 18px;background:#005b38;color:#fff;display:flex;justify-content:space-between;align-items:center;">
+              <strong style="font-size:14px;"><i class="bi bi-bell-fill me-2"></i>Notifications</strong>
+              <button onclick="markAllRead()" style="background:rgba(255,255,255,.2);border:none;border-radius:8px;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;cursor:pointer;">Mark All Read</button>
+            </div>
+            <div id="notifList" style="max-height:320px;overflow-y:auto;padding:8px 0;">
+              <div style="text-align:center;padding:30px;color:#aaa;font-size:13px;">Loading…</div>
+            </div>
+          </div>
         </div>
 
         <a href="/download-leads" class="header-export-btn" title="Export Leads">
@@ -177,5 +202,96 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 {% block scripts %}{% endblock %}
 <script src="{{ url_for('static', filename='js/admin.js') }}?v=50"></script>
+<script>
+// ── Global Search ─────────────────────────────────────────────────────
+var _srchTimer = null;
+function globalSearch(val) {
+  clearTimeout(_srchTimer);
+  var box = document.getElementById('searchResults');
+  if (!box) return;
+  if (!val.trim()) { box.style.display='none'; return; }
+  _srchTimer = setTimeout(function() {
+    fetch('/global-search?q=' + encodeURIComponent(val))
+      .then(r => r.json()).then(d => {
+        var html = '';
+        if (d.vendors.length) {
+          html += '<div class="sr-section">Vendors</div>';
+          d.vendors.forEach(v => html += '<a href="/vendors" class="sr-item"><i class="bi bi-building me-2 text-success"></i>' + v.name + ' <small class="text-muted">(' + v.district + ')</small></a>');
+        }
+        if (d.leads.length) {
+          html += '<div class="sr-section">Leads</div>';
+          d.leads.forEach(l => html += '<a href="/lead-detail/' + l.id + '" class="sr-item"><i class="bi bi-person me-2 text-primary"></i>' + l.name + ' &bull; ' + l.phone + '</a>');
+        }
+        if (d.quotations.length) {
+          html += '<div class="sr-section">Quotations</div>';
+          d.quotations.forEach(q => html += '<a href="/vendor-quotation/' + q.id + '" class="sr-item"><i class="bi bi-file-text me-2 text-warning"></i>' + q.customer + ' <span class="badge bg-secondary ms-1" style="font-size:10px">' + q.status + '</span></a>');
+        }
+        if (!html) html = '<div class="sr-empty">No results found.</div>';
+        box.innerHTML = html; box.style.display='block';
+      });
+  }, 280);
+}
+document.addEventListener('click', function(e) {
+  var box = document.getElementById('searchResults');
+  if (box && !box.contains(e.target) && e.target.id !== 'globalSearchInput') box.style.display='none';
+});
+
+// ── Notification Bell ─────────────────────────────────────────────────
+function refreshNotifCount() {
+  fetch('/notifications/unread-count').then(r => r.json()).then(d => {
+    var badge = document.getElementById('notifCount');
+    if (!badge) return;
+    if (d.count > 0) { badge.textContent = d.count; badge.style.display='inline-block'; }
+    else { badge.style.display='none'; }
+  });
+}
+function toggleNotifPanel() {
+  var panel = document.getElementById('notifPanel');
+  if (!panel) return;
+  var open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  if (!open) loadNotifList();
+}
+function loadNotifList() {
+  fetch('/notifications/list').then(r => r.json()).then(items => {
+    var list = document.getElementById('notifList');
+    if (!list) return;
+    if (!items.length) { list.innerHTML='<div style="text-align:center;padding:30px;color:#aaa;font-size:13px;">No notifications.</div>'; return; }
+    list.innerHTML = items.map(n =>
+      '<div class="notif-item' + (n.is_read ? '' : ' notif-unread') + '" onclick="markOneRead(' + n.id + ',this)" style="padding:12px 18px;cursor:pointer;border-bottom:1px solid #f0f0f0;">' +
+      '<div style="font-weight:700;font-size:13px;">' + n.title + '</div>' +
+      '<div style="font-size:12px;color:#555;margin-top:2px;">' + n.message + '</div>' +
+      '<div style="font-size:11px;color:#aaa;margin-top:4px;">' + n.created_at + '</div>' +
+      '</div>'
+    ).join('');
+  });
+}
+function markOneRead(id, el) {
+  fetch('/notifications/mark-read', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id:id}) });
+  el.style.background = '#fff';
+  el.querySelector('div').style.fontWeight = 'normal';
+  refreshNotifCount();
+}
+function markAllRead() {
+  fetch('/notifications/mark-read', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({}) })
+    .then(() => { loadNotifList(); refreshNotifCount(); });
+}
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('notifWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    var panel = document.getElementById('notifPanel');
+    if (panel) panel.style.display='none';
+  }
+});
+refreshNotifCount();
+setInterval(refreshNotifCount, 60000);
+</script>
+<style>
+.sr-section { font-size:11px;font-weight:800;color:#888;padding:8px 16px 4px;text-transform:uppercase;letter-spacing:.5px; }
+.sr-item { display:block;padding:8px 16px;font-size:13px;color:#222;text-decoration:none; }
+.sr-item:hover { background:#f6fff9; }
+.sr-empty { text-align:center;padding:20px;color:#aaa;font-size:13px; }
+.notif-unread { background:#f0fff4; }
+</style>
 </body>
 </html>

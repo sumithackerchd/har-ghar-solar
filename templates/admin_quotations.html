@@ -1,0 +1,198 @@
+{% extends 'admin_base.html' %}
+{% block page_title %}Quotation Management{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+  <li class="breadcrumb-item active">Quotations</li>
+{% endblock %}
+{% block admin %}
+
+<div class="crm-page-header">
+  <div>
+    <h1 class="crm-page-title"><i class="bi bi-file-earmark-text-fill me-2"></i>Quotation Management</h1>
+    <p class="crm-page-sub">Review and approve vendor quotations</p>
+  </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+  {% for cat, msg in messages %}
+  <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+    {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+{% endif %}
+{% endwith %}
+
+<!-- SUMMARY CARDS -->
+<div class="row g-3 mb-4">
+  {% set pending  = quotes|selectattr('status','eq','Pending') |list %}
+  {% set approved = quotes|selectattr('status','eq','Approved')|list %}
+  {% set rejected = quotes|selectattr('status','eq','Rejected')|list %}
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm text-center p-3">
+      <div style="font-size:28px;font-weight:900;color:#005b38">{{ quotes|length }}</div>
+      <div style="font-size:12px;font-weight:700;color:#666">Total Quotations</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm text-center p-3">
+      <div style="font-size:28px;font-weight:900;color:#856404">{{ pending|length }}</div>
+      <div style="font-size:12px;font-weight:700;color:#666">Pending Review</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm text-center p-3">
+      <div style="font-size:28px;font-weight:900;color:#0a3622">{{ approved|length }}</div>
+      <div style="font-size:12px;font-weight:700;color:#666">Approved</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm text-center p-3">
+      <div style="font-size:28px;font-weight:900;color:#842029">{{ rejected|length }}</div>
+      <div style="font-size:12px;font-weight:700;color:#666">Rejected</div>
+    </div>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="crm-table-wrap">
+  <table class="crm-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Vendor</th>
+        <th>Customer</th>
+        <th>Capacity</th>
+        <th>Type</th>
+        <th>Gross Price</th>
+        <th>Net Price</th>
+        <th>Commission</th>
+        <th>Status</th>
+        <th>Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% if quotes %}
+    {% for q in quotes %}
+    <tr>
+      <td class="text-muted" style="font-size:12px">{{ q.id }}</td>
+      <td><strong>{{ q.vendor.company_name if q.vendor else '—' }}</strong></td>
+      <td>{{ q.customer_name }}<br><span style="font-size:11px;color:#888">{{ q.customer_phone }}</span></td>
+      <td><strong>{{ q.capacity_kw }} KW</strong></td>
+      <td>{{ q.project_type }}</td>
+      <td>₹{{ '{:,.0f}'.format(q.gross_price) }}</td>
+      <td><strong>₹{{ '{:,.0f}'.format(q.net_price) }}</strong></td>
+      <td>₹{{ '{:,.0f}'.format(q.commission) }}</td>
+      <td>
+        {% if q.status == 'Pending' %}
+          <span class="badge bg-warning text-dark">Pending</span>
+        {% elif q.status == 'Approved' %}
+          <span class="badge bg-success">Approved</span>
+        {% elif q.status == 'Rejected' %}
+          <span class="badge bg-danger">Rejected</span>
+        {% elif q.status == 'Revision' %}
+          <span class="badge bg-info">🔄 Revision Requested</span>
+        {% elif q.status == 'Revision Submitted' %}
+          <span class="badge bg-primary">Revision Submitted</span>
+        {% elif q.status == 'Accepted by Vendor' %}
+          <span class="badge" style="background:#005b38;color:#fff;">✓ Accepted</span>
+        {% elif q.status == 'Rejected by Vendor' %}
+          <span class="badge bg-danger">Rejected by Vendor</span>
+        {% else %}
+          <span class="badge bg-secondary">{{ q.status }}</span>
+        {% endif %}
+      </td>
+      <td style="font-size:12px;color:#888">{{ q.created_at }}</td>
+      <td>
+        <div class="d-flex gap-1 flex-wrap">
+          <a href="/vendor-quotation/{{ q.id }}" target="_blank"
+             class="btn btn-sm btn-outline-secondary" title="View">
+            <i class="bi bi-eye"></i>
+          </a>
+          {% if session.get('is_super') or session.get('role') == 'admin' %}
+          <button class="btn btn-sm btn-outline-success" title="Approve"
+            onclick="doAction({{ q.id }}, 'Approved', this)">
+            <i class="bi bi-check-lg"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-warning" title="Request Revision"
+            onclick="promptAction({{ q.id }}, 'Revision')">
+            <i class="bi bi-pencil-square"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger" title="Reject"
+            onclick="promptAction({{ q.id }}, 'Rejected')">
+            <i class="bi bi-x-lg"></i>
+          </button>
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+    {% else %}
+    <tr><td colspan="11" class="text-center text-muted py-5">No quotations found.</td></tr>
+    {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<!-- REMARK MODAL -->
+<div class="modal fade" id="remarkModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="remarkTitle">Add Remark</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="rmQid">
+        <input type="hidden" id="rmAction">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Admin Remark (optional)</label>
+          <textarea id="rmNote" class="form-control" rows="3" placeholder="Add a note for the vendor..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary fw-bold" onclick="submitRemark()">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function doAction(qid, action, btn) {
+  var fd = new FormData();
+  fd.append('action', action);
+  fd.append('admin_remarks', '');
+  fetch('/admin/quotation/' + qid + '/action', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) location.reload();
+      else alert('Error: ' + (d.error || 'Unknown'));
+    });
+}
+
+function promptAction(qid, action) {
+  document.getElementById('rmQid').value    = qid;
+  document.getElementById('rmAction').value = action;
+  document.getElementById('remarkTitle').textContent = action === 'Rejected' ? 'Reject Quotation' : 'Request Revision';
+  document.getElementById('rmNote').value = '';
+  new bootstrap.Modal(document.getElementById('remarkModal')).show();
+}
+
+function submitRemark() {
+  var qid    = document.getElementById('rmQid').value;
+  var action = document.getElementById('rmAction').value;
+  var note   = document.getElementById('rmNote').value;
+  var fd = new FormData();
+  fd.append('action', action);
+  fd.append('admin_remarks', note);
+  fetch('/admin/quotation/' + qid + '/action', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) location.reload();
+      else alert('Error: ' + (d.error || 'Unknown'));
+    });
+}
+</script>
+{% endblock %}

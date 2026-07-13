@@ -12,15 +12,42 @@
     <h1 class="crm-page-title"><i class="bi bi-people-fill me-2"></i>Vendor Management</h1>
     <p class="crm-page-sub">Manage all registered solar installation vendors</p>
   </div>
-  <div class="d-flex gap-2">
+  <div class="d-flex gap-2 flex-wrap">
     <a href="/vendor-add" class="btn-crm-primary">
       <i class="bi bi-person-plus-fill me-1"></i> Add Vendor
     </a>
     <a href="/import-vendors" class="btn-crm-secondary">
       <i class="bi bi-file-earmark-arrow-up me-1"></i> Import Excel
     </a>
+    <a href="/admin/quotations" class="btn-crm-secondary">
+      <i class="bi bi-file-earmark-text me-1"></i> Quotations
+    </a>
+    <div id="bulkBar" style="display:none;gap:6px;" class="d-flex">
+      <button type="button" onclick="bulkAction('enable')"
+        class="btn btn-sm btn-success fw-bold">
+        <i class="bi bi-check-circle me-1"></i> Enable
+      </button>
+      <button type="button" onclick="bulkAction('disable')"
+        class="btn btn-sm btn-warning fw-bold">
+        <i class="bi bi-pause-circle me-1"></i> Disable
+      </button>
+      <button type="button" onclick="bulkAction('export')"
+        class="btn btn-sm btn-info fw-bold text-white">
+        <i class="bi bi-download me-1"></i> Export
+      </button>
+      <button type="button" onclick="bulkAction('delete')"
+        class="btn btn-sm btn-danger fw-bold">
+        <i class="bi bi-trash me-1"></i> Delete
+      </button>
+    </div>
   </div>
 </div>
+
+<!-- HIDDEN BULK FORM -->
+<form id="bulkForm" method="POST" action="/vendor-bulk" style="display:none">
+  <input type="hidden" name="action" id="bulkAction">
+  <div id="bulkIds"></div>
+</form>
 
 <!-- FILTERS -->
 <div class="filter-panel mb-4">
@@ -60,6 +87,10 @@
   <table class="crm-table" id="vendorTable">
     <thead>
       <tr>
+        <th style="width:36px;">
+          <input type="checkbox" id="selectAll" onclick="toggleAll(this)"
+            style="width:16px;height:16px;accent-color:#005b38;cursor:pointer;">
+        </th>
         <th>#</th>
         <th>Company</th>
         <th>Owner</th>
@@ -77,6 +108,10 @@
     <tbody>
     {% for v in vendors %}
     <tr class="lead-row">
+      <td>
+        <input type="checkbox" class="vendor-cb" value="{{ v.id }}" onchange="updateBulkBar()"
+          style="width:16px;height:16px;accent-color:#005b38;cursor:pointer;">
+      </td>
       <td class="text-muted" style="font-size:12px">{{ v.id }}</td>
       <td><span class="fw-700" style="color:#1a2332">{{ v.company_name }}</span></td>
       <td style="font-size:13px">{{ v.owner_name }}</td>

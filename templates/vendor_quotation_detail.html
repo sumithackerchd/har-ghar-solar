@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quotation #{{ q.id }} — {{ vendor.company_name }}</title>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white; }
+      .q-card { box-shadow: none; }
+    }
+    * { box-sizing: border-box; }
+    body { background: #f4f4f4; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 24px; }
+    .q-card {
+      max-width: 780px; margin: auto; background: white; border-radius: 16px;
+      padding: 40px 48px; box-shadow: 0 8px 32px rgba(0,0,0,.12);
+    }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+    .brand { font-size: 28px; font-weight: 900; color: #005b38; }
+    .brand span { color: #ffc107; }
+    .q-no { font-size: 13px; color: #888; text-align: right; }
+    .q-no strong { font-size: 20px; color: #333; display: block; }
+    .status-badge {
+      display: inline-block; padding: 4px 14px; border-radius: 20px;
+      font-size: 12px; font-weight: 700; margin-top: 4px;
+    }
+    .Pending  { background: #fff3cd; color: #856404; }
+    .Approved { background: #d1e7dd; color: #0a3622; }
+    .Rejected { background: #f8d7da; color: #842029; }
+    .Revision { background: #cfe2ff; color: #084298; }
+    .divider { border: none; border-top: 2px solid #e8f5e9; margin: 20px 0; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+    .info-group label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; display: block; margin-bottom: 3px; }
+    .info-group span { font-size: 14px; font-weight: 600; color: #333; }
+    /* Component table */
+    .price-table { width: 100%; border-collapse: collapse; margin: 24px 0; }
+    .price-table th { background: #005b38; color: white; padding: 10px 14px; font-size: 12px; text-align: left; }
+    .price-table th.right { text-align: right; }
+    .price-table td { padding: 9px 14px; border-bottom: 1px solid #f0f0f0; font-size: 13px; vertical-align: top; }
+    .price-table td.right { text-align: right; white-space: nowrap; }
+    .price-table .section-head td {
+      background: #f0f7f4; font-weight: 800; font-size: 12px;
+      color: #005b38; text-transform: uppercase; letter-spacing: .5px;
+      padding: 7px 14px; border-bottom: 1px solid #d4edda;
+    }
+    .price-table .subtotal-row td { background: #f9f9f9; font-weight: 700; border-top: 2px solid #e0e0e0; }
+    .price-table .gst-row td { background: #fffde7; }
+    .price-table .gross-row td { background: #e8f5e9; font-weight: 800; font-size: 15px; color: #005b38; }
+    .price-table .subsidy-row td { background: #fff3e0; color: #e65100; font-weight: 700; }
+    .price-table .commission-row td { background: #e3f2fd; color: #1565c0; font-weight: 700; }
+    .price-table .total-row td { background: #005b38; color: white; font-weight: 900; font-size: 16px; border-bottom: none; }
+    .warn-box {
+      background: #fff3cd; border: 1.5px solid #ffc107; border-radius: 10px;
+      padding: 12px 16px; font-size: 13px; font-weight: 600; color: #856404;
+      margin: 16px 0;
+    }
+    .remarks-box {
+      background: #f9f9f9; border-radius: 10px; padding: 14px 18px;
+      font-size: 13px; color: #555; margin-top: 16px;
+    }
+    .footer { margin-top: 32px; display: flex; justify-content: space-between; font-size: 12px; color: #aaa; }
+    .action-bar { display: flex; gap: 12px; margin-bottom: 20px; max-width: 780px; margin-left: auto; margin-right: auto; }
+    .btn-back {
+      background: white; border: 2px solid #ccc; border-radius: 10px;
+      padding: 9px 20px; font-weight: 700; cursor: pointer; text-decoration: none; color: #333; font-size: 14px;
+    }
+    .btn-print {
+      background: #005b38; color: white; border: none; border-radius: 10px;
+      padding: 9px 20px; font-weight: 700; cursor: pointer; font-size: 14px;
+    }
+    .detail-text { font-size: 11px; color: #888; margin-top: 2px; }
+  </style>
+</head>
+<body>
+<div class="action-bar no-print">
+  <a href="/vendor-quotations" class="btn-back">&#8592; Back</a>
+  <button class="btn-print" onclick="window.print()">&#128424; Print / PDF</button>
+</div>
+
+<div class="q-card">
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <div class="brand">&#9728; HGS <span>Solar</span></div>
+      <div style="font-size:13px;color:#666;margin-top:4px;">Har Ghar Solar CRM</div>
+      <div style="font-size:12px;color:#888;">{{ vendor.company_name }}</div>
+    </div>
+    <div class="q-no">
+      <strong>Quotation #{{ q.id }}</strong>
+      <div>{{ q.created_at }}</div>
+      <span class="status-badge {{ q.status }}">{{ q.status }}</span>
+    </div>
+  </div>
+  <hr class="divider">
+
+  <!-- Customer + System Info -->
+  <div class="two-col">
+    <div>
+      <div class="info-group" style="margin-bottom:12px;">
+        <label>Customer Name</label>
+        <span>{{ q.customer_name }}</span>
+      </div>
+      <div class="info-group" style="margin-bottom:12px;">
+        <label>Phone</label>
+        <span>{{ q.customer_phone or '—' }}</span>
+      </div>
+      <div class="info-group">
+        <label>Project Type</label>
+        <span>{{ q.project_type }}</span>
+      </div>
+    </div>
+    <div>
+      <div class="info-group" style="margin-bottom:12px;">
+        <label>Capacity</label>
+        <span>{{ q.capacity_kw }} KW</span>
+      </div>
+      <div class="info-group" style="margin-bottom:12px;">
+        <label>Brand</label>
+        <span>{{ q.panel_brand or q.brand or '—' }}</span>
+      </div>
+      <div class="info-group">
+        <label>Vendor</label>
+        <span>{{ vendor.company_name }}</span>
+      </div>
+    </div>
+  </div>
+  <hr class="divider">
+
+  {% set comps = [] %}
+  {% if q.components_json %}
+    {% set comps = q.components_json | fromjson %}
+  {% endif %}
+
+  {% if not comps %}
+  <!-- No component data: show warning -->
+  <div class="warn-box">
+    &#9888; Vendor has not configured pricing. Component-wise breakdown is unavailable.
+    Gross price is shown as entered.
+  </div>
+  {% endif %}
+
+  <!-- Pricing Table -->
+  <table class="price-table">
+    <thead>
+      <tr>
+        <th style="width:38%">Component</th>
+        <th style="width:36%">Details</th>
+        <th class="right" style="width:12%">Unit Price</th>
+        <th class="right" style="width:7%">Qty</th>
+        <th class="right" style="width:13%">Amount (₹)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if comps %}
+        {% for c in comps %}
+        <tr>
+          <td><strong>{{ c.item }}</strong></td>
+          <td><div>{{ c.details }}</div></td>
+          <td class="right">
+            {% if c.unit_price %}₹{{ '{:,.0f}'.format(c.unit_price) }}{% else %}—{% endif %}
+          </td>
+          <td class="right">{{ c.qty if c.qty else 1 }}</td>
+          <td class="right"><strong>₹{{ '{:,.0f}'.format(c.amount) }}</strong></td>
+        </tr>
+        {% endfor %}
+        <!-- Sub Total -->
+        <tr class="subtotal-row">
+          <td colspan="4"><strong>Sub Total (before GST)</strong></td>
+          <td class="right"><strong>₹{{ '{:,.0f}'.format(q.sub_total or 0) }}</strong></td>
+        </tr>
+        <!-- GST -->
+        {% if q.gst_percent %}
+        <tr class="gst-row">
+          <td colspan="4">GST @ {{ q.gst_percent | int }}%</td>
+          <td class="right">+ ₹{{ '{:,.0f}'.format(q.gst_amount or 0) }}</td>
+        </tr>
+        {% endif %}
+        <!-- Gross -->
+        <tr class="gross-row">
+          <td colspan="4"><strong>Gross System Price</strong></td>
+          <td class="right"><strong>₹{{ '{:,.0f}'.format(q.gross_price) }}</strong></td>
+        </tr>
+      {% else %}
+        <!-- Fallback: just show gross -->
+        <tr class="gross-row">
+          <td colspan="4"><strong>Gross System Price</strong></td>
+          <td class="right"><strong>₹{{ '{:,.0f}'.format(q.gross_price) }}</strong></td>
+        </tr>
+      {% endif %}
+
+      <!-- Subsidy -->
+      {% if q.subsidy_amount %}
+      <tr class="subsidy-row">
+        <td colspan="4">PM Surya Ghar Subsidy (Government)</td>
+        <td class="right">− ₹{{ '{:,.0f}'.format(q.subsidy_amount) }}</td>
+      </tr>
+      {% endif %}
+
+      <!-- Commission -->
+      {% if q.commission %}
+      <tr class="commission-row">
+        <td colspan="4">Har Ghar Solar Commission</td>
+        <td class="right">+ ₹{{ '{:,.0f}'.format(q.commission) }}</td>
+      </tr>
+      {% endif %}
+
+      <!-- Final -->
+      <tr class="total-row">
+        <td colspan="4">Customer Final Price</td>
+        <td class="right">₹{{ '{:,.0f}'.format(q.net_price) }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% if q.remarks %}
+  <div class="remarks-box">
+    <strong>Remarks:</strong> {{ q.remarks }}
+  </div>
+  {% endif %}
+
+  {% if q.admin_remarks %}
+  <div class="remarks-box" style="background:#fff3cd;border:1.5px solid #ffc107;margin-top:10px;">
+    <strong>Admin Note:</strong> {{ q.admin_remarks }}
+  </div>
+  {% endif %}
+
+  <hr class="divider" style="margin-top:32px;">
+  <div class="footer">
+    <div>Generated by Har Ghar Solar CRM</div>
+    <div>{{ q.created_at }}</div>
+  </div>
+</div>
+
+<script>
+// Register fromjson filter polyfill for inline use (Jinja2 handles it server-side)
+</script>
+</body>
+</html>

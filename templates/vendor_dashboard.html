@@ -113,7 +113,26 @@
   <a href="/vendor-dashboard" class="{% if request.path == '/vendor-dashboard' %}active{% endif %}">
     <i class="fa-solid fa-gauge-high"></i> My Dashboard
   </a>
-  <a href="#" onclick="document.getElementById('changePwModal').style.display='flex';return false;">
+  <a href="/vendor-profile" class="{% if request.path == '/vendor-profile' %}active{% endif %}">
+    <i class="fa-solid fa-id-card"></i> My Profile
+  </a>
+  <a href="/vendor-pricing" class="{% if request.path == '/vendor-pricing' %}active{% endif %}">
+    <i class="fa-solid fa-tags"></i> My Pricing
+  </a>
+  <a href="/vendor-commission" class="{% if request.path == '/vendor-commission' %}active{% endif %}">
+    <i class="fa-solid fa-hand-holding-dollar"></i> Commission
+  </a>
+  <a href="/vendor-coverage" class="{% if request.path == '/vendor-coverage' %}active{% endif %}">
+    <i class="fa-solid fa-map-location-dot"></i> My Coverage
+  </a>
+  <a href="/vendor-quotations" class="{% if request.path == '/vendor-quotations' %}active{% endif %}">
+    <i class="fa-solid fa-file-invoice"></i> Quotations
+    {% if pending_quotations is defined and pending_quotations %}
+    <span style="background:#ffc107;color:#000;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;">{{ pending_quotations }}</span>
+    {% endif %}
+  </a>
+  <a href="#" onclick="document.getElementById('changePwModal').style.display='flex';return false;"
+     class="{% if request.path == '/vendor-change-password' %}active{% endif %}">
     <i class="fa-solid fa-key"></i> Change Password
   </a>
   <a href="/vendor-logout" class="logout">

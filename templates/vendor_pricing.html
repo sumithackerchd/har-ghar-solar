@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Pricing — {{ vendor.company_name }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #eef4f2; font-family: 'Segoe UI', sans-serif; margin: 0; }
+    .v-sidebar {
+      width: 220px; height: 100vh; position: fixed; left: 0; top: 0;
+      background: #1a3c2f; padding: 28px 18px; color: white; overflow-y: auto;
+    }
+    .v-sidebar .brand { font-size: 22px; font-weight: 900; color: #ffc107; margin-bottom: 10px; }
+    .v-sidebar .vendor-info { font-size: 12px; color: #a5d6a7; margin-bottom: 28px; line-height: 1.6; }
+    .v-sidebar a {
+      display: flex; align-items: center; gap: 10px; color: white; text-decoration: none;
+      font-weight: 700; font-size: 14px; padding: 11px 12px; border-radius: 12px; margin-bottom: 6px; transition: .2s;
+    }
+    .v-sidebar a:hover, .v-sidebar a.active { background: rgba(255,255,255,.15); }
+    .v-sidebar a.logout { margin-top: 30px; background: rgba(255,50,50,.15); }
+    .v-content { margin-left: 220px; padding: 22px 24px; }
+    .page-title { font-size: 24px; font-weight: 900; color: #005b38; margin-bottom: 6px; }
+    .page-sub { font-size: 12.5px; color: #888; margin-bottom: 16px; }
+
+    /* Tab bar */
+    .tab-bar { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+    .tab-btn {
+      padding: 8px 18px; border-radius: 10px; font-weight: 700; font-size: 13px;
+      border: 2px solid #e0e0e0; background: white; cursor: pointer; transition: .15s; color: #555;
+    }
+    .tab-btn.active { background: #005b38; color: white; border-color: #005b38; }
+
+    /* Cards */
+    .pricing-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,.08); margin-bottom: 18px; }
+    .pricing-card .card-head {
+      background: #005b38; color: white; padding: 10px 18px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .pricing-card .card-head h6 { margin: 0; font-weight: 800; font-size: 14px; }
+
+    /* Summary table */
+    table.ptable { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    table.ptable th {
+      background: #f5f5f5; color: #333; padding: 8px 10px;
+      font-weight: 700; text-align: center; border-bottom: 2px solid #e0e0e0; white-space: nowrap;
+    }
+    table.ptable th.cap-col { text-align: left; }
+    table.ptable td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; text-align: center; }
+    table.ptable tr:last-child td { border-bottom: none; }
+    table.ptable tr:hover td { background: #f9fff9; }
+    .kw-label { font-weight: 800; color: #005b38; font-size: 13px; }
+    .final-price { font-weight: 800; color: #005b38; font-size: 13px; }
+
+    /* Inputs */
+    .mini-input {
+      width: 100%; min-width: 72px; max-width: 120px; padding: 5px 8px;
+      border: 1.5px solid #e0e0e0; border-radius: 7px; font-size: 12px;
+      outline: none; text-align: right;
+    }
+    .mini-input:focus { border-color: #00a651; }
+    .mini-input.txt { text-align: left; max-width: 130px; }
+    .mini-select {
+      padding: 5px 6px; border: 1.5px solid #e0e0e0; border-radius: 7px;
+      font-size: 12px; outline: none; min-width: 90px; max-width: 140px; width: 100%;
+    }
+    .mini-select:focus { border-color: #00a651; }
+
+    /* Component section */
+    .comp-section { padding: 16px 20px; }
+    .comp-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px; margin-bottom: 14px;
+    }
+    .comp-item label { font-size: 11px; font-weight: 700; color: #555; display: block; margin-bottom: 4px; }
+    .comp-item input, .comp-item select {
+      width: 100%; padding: 7px 10px; border: 1.5px solid #e0e0e0; border-radius: 8px;
+      font-size: 13px; outline: none;
+    }
+    .comp-item input:focus, .comp-item select:focus { border-color: #00a651; }
+    .comp-section-title {
+      font-size: 12px; font-weight: 800; color: #005b38; text-transform: uppercase;
+      letter-spacing: .4px; margin: 14px 0 8px; border-bottom: 1.5px solid #e8f5e9; padding-bottom: 4px;
+    }
+
+    .save-btn {
+      background: #005b38; color: white; border: none; border-radius: 10px;
+      padding: 10px 26px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 6px;
+    }
+    .save-btn:hover { background: #00a651; }
+    #alertBox { display:none; padding:11px 16px; border-radius:10px; margin-bottom:14px; font-weight:600; font-size:13px; }
+  </style>
+</head>
+<body>
+<div class="v-sidebar">
+  <div class="brand">&#9728; HGS CRM</div>
+  <div class="vendor-info">
+    <div><i class="fa-solid fa-building me-1"></i> {{ vendor.company_name }}</div>
+    <div><i class="fa-solid fa-location-dot me-1"></i> {{ vendor.district }}</div>
+    <div style="margin-top:6px;color:#ffc107;font-size:11px;font-weight:700">@{{ vendor.username }}</div>
+  </div>
+  <a href="/vendor-dashboard"><i class="fa-solid fa-gauge-high"></i> My Dashboard</a>
+  <a href="/vendor-profile"><i class="fa-solid fa-id-card"></i> My Profile</a>
+  <a href="/vendor-pricing" class="active"><i class="fa-solid fa-tags"></i> My Pricing</a>
+  <a href="/vendor-commission"><i class="fa-solid fa-hand-holding-dollar"></i> Commission</a>
+  <a href="/vendor-coverage"><i class="fa-solid fa-map-location-dot"></i> My Coverage</a>
+  <a href="/vendor-quotations"><i class="fa-solid fa-file-invoice"></i> Quotations</a>
+  <a href="/vendor-performance"><i class="fa-solid fa-chart-line"></i> Performance</a>
+  <a href="/vendor-logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+</div>
+
+<div class="v-content">
+  <div class="page-title"><i class="fa-solid fa-tags me-2"></i>My Pricing</div>
+  <p class="page-sub">
+    Set capacity-wise prices and component costs. Quotations are auto-calculated from these values.
+    <strong>Final Customer Price = Vendor Selling Price + HGS Commission.</strong>
+  </p>
+  <div id="alertBox"></div>
+
+  <!-- Tab selector by capacity -->
+  <div class="tab-bar" id="capTabs">
+    {% for cap in capacities %}
+    <button class="tab-btn {% if loop.first %}active{% endif %}"
+            onclick="showCap({{ cap }}, this)">{{ cap }} KW</button>
+    {% endfor %}
+  </div>
+
+  {% for cap in capacities %}
+  {% set r = pricing_map.get(('Residential', cap)) %}
+  <div class="pricing-card cap-section" id="cap-{{ cap }}" style="{{ 'display:block' if loop.first else 'display:none' }}">
+    <div class="card-head">
+      <h6><i class="fa-solid fa-solar-panel me-2"></i>{{ cap }} KW — Pricing &amp; Components</h6>
+      <button class="save-btn" onclick="saveCap({{ cap }})" style="padding:6px 18px;font-size:12px;">
+        <i class="fa-solid fa-floppy-disk me-1"></i> Save {{ cap }} KW
+      </button>
+    </div>
+
+    <div class="comp-section" data-cap="{{ cap }}">
+
+      <!-- SUMMARY ROW -->
+      <div class="comp-section-title">Base Pricing (by Type)</div>
+      <table class="ptable" style="margin-bottom:14px;">
+        <thead>
+          <tr>
+            <th class="cap-col">Type</th>
+            <th>Brand</th>
+            <th>Warranty (yr)</th>
+            <th>Type Price ₹</th>
+            <th>Vendor Selling ₹</th>
+            <th>HGS Commission ₹</th>
+            <th>Final Customer ₹</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ptype, pkey in [('Residential','residential_price'),('Commercial','commercial_price'),('Government','govt_price')] %}
+          {% set pr = pricing_map.get((ptype, cap)) %}
+          <tr data-ptype="{{ ptype }}">
+            <td style="text-align:left;"><span class="kw-label">{{ ptype }}</span></td>
+            <td>
+              <select class="mini-select p_brand">
+                <option value="">—</option>
+                {% for b in brands %}<option value="{{ b }}" {% if pr and pr.brand==b %}selected{% endif %}>{{ b }}</option>{% endfor %}
+              </select>
+            </td>
+            <td><input type="number" class="mini-input p_warranty" style="max-width:68px;text-align:center;" value="{{ pr.warranty_years if pr else '' }}" placeholder="25" min="0"></td>
+            <td><input type="number" class="mini-input p_type_price" min="0" step="1000" value="{{ pr.system_price if pr and pr.system_price else '' }}" placeholder="0"></td>
+            <td><input type="number" class="mini-input p_vendor_price" min="0" step="1000" value="{{ pr.vendor_price if pr and pr.vendor_price else '' }}" placeholder="0" oninput="calcFinal(this)"></td>
+            <td><input type="number" class="mini-input p_hgs_comm" min="0" step="100" value="{{ pr.hgs_commission if pr and pr.hgs_commission else '' }}" placeholder="0" oninput="calcFinal(this)"></td>
+            <td><span class="final-price p_final">{% if pr and pr.final_price %}&#8377;{{ '{:,.0f}'.format(pr.final_price) }}{% else %}—{% endif %}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- COMPONENT PRICING (shared across types for this KW) -->
+      <div class="comp-section-title">Component Prices (used in Quotation breakdown)</div>
+
+      <div class="comp-grid">
+        <div class="comp-item">
+          <label>Panel Unit Price (₹)</label>
+          <input type="number" class="c_panel_price" min="0" step="100"
+            value="{{ r.panel_price if r and r.panel_price else '' }}" placeholder="e.g. 12000">
+        </div>
+        <div class="comp-item">
+          <label>Panel Wattage (W)</label>
+          <input type="number" class="c_panel_wattage" min="0" step="5"
+            value="{{ r.panel_wattage if r and r.panel_wattage else '' }}" placeholder="e.g. 540">
+        </div>
+        <div class="comp-item">
+          <label>Panel Quantity</label>
+          <input type="number" class="c_panel_qty" min="0"
+            value="{{ r.panel_quantity if r and r.panel_quantity else '' }}" placeholder="e.g. 4">
+        </div>
+      </div>
+
+      <div class="comp-grid">
+        <div class="comp-item">
+          <label>Inverter Price (₹)</label>
+          <input type="number" class="c_inv_price" min="0" step="100"
+            value="{{ r.inverter_price if r and r.inverter_price else '' }}" placeholder="e.g. 25000">
+        </div>
+        <div class="comp-item">
+          <label>Inverter Brand</label>
+          <input type="text" class="c_inv_brand"
+            value="{{ r.inverter_brand if r and r.inverter_brand else '' }}" placeholder="e.g. Havells">
+        </div>
+        <div class="comp-item">
+          <label>Inverter Capacity</label>
+          <input type="text" class="c_inv_cap"
+            value="{{ r.inverter_capacity if r and r.inverter_capacity else '' }}" placeholder="e.g. 5 KW">
+        </div>
+      </div>
+
+      <div class="comp-grid">
+        <div class="comp-item">
+          <label>Structure Price (₹)</label>
+          <input type="number" class="c_struct_price" min="0" step="100"
+            value="{{ r.structure_price if r and r.structure_price else '' }}" placeholder="e.g. 8000">
+        </div>
+        <div class="comp-item">
+          <label>Structure Type</label>
+          <input type="text" class="c_struct_type"
+            value="{{ r.structure_type if r and r.structure_type else '' }}" placeholder="e.g. GI / MS">
+        </div>
+      </div>
+
+      <div class="comp-section-title">Other Charges</div>
+      <div class="comp-grid">
+        <div class="comp-item">
+          <label>Installation Charge (₹)</label>
+          <input type="number" class="c_install" min="0" step="100"
+            value="{{ r.install_charge if r and r.install_charge else '' }}" placeholder="0">
+        </div>
+        <div class="comp-item">
+          <label>Electrical Material (₹)</label>
+          <input type="number" class="c_elec" min="0" step="100"
+            value="{{ r.elec_material if r and r.elec_material else '' }}" placeholder="0">
+        </div>
+        <div class="comp-item">
+          <label>Net Meter Charge (₹)</label>
+          <input type="number" class="c_netmeter" min="0" step="100"
+            value="{{ r.net_meter_charge if r and r.net_meter_charge else '' }}" placeholder="0">
+        </div>
+        <div class="comp-item">
+          <label>Transportation (₹)</label>
+          <input type="number" class="c_transport" min="0" step="100"
+            value="{{ r.transportation if r and r.transportation else '' }}" placeholder="0">
+        </div>
+        <div class="comp-item">
+          <label>Documentation (₹)</label>
+          <input type="number" class="c_docs" min="0" step="100"
+            value="{{ r.documentation if r and r.documentation else '' }}" placeholder="0">
+        </div>
+        <div class="comp-item">
+          <label>Miscellaneous (₹)</label>
+          <input type="number" class="c_misc" min="0" step="100"
+            value="{{ r.miscellaneous if r and r.miscellaneous else '' }}" placeholder="0">
+        </div>
+        <div class="comp-item">
+          <label>GST %</label>
+          <input type="number" class="c_gst" min="0" max="100" step="0.5"
+            value="{{ r.gst_percent if r and r.gst_percent else '' }}" placeholder="e.g. 13.8">
+        </div>
+      </div>
+
+    </div><!-- /comp-section -->
+  </div><!-- /pricing-card -->
+  {% endfor %}
+</div>
+
+<script>
+function showCap(cap, btn) {
+  document.querySelectorAll('.cap-section').forEach(function(el){ el.style.display='none'; });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('cap-'+cap).style.display = 'block';
+  btn.classList.add('active');
+}
+
+function calcFinal(el) {
+  var row      = el.closest('tr');
+  var vp       = parseFloat(row.querySelector('.p_vendor_price').value) || 0;
+  var hgs      = parseFloat(row.querySelector('.p_hgs_comm').value)     || 0;
+  var final    = vp + hgs;
+  row.querySelector('.p_final').textContent = final > 0 ? '&#8377;' + final.toLocaleString('en-IN') : '—';
+}
+
+function saveCap(cap) {
+  var section  = document.getElementById('cap-'+cap);
+  var alertBox = document.getElementById('alertBox');
+  var rows     = [];
+
+  // Base pricing rows
+  section.querySelectorAll('tbody tr[data-ptype]').forEach(function(row) {
+    rows.push({
+      capacity_kw:          cap,
+      project_type_override: row.dataset.ptype,
+      brand:                row.querySelector('.p_brand').value,
+      warranty_years:       parseInt(row.querySelector('.p_warranty').value) || 0,
+      type_price_key:       row.dataset.ptype === 'Residential' ? 'residential_price'
+                          : row.dataset.ptype === 'Commercial'  ? 'commercial_price' : 'govt_price',
+      type_price_val:       parseFloat(row.querySelector('.p_type_price').value) || 0,
+      vendor_selling_price: parseFloat(row.querySelector('.p_vendor_price').value) || 0,
+      hgs_commission:       parseFloat(row.querySelector('.p_hgs_comm').value)    || 0,
+    });
+  });
+
+  // Component fields (shared per KW)
+  var cs = section.querySelector('.comp-section');
+  var comp = {
+    panel_price:      parseFloat(cs.querySelector('.c_panel_price').value)   || 0,
+    panel_wattage:    parseInt(cs.querySelector('.c_panel_wattage').value)   || 0,
+    panel_quantity:   parseInt(cs.querySelector('.c_panel_qty').value)       || 0,
+    inverter_price:   parseFloat(cs.querySelector('.c_inv_price').value)     || 0,
+    inverter_brand:   cs.querySelector('.c_inv_brand').value.trim(),
+    inverter_capacity:cs.querySelector('.c_inv_cap').value.trim(),
+    structure_price:  parseFloat(cs.querySelector('.c_struct_price').value)  || 0,
+    structure_type:   cs.querySelector('.c_struct_type').value.trim(),
+    install_charge:   parseFloat(cs.querySelector('.c_install').value)       || 0,
+    elec_material:    parseFloat(cs.querySelector('.c_elec').value)          || 0,
+    net_meter_charge: parseFloat(cs.querySelector('.c_netmeter').value)      || 0,
+    transportation:   parseFloat(cs.querySelector('.c_transport').value)     || 0,
+    documentation:    parseFloat(cs.querySelector('.c_docs').value)          || 0,
+    miscellaneous:    parseFloat(cs.querySelector('.c_misc').value)          || 0,
+    gst_percent:      parseFloat(cs.querySelector('.c_gst').value)           || 0,
+  };
+
+  // Build payload — one entry per type row, merge component fields
+  var payload = rows.map(function(r) {
+    var entry = Object.assign({}, comp);
+    entry.capacity_kw         = cap;
+    entry.brand               = r.brand;
+    entry.warranty_years      = r.warranty_years;
+    entry.vendor_selling_price= r.vendor_selling_price;
+    entry.hgs_commission      = r.hgs_commission;
+    // Map type price to correct key
+    entry['residential_price'] = r.type_price_key === 'residential_price' ? r.type_price_val : 0;
+    entry['commercial_price']  = r.type_price_key === 'commercial_price'  ? r.type_price_val : 0;
+    entry['govt_price']        = r.type_price_key === 'govt_price'        ? r.type_price_val : 0;
+    return entry;
+  });
+
+  fetch('/vendor-pricing/save', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  }).then(r => r.json()).then(d => {
+    alertBox.style.display = 'block';
+    if (d.ok) {
+      alertBox.style.background = '#d1e7dd'; alertBox.style.color = '#0a3622';
+      alertBox.textContent = '&#10003; ' + d.message;
+    } else {
+      alertBox.style.background = '#f8d7da'; alertBox.style.color = '#842029';
+      alertBox.textContent = '&#10007; ' + (d.error || 'Error saving pricing.');
+    }
+    window.scrollTo(0, 0);
+    setTimeout(function(){ alertBox.style.display = 'none'; }, 3000);
+  }).catch(function() {
+    alertBox.style.display = 'block';
+    alertBox.style.background = '#f8d7da'; alertBox.style.color = '#842029';
+    alertBox.textContent = '&#10007; Network error. Please try again.';
+  });
+}
+</script>
+</body>
+</html>

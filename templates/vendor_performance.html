@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Performance — {{ vendor.company_name }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #eef4f2; font-family: 'Segoe UI', sans-serif; margin: 0; }
+    .v-sidebar {
+      width: 220px; height: 100vh; position: fixed; left: 0; top: 0;
+      background: #1a3c2f; padding: 28px 18px; color: white; overflow-y: auto;
+    }
+    .v-sidebar .brand { font-size: 22px; font-weight: 900; color: #ffc107; margin-bottom: 10px; }
+    .v-sidebar .vendor-info { font-size: 12px; color: #a5d6a7; margin-bottom: 28px; line-height: 1.6; }
+    .v-sidebar a {
+      display: flex; align-items: center; gap: 10px; color: white; text-decoration: none;
+      font-weight: 700; font-size: 14px; padding: 11px 12px; border-radius: 12px; margin-bottom: 6px; transition: .2s;
+    }
+    .v-sidebar a:hover, .v-sidebar a.active { background: rgba(255,255,255,.15); }
+    .v-sidebar a.logout { margin-top: 30px; background: rgba(255,50,50,.15); }
+    .v-content { margin-left: 220px; padding: 28px; }
+    .page-title { font-size: 26px; font-weight: 900; color: #005b38; margin-bottom: 22px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: white; border-radius: 16px; padding: 22px 20px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.07); text-align: center;
+    }
+    .stat-card .num { font-size: 32px; font-weight: 900; color: #005b38; }
+    .stat-card .lbl { font-size: 12px; font-weight: 700; color: #888; margin-top: 4px; }
+    .stat-card.orange .num { color: #f57c00; }
+    .stat-card.blue .num   { color: #1565c0; }
+    .stat-card.red .num    { color: #c62828; }
+    .card-section {
+      background: white; border-radius: 18px; padding: 24px 26px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.07); margin-bottom: 22px;
+    }
+    .card-section h5 { font-weight: 800; color: #005b38; margin-bottom: 16px; border-bottom: 2px solid #e8f5e9; padding-bottom: 10px; }
+    .star-big { font-size: 36px; font-weight: 900; color: #ffc107; }
+    .q-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .q-table th { background: #005b38; color: #fff; padding: 10px 14px; font-weight: 700; text-align: left; }
+    .q-table td { padding: 10px 14px; border-bottom: 1px solid #f0f0f0; }
+    .q-table tr:last-child td { border-bottom: none; }
+    .badge-pending  { background:#fff3cd; color:#856404; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+    .badge-approved { background:#d1e7dd; color:#0a3622; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+    .badge-rejected { background:#f8d7da; color:#842029; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+  </style>
+</head>
+<body>
+<div class="v-sidebar">
+  <div class="brand">☀ HGS CRM</div>
+  <div class="vendor-info">
+    <div><i class="fa-solid fa-building me-1"></i> {{ vendor.company_name }}</div>
+    <div><i class="fa-solid fa-location-dot me-1"></i> {{ vendor.district }}</div>
+    <div style="margin-top:6px;color:#ffc107;font-size:11px;font-weight:700">@{{ vendor.username }}</div>
+  </div>
+  <a href="/vendor-dashboard"><i class="fa-solid fa-gauge-high"></i> My Dashboard</a>
+  <a href="/vendor-profile"><i class="fa-solid fa-id-card"></i> My Profile</a>
+  <a href="/vendor-pricing"><i class="fa-solid fa-tags"></i> My Pricing</a>
+  <a href="/vendor-commission"><i class="fa-solid fa-hand-holding-dollar"></i> Commission</a>
+  <a href="/vendor-coverage"><i class="fa-solid fa-map-location-dot"></i> My Coverage</a>
+  <a href="/vendor-quotations"><i class="fa-solid fa-file-invoice"></i> Quotations</a>
+  <a href="/vendor-performance" class="active"><i class="fa-solid fa-chart-line"></i> Performance</a>
+  <a href="/vendor-logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+</div>
+
+<div class="v-content">
+  <div class="page-title"><i class="fa-solid fa-chart-line me-2"></i>My Performance</div>
+
+  <!-- KPI Cards -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="num">{{ total }}</div>
+      <div class="lbl">Total Leads</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">{{ completed }}</div>
+      <div class="lbl">Completed</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="num">{{ pending }}</div>
+      <div class="lbl">Pending</div>
+    </div>
+    <div class="stat-card red">
+      <div class="num">{{ cancelled }}</div>
+      <div class="lbl">Cancelled</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="num">{{ conv_pct }}%</div>
+      <div class="lbl">Conversion Rate</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">₹{{ '{:,.0f}'.format(total_revenue) }}</div>
+      <div class="lbl">Revenue Generated</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="num">₹{{ '{:,.0f}'.format(total_commission) }}</div>
+      <div class="lbl">HGS Commission Paid</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">{{ rating_count }}</div>
+      <div class="lbl">Customer Ratings</div>
+    </div>
+  </div>
+
+  <!-- Rating + Chart row -->
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:20px;margin-bottom:22px;">
+    <div class="card-section" style="display:flex;flex-direction:column;justify-content:center;align-items:center;">
+      <h5 style="text-align:center;">Customer Rating</h5>
+      <div class="star-big">{{ avg_rating }}</div>
+      <div style="color:#ffc107;font-size:24px;margin:6px 0;">
+        {% for i in range(avg_rating|int) %}★{% endfor %}
+        {% if avg_rating % 1 >= 0.5 %}½{% endif %}
+      </div>
+      <div style="color:#888;font-size:13px;">Based on {{ rating_count }} review{{ 's' if rating_count != 1 }}</div>
+    </div>
+    <div class="card-section">
+      <h5><i class="fa-solid fa-chart-bar me-2"></i>Lead Trend (Last 6 Months)</h5>
+      <canvas id="trendChart" height="120"></canvas>
+    </div>
+  </div>
+
+  <!-- Quotation history -->
+  <div class="card-section" style="padding:0;overflow:hidden;">
+    <div style="padding:20px 24px 0;"><h5><i class="fa-solid fa-file-invoice me-2"></i>Quotation History</h5></div>
+    {% if quotes %}
+    <table class="q-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Customer</th><th>Capacity</th><th>Type</th>
+          <th>Gross</th><th>Net Price</th><th>Commission</th><th>Status</th><th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in quotes %}
+        <tr>
+          <td class="text-muted">{{ q.id }}</td>
+          <td>{{ q.customer_name }}</td>
+          <td><strong>{{ q.capacity_kw }} KW</strong></td>
+          <td>{{ q.project_type }}</td>
+          <td>₹{{ '{:,.0f}'.format(q.gross_price) }}</td>
+          <td><strong>₹{{ '{:,.0f}'.format(q.net_price) }}</strong></td>
+          <td>₹{{ '{:,.0f}'.format(q.commission) }}</td>
+          <td><span class="badge-{{ q.status|lower }}">{{ q.status }}</span></td>
+          <td style="font-size:11px;color:#888">{{ q.created_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="text-align:center;padding:40px;color:#aaa;">No quotations yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+var ctx = document.getElementById('trendChart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: {{ trend_labels | tojson }},
+    datasets: [{
+      label: 'Leads',
+      data: {{ trend_data | tojson }},
+      backgroundColor: 'rgba(0,91,56,0.7)',
+      borderRadius: 8
+    }]
+  },
+  options: {
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 } }
+    }
+  }
+});
+</script>
+</body>
+</html>

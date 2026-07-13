@@ -78,6 +78,10 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 db = SQLAlchemy(app)
 
+# Jinja2 custom filter: parse JSON in templates
+import json as _json_mod
+app.jinja_env.filters['fromjson'] = lambda s: _json_mod.loads(s or '[]')
+
 # ==========================
 # RATE LIMITING (in-memory)
 # ==========================
@@ -229,6 +233,165 @@ class VisitorCount(db.Model):
     id    = db.Column(db.Integer, primary_key=True)
     count = db.Column(db.Integer, default=0)
 
+
+# ==========================
+# VENDOR EXTENDED MODELS
+# ==========================
+class VendorProfile(db.Model):
+    __tablename__ = "vendor_profile"
+    id                   = db.Column(db.Integer, primary_key=True)
+    vendor_id            = db.Column(db.Integer, db.ForeignKey("vendor.id"), unique=True, nullable=False)
+    gst_number           = db.Column(db.String(20), default="")
+    pan_number           = db.Column(db.String(20), default="")
+    state                = db.Column(db.String(100), default="Uttar Pradesh")
+    pincode              = db.Column(db.String(10), default="")
+    alternate_phone      = db.Column(db.String(20), default="")
+    website              = db.Column(db.String(200), default="")
+    years_experience     = db.Column(db.Integer, default=0)
+    install_capacity_kw  = db.Column(db.Integer, default=0)
+    res_projects         = db.Column(db.Integer, default=0)
+    comm_projects        = db.Column(db.Integer, default=0)
+    ind_projects         = db.Column(db.Integer, default=0)
+    govt_projects        = db.Column(db.Integer, default=0)
+    pm_surya_approved    = db.Column(db.Boolean, default=False)
+    discom_empanelled    = db.Column(db.Boolean, default=False)
+    brands_supported     = db.Column(db.Text, default="")   # comma-separated
+    company_logo         = db.Column(db.String(300), default="")
+    profile_photo        = db.Column(db.String(300), default="")
+    updated_at           = db.Column(db.String(50), default="")
+    vendor               = db.relationship("Vendor", backref=db.backref("profile", uselist=False))
+
+
+SOLAR_BRANDS = [
+    "Waaree", "Adani", "Tata", "Luminous", "Havells",
+    "Loom Solar", "Vikram Solar", "Premier Energies", "RenewSys", "Other"
+]
+
+LEAD_TYPES = [
+    "Residential", "Commercial", "Government", "Industrial",
+    "Society", "School", "Hospital", "Factory"
+]
+
+KW_CAPACITIES = [1, 2, 3, 5, 10, 15, 20, 25, 50]
+
+
+class VendorPricing(db.Model):
+    __tablename__ = "vendor_pricing"
+    id                  = db.Column(db.Integer, primary_key=True)
+    vendor_id           = db.Column(db.Integer, db.ForeignKey("vendor.id"), nullable=False)
+    project_type        = db.Column(db.String(50), nullable=False)   # Residential/Commercial/Government
+    capacity_kw         = db.Column(db.Integer, nullable=False)
+    system_price        = db.Column(db.Float, default=0)             # type-specific base price
+    brand               = db.Column(db.String(100), default="")
+    warranty_years      = db.Column(db.Integer, default=0)
+    vendor_price        = db.Column(db.Float, default=0)             # vendor selling price
+    hgs_commission      = db.Column(db.Float, default=0)             # HGS commission
+    final_price         = db.Column(db.Float, default=0)             # vendor_price + hgs_commission
+    # Component-wise pricing
+    panel_price         = db.Column(db.Float, default=0)   # per-unit panel price
+    panel_wattage       = db.Column(db.Integer, default=0) # panel wattage in W
+    panel_quantity      = db.Column(db.Integer, default=0) # number of panels
+    inverter_price      = db.Column(db.Float, default=0)
+    inverter_brand      = db.Column(db.String(100), default="")
+    inverter_capacity   = db.Column(db.String(50), default="")  # e.g. "5 KW"
+    structure_price     = db.Column(db.Float, default=0)
+    structure_type      = db.Column(db.String(100), default="")
+    install_charge      = db.Column(db.Float, default=0)
+    elec_material       = db.Column(db.Float, default=0)
+    net_meter_charge    = db.Column(db.Float, default=0)
+    transportation      = db.Column(db.Float, default=0)
+    documentation       = db.Column(db.Float, default=0)
+    miscellaneous       = db.Column(db.Float, default=0)
+    gst_percent         = db.Column(db.Float, default=0)   # GST %
+    updated_at          = db.Column(db.String(50), default="")
+    vendor              = db.relationship("Vendor", backref="pricing")
+    __table_args__      = (db.UniqueConstraint("vendor_id", "project_type", "capacity_kw"),)
+
+
+class VendorCommission(db.Model):
+    __tablename__ = "vendor_commission"
+    id               = db.Column(db.Integer, primary_key=True)
+    vendor_id        = db.Column(db.Integer, db.ForeignKey("vendor.id"), nullable=False)
+    project_type     = db.Column(db.String(50), nullable=False)
+    capacity_kw      = db.Column(db.Integer, nullable=False)
+    vendor_price     = db.Column(db.Float, default=0)
+    hgs_commission   = db.Column(db.Float, default=0)
+    final_price      = db.Column(db.Float, default=0)
+    updated_at       = db.Column(db.String(50), default="")
+    vendor           = db.relationship("Vendor", backref="commissions")
+    __table_args__   = (db.UniqueConstraint("vendor_id", "project_type", "capacity_kw"),)
+
+
+class VendorCoverage(db.Model):
+    __tablename__ = "vendor_coverage"
+    id            = db.Column(db.Integer, primary_key=True)
+    vendor_id     = db.Column(db.Integer, db.ForeignKey("vendor.id"), nullable=False)
+    districts     = db.Column(db.Text, default="")   # JSON list
+    lead_types    = db.Column(db.Text, default="")   # JSON list
+    all_districts = db.Column(db.Boolean, default=False)
+    updated_at    = db.Column(db.String(50), default="")
+    vendor        = db.relationship("Vendor", backref=db.backref("coverage", uselist=False))
+
+
+class VendorQuotation(db.Model):
+    __tablename__ = "vendor_quotation"
+    id             = db.Column(db.Integer, primary_key=True)
+    vendor_id      = db.Column(db.Integer, db.ForeignKey("vendor.id"), nullable=False)
+    lead_id        = db.Column(db.Integer, db.ForeignKey("lead.id"), nullable=True)
+    customer_name  = db.Column(db.String(150), default="")
+    customer_phone = db.Column(db.String(20), default="")
+    capacity_kw    = db.Column(db.Integer, default=0)
+    project_type   = db.Column(db.String(50), default="Residential")
+    brand          = db.Column(db.String(100), default="")
+    panel_brand    = db.Column(db.String(100), default="")
+    inverter_brand = db.Column(db.String(100), default="")
+    structure_type = db.Column(db.String(100), default="")
+    subsidy_amount = db.Column(db.Float, default=0)
+    gross_price    = db.Column(db.Float, default=0)
+    net_price      = db.Column(db.Float, default=0)
+    commission     = db.Column(db.Float, default=0)
+    remarks        = db.Column(db.Text, default="")
+    status         = db.Column(db.String(30), default="Pending")  # Pending/Approved/Rejected/Revision
+    admin_remarks  = db.Column(db.Text, default="")
+    created_at     = db.Column(db.String(50), default="")
+    updated_at     = db.Column(db.String(50), default="")
+    # Item-wise breakdown stored as JSON
+    components_json = db.Column(db.Text, default="")   # JSON list of {item,details,amount}
+    gst_amount      = db.Column(db.Float, default=0)
+    sub_total       = db.Column(db.Float, default=0)
+    gst_percent     = db.Column(db.Float, default=0)
+    vendor          = db.relationship("Vendor", backref="quotations")
+    lead            = db.relationship("Lead", backref="quotations")
+
+
+# ==========================
+# VENDOR RATING MODEL
+# ==========================
+class VendorRating(db.Model):
+    __tablename__ = "vendor_rating"
+    id          = db.Column(db.Integer, primary_key=True)
+    vendor_id   = db.Column(db.Integer, db.ForeignKey("vendor.id"), nullable=False)
+    lead_id     = db.Column(db.Integer, db.ForeignKey("lead.id"), nullable=True)
+    rating      = db.Column(db.Float, default=0)        # 1-5
+    review      = db.Column(db.Text, default="")
+    rated_by    = db.Column(db.String(100), default="")
+    created_at  = db.Column(db.String(50), default="")
+    vendor      = db.relationship("Vendor", backref="ratings")
+
+
+# ==========================
+# NOTIFICATION MODEL
+# ==========================
+class Notification(db.Model):
+    __tablename__ = "notification"
+    id          = db.Column(db.Integer, primary_key=True)
+    target_type = db.Column(db.String(20), default="admin")  # admin / vendor
+    target_id   = db.Column(db.Integer, nullable=True)       # vendor_id or user_id, None=all admins
+    title       = db.Column(db.String(200), default="")
+    message     = db.Column(db.Text, default="")
+    is_read     = db.Column(db.Boolean, default=False)
+    created_at  = db.Column(db.String(50), default="")
+
 # ==========================
 # DB INIT + MIGRATION
 # ==========================
@@ -262,8 +425,203 @@ with app.app_context():
             cur.execute("ALTER TABLE vendor ADD COLUMN address TEXT DEFAULT ''")
         if "approved_date" not in vendor_cols:
             cur.execute("ALTER TABLE vendor ADD COLUMN approved_date VARCHAR(50) DEFAULT ''")
+
+        # VendorProfile migration
+        cur.execute("PRAGMA table_info(vendor_profile)")
+        vp_cols = [r[1] for r in cur.fetchall()]
+        if not vp_cols:
+            cur.execute("""CREATE TABLE IF NOT EXISTS vendor_profile (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                vendor_id INTEGER UNIQUE NOT NULL,
+                gst_number VARCHAR(20) DEFAULT '',
+                pan_number VARCHAR(20) DEFAULT '',
+                state VARCHAR(100) DEFAULT 'Uttar Pradesh',
+                pincode VARCHAR(10) DEFAULT '',
+                alternate_phone VARCHAR(20) DEFAULT '',
+                website VARCHAR(200) DEFAULT '',
+                years_experience INTEGER DEFAULT 0,
+                install_capacity_kw INTEGER DEFAULT 0,
+                res_projects INTEGER DEFAULT 0,
+                comm_projects INTEGER DEFAULT 0,
+                ind_projects INTEGER DEFAULT 0,
+                govt_projects INTEGER DEFAULT 0,
+                pm_surya_approved BOOLEAN DEFAULT 0,
+                discom_empanelled BOOLEAN DEFAULT 0,
+                brands_supported TEXT DEFAULT '',
+                company_logo VARCHAR(300) DEFAULT '',
+                profile_photo VARCHAR(300) DEFAULT '',
+                updated_at VARCHAR(50) DEFAULT '',
+                FOREIGN KEY(vendor_id) REFERENCES vendor(id)
+            )""")
+
+        # VendorPricing migration
+        cur.execute("""CREATE TABLE IF NOT EXISTS vendor_pricing (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            vendor_id INTEGER NOT NULL,
+            project_type VARCHAR(50) NOT NULL,
+            capacity_kw INTEGER NOT NULL,
+            system_price FLOAT DEFAULT 0,
+            install_charge FLOAT DEFAULT 0,
+            gst_included BOOLEAN DEFAULT 1,
+            brand VARCHAR(100) DEFAULT '',
+            warranty_years INTEGER DEFAULT 0,
+            structure_type VARCHAR(100) DEFAULT '',
+            inverter_brand VARCHAR(100) DEFAULT '',
+            panel_brand VARCHAR(100) DEFAULT '',
+            battery VARCHAR(100) DEFAULT '',
+            updated_at VARCHAR(50) DEFAULT '',
+            FOREIGN KEY(vendor_id) REFERENCES vendor(id),
+            UNIQUE(vendor_id, project_type, capacity_kw)
+        )""")
+
+        # VendorCommission migration
+        cur.execute("""CREATE TABLE IF NOT EXISTS vendor_commission (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            vendor_id INTEGER NOT NULL,
+            project_type VARCHAR(50) NOT NULL,
+            capacity_kw INTEGER NOT NULL,
+            vendor_price FLOAT DEFAULT 0,
+            hgs_commission FLOAT DEFAULT 0,
+            final_price FLOAT DEFAULT 0,
+            updated_at VARCHAR(50) DEFAULT '',
+            FOREIGN KEY(vendor_id) REFERENCES vendor(id),
+            UNIQUE(vendor_id, project_type, capacity_kw)
+        )""")
+
+        # VendorCoverage migration
+        cur.execute("""CREATE TABLE IF NOT EXISTS vendor_coverage (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            vendor_id INTEGER NOT NULL,
+            districts TEXT DEFAULT '',
+            lead_types TEXT DEFAULT '',
+            all_districts BOOLEAN DEFAULT 0,
+            updated_at VARCHAR(50) DEFAULT '',
+            FOREIGN KEY(vendor_id) REFERENCES vendor(id)
+        )""")
+
+        # VendorQuotation migration
+        cur.execute("""CREATE TABLE IF NOT EXISTS vendor_quotation (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            vendor_id INTEGER NOT NULL,
+            lead_id INTEGER,
+            customer_name VARCHAR(150) DEFAULT '',
+            customer_phone VARCHAR(20) DEFAULT '',
+            capacity_kw INTEGER DEFAULT 0,
+            project_type VARCHAR(50) DEFAULT 'Residential',
+            brand VARCHAR(100) DEFAULT '',
+            panel_brand VARCHAR(100) DEFAULT '',
+            inverter_brand VARCHAR(100) DEFAULT '',
+            structure_type VARCHAR(100) DEFAULT '',
+            subsidy_amount FLOAT DEFAULT 0,
+            gross_price FLOAT DEFAULT 0,
+            net_price FLOAT DEFAULT 0,
+            commission FLOAT DEFAULT 0,
+            remarks TEXT DEFAULT '',
+            status VARCHAR(30) DEFAULT 'Pending',
+            admin_remarks TEXT DEFAULT '',
+            created_at VARCHAR(50) DEFAULT '',
+            updated_at VARCHAR(50) DEFAULT '',
+            FOREIGN KEY(vendor_id) REFERENCES vendor(id),
+            FOREIGN KEY(lead_id) REFERENCES lead(id)
+        )""")
+
         conn.commit()
         conn.close()
+
+        # ── Re-open for new-column migrations ──────────────────────────
+        conn2 = sqlite3.connect(db_path)
+        cur2  = conn2.cursor()
+
+        # VendorProfile — add missing columns
+        cur2.execute("PRAGMA table_info(vendor_profile)")
+        vp2 = [r[1] for r in cur2.fetchall()]
+        new_vp_cols = [
+            ("service_radius", "INTEGER DEFAULT 0"),
+            ("bank_name",      "VARCHAR(100) DEFAULT ''"),
+            ("account_number", "VARCHAR(50)  DEFAULT ''"),
+            ("ifsc_code",      "VARCHAR(20)  DEFAULT ''"),
+            ("account_holder", "VARCHAR(100) DEFAULT ''"),
+            ("upi_id",         "VARCHAR(100) DEFAULT ''"),
+        ]
+        for col, defn in new_vp_cols:
+            if col not in vp2:
+                cur2.execute(f"ALTER TABLE vendor_profile ADD COLUMN {col} {defn}")
+
+        # VendorPricing — add missing columns
+        cur2.execute("PRAGMA table_info(vendor_pricing)")
+        vpr2 = [r[1] for r in cur2.fetchall()]
+        new_vpr_cols = [
+            ("price_with_subsidy",    "FLOAT DEFAULT 0"),
+            ("price_without_subsidy", "FLOAT DEFAULT 0"),
+            ("govt_price",            "FLOAT DEFAULT 0"),
+            ("panel_wattage",         "INTEGER DEFAULT 0"),
+            ("install_days",          "INTEGER DEFAULT 0"),
+            ("amc_available",         "BOOLEAN DEFAULT 0"),
+            ("amc_cost_annual",       "FLOAT DEFAULT 0"),
+            ("vendor_price",          "FLOAT DEFAULT 0"),
+            ("hgs_commission",        "FLOAT DEFAULT 0"),
+            ("final_price",           "FLOAT DEFAULT 0"),
+            ("panel_price",           "FLOAT DEFAULT 0"),
+            ("panel_quantity",        "INTEGER DEFAULT 0"),
+            ("inverter_price",        "FLOAT DEFAULT 0"),
+            ("inverter_brand",        "VARCHAR(100) DEFAULT ''"),
+            ("inverter_capacity",     "VARCHAR(50) DEFAULT ''"),
+            ("structure_price",       "FLOAT DEFAULT 0"),
+            ("structure_type",        "VARCHAR(100) DEFAULT ''"),
+            ("install_charge",        "FLOAT DEFAULT 0"),
+            ("elec_material",         "FLOAT DEFAULT 0"),
+            ("net_meter_charge",      "FLOAT DEFAULT 0"),
+            ("transportation",        "FLOAT DEFAULT 0"),
+            ("documentation",         "FLOAT DEFAULT 0"),
+            ("miscellaneous",         "FLOAT DEFAULT 0"),
+            ("gst_percent",           "FLOAT DEFAULT 0"),
+        ]
+        for col, defn in new_vpr_cols:
+            if col not in vpr2:
+                cur2.execute(f"ALTER TABLE vendor_pricing ADD COLUMN {col} {defn}")
+
+        # VendorQuotation — add missing columns
+        cur2.execute("PRAGMA table_info(vendor_quotation)")
+        vq2 = [r[1] for r in cur2.fetchall()]
+        new_vq_cols = [
+            ("battery",          "VARCHAR(100) DEFAULT ''"),
+            ("gst_percent",      "FLOAT DEFAULT 0"),
+            ("validity_days",    "INTEGER DEFAULT 30"),
+            ("vendor_profit",    "FLOAT DEFAULT 0"),
+            ("components_json",  "TEXT DEFAULT ''"),
+            ("gst_amount",       "FLOAT DEFAULT 0"),
+            ("sub_total",        "FLOAT DEFAULT 0"),
+        ]
+        for col, defn in new_vq_cols:
+            if col not in vq2:
+                cur2.execute(f"ALTER TABLE vendor_quotation ADD COLUMN {col} {defn}")
+
+        # VendorRating — create if missing
+        cur2.execute("""CREATE TABLE IF NOT EXISTS vendor_rating (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            vendor_id  INTEGER NOT NULL,
+            lead_id    INTEGER,
+            rating     FLOAT DEFAULT 0,
+            review     TEXT DEFAULT '',
+            rated_by   VARCHAR(100) DEFAULT '',
+            created_at VARCHAR(50) DEFAULT '',
+            FOREIGN KEY(vendor_id) REFERENCES vendor(id),
+            FOREIGN KEY(lead_id)   REFERENCES lead(id)
+        )""")
+
+        # Notification — create if missing
+        cur2.execute("""CREATE TABLE IF NOT EXISTS notification (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            target_type VARCHAR(20) DEFAULT 'admin',
+            target_id   INTEGER,
+            title       VARCHAR(200) DEFAULT '',
+            message     TEXT DEFAULT '',
+            is_read     BOOLEAN DEFAULT 0,
+            created_at  VARCHAR(50) DEFAULT ''
+        )""")
+
+        conn2.commit()
+        conn2.close()
 
     if not User.query.filter_by(username="admin").first():
         db.session.add(User(
@@ -729,18 +1087,185 @@ def delete(id):
 @app.route("/assign-vendor/<int:lead_id>", methods=["POST"])
 @admin_required
 def assign_vendor(lead_id):
+    """AJAX vendor assignment — returns JSON, no page redirect."""
     lead      = Lead.query.get_or_404(lead_id)
-    vendor_id = request.form.get("vendor_id")
-    if vendor_id:
-        lead.vendor_id  = int(vendor_id)
-        lead.status     = "Assigned"
-        lead.updated_by = session.get("username", "Admin")
-        db.session.commit()
-        vendor = db.session.get(Vendor, int(vendor_id))
-        v_name = vendor.company_name if vendor else "Unknown"
-        add_timeline(lead_id, f"Assigned to Vendor: {v_name}",
-                     "", session.get("username", "Admin"))
-    return redirect(url_for("admin"))
+    vendor_id = request.form.get("vendor_id") or (
+        request.get_json(silent=True) or {}
+    ).get("vendor_id")
+
+    if not vendor_id:
+        return jsonify({"ok": False, "error": "No vendor selected."}), 400
+
+    try:
+        vendor_id = int(vendor_id)
+    except (ValueError, TypeError):
+        return jsonify({"ok": False, "error": "Invalid vendor ID."}), 400
+
+    vendor = Vendor.query.get(vendor_id)
+    if not vendor:
+        return jsonify({"ok": False, "error": "Vendor not found."}), 404
+
+    prev_vendor_name = lead.vendor.company_name if lead.vendor else None
+    force            = (request.form.get("force") == "1") or (
+        (request.get_json(silent=True) or {}).get("force") == True
+    )
+
+    # Warn on duplicate assignment (unless forced)
+    if lead.vendor_id and lead.vendor_id != vendor_id and not force:
+        return jsonify({
+            "ok": False,
+            "duplicate": True,
+            "prev_vendor": prev_vendor_name,
+            "message": f"This lead is already assigned to {prev_vendor_name}. Replace?"
+        }), 200
+
+    lead.vendor_id  = vendor_id
+    lead.status     = "Assigned"
+    lead.updated_by = session.get("username", "Admin")
+    db.session.commit()
+
+    admin_name = session.get("user_name") or session.get("username", "Admin")
+    add_timeline(
+        lead_id,
+        f"Vendor Assigned: {vendor.company_name}",
+        f"Assigned by {admin_name}" + (f" (replaced {prev_vendor_name})" if prev_vendor_name and prev_vendor_name != vendor.company_name else ""),
+        admin_name
+    )
+
+    return jsonify({
+        "ok": True,
+        "vendor_id":   vendor.id,
+        "vendor_name": vendor.company_name,
+        "district":    vendor.district,
+        "message":     f"Vendor '{vendor.company_name}' assigned successfully."
+    })
+
+
+@app.route("/vendor-search")
+@login_required
+def vendor_search():
+    """AJAX searchable vendor endpoint for Tom Select with district filter + scoring."""
+    import json as _json, statistics
+    q          = request.args.get("q", "").strip()
+    lead_id    = request.args.get("lead_id", type=int)
+    district   = request.args.get("district", "").strip()
+    page       = request.args.get("page", 1, type=int)
+    per_page   = 20
+
+    # Base query — active vendors only
+    qry = Vendor.query.filter_by(is_active=True)
+
+    # District filter — intersect with coverage
+    if district:
+        # Collect vendor IDs that cover this district
+        cov_all     = VendorCoverage.query.filter_by(all_districts=True).with_entities(VendorCoverage.vendor_id).all()
+        cov_all_ids = {r[0] for r in cov_all}
+        cov_dist    = VendorCoverage.query.filter(
+            VendorCoverage.all_districts == False
+        ).all()
+        cov_dist_ids = set()
+        for c in cov_dist:
+            try:
+                dl = _json.loads(c.districts or "[]")
+            except Exception:
+                dl = []
+            if district in dl:
+                cov_dist_ids.add(c.vendor_id)
+        # Also include vendors with no coverage record but matching base district
+        no_cov_ids = {v.id for v in Vendor.query.filter_by(
+            is_active=True, district=district
+        ).filter(
+            ~Vendor.id.in_(
+                db.session.query(VendorCoverage.vendor_id).subquery()
+            )
+        ).all()}
+        allowed_ids = cov_all_ids | cov_dist_ids | no_cov_ids
+        if allowed_ids:
+            qry = qry.filter(Vendor.id.in_(allowed_ids))
+        else:
+            return jsonify({"results": [], "has_more": False})
+
+    # Text search
+    if q:
+        like = f"%{q}%"
+        qry = qry.filter(db.or_(
+            Vendor.company_name.ilike(like),
+            Vendor.owner_name.ilike(like),
+            Vendor.district.ilike(like),
+            Vendor.mobile.ilike(like),
+            Vendor.username.ilike(like),
+        ))
+
+    total   = qry.count()
+    vendors = qry.offset((page - 1) * per_page).limit(per_page).all()
+
+    results = []
+    for v in vendors:
+        ratings   = [r.rating for r in VendorRating.query.filter_by(vendor_id=v.id).all()]
+        avg_r     = round(statistics.mean(ratings), 1) if ratings else 0.0
+        total_l   = Lead.query.filter_by(vendor_id=v.id).count()
+        done_l    = Lead.query.filter_by(vendor_id=v.id, status="Completed").count()
+        conv      = round(done_l / total_l * 100, 1) if total_l else 0.0
+        profile   = VendorProfile.query.filter_by(vendor_id=v.id).first()
+        yrs_exp   = profile.years_experience if profile else 0
+
+        # Scoring for sort/recommendation
+        score = (avg_r * 20) + (conv * 0.5) + (min(done_l, 200) * 0.1)
+        stars = "★" * int(avg_r) + ("½" if avg_r % 1 >= 0.5 else "") + "☆" * (5 - int(avg_r) - (1 if avg_r % 1 >= 0.5 else 0))
+
+        results.append({
+            "id":           v.id,
+            "text":         f"{v.company_name} — {v.district}",
+            "company_name": v.company_name,
+            "owner_name":   v.owner_name,
+            "district":     v.district,
+            "mobile":       v.mobile,
+            "avg_rating":   avg_r,
+            "stars":        stars,
+            "done":         done_l,
+            "conv":         conv,
+            "yrs_exp":      yrs_exp,
+            "score":        score,
+        })
+
+    # Sort by score descending; mark top as recommended
+    results.sort(key=lambda x: -x["score"])
+    if results:
+        results[0]["recommended"] = True
+
+    return jsonify({"results": results, "has_more": (page * per_page) < total})
+
+
+@app.route("/eligible-vendors/<int:lead_id>")
+@login_required
+def eligible_vendors(lead_id):
+    """Return vendors eligible for a lead based on district & lead type coverage."""
+    import json
+    lead = Lead.query.get_or_404(lead_id)
+    active_vendors = Vendor.query.filter_by(is_active=True).all()
+    eligible = []
+    for v in active_vendors:
+        cov = VendorCoverage.query.filter_by(vendor_id=v.id).first()
+        if cov:
+            if cov.all_districts:
+                eligible.append(v)
+                continue
+            try:
+                dist_list = json.loads(cov.districts or "[]")
+            except Exception:
+                dist_list = []
+            if lead.district and lead.district in dist_list:
+                eligible.append(v)
+        else:
+            # No coverage set — include all vendors that match base district
+            if not lead.district or v.district == lead.district:
+                eligible.append(v)
+    return jsonify([{
+        "id": v.id,
+        "company_name": v.company_name,
+        "district": v.district,
+        "mobile": v.mobile
+    } for v in eligible])
 
 # ==========================
 # LEAD TIMELINE API
@@ -794,6 +1319,488 @@ def vendor_logout():
     session.pop("vendor_mobile", None)
     session.pop("vendor_email", None)
     return redirect("/vendor-login")
+
+# ==========================
+# VENDOR PROFILE
+# ==========================
+@app.route("/vendor-profile", methods=["GET", "POST"])
+@vendor_required
+def vendor_profile():
+    vendor = Vendor.query.get_or_404(session["vendor_id"])
+    profile = VendorProfile.query.filter_by(vendor_id=vendor.id).first()
+    if not profile:
+        profile = VendorProfile(vendor_id=vendor.id)
+        db.session.add(profile)
+        db.session.commit()
+    if request.method == "POST":
+        # Update Vendor base fields
+        vendor.company_name  = request.form.get("company_name", vendor.company_name).strip()
+        vendor.owner_name    = request.form.get("owner_name", vendor.owner_name).strip()
+        vendor.mobile        = request.form.get("mobile", vendor.mobile).strip()
+        vendor.email         = request.form.get("email", vendor.email).strip()
+        vendor.address       = request.form.get("address", vendor.address).strip()
+        vendor.district      = request.form.get("district", vendor.district).strip()
+        # Update profile fields
+        profile.gst_number        = request.form.get("gst_number", "").strip()
+        profile.pan_number        = request.form.get("pan_number", "").strip()
+        profile.state             = request.form.get("state", "Uttar Pradesh").strip()
+        profile.pincode           = request.form.get("pincode", "").strip()
+        profile.alternate_phone   = request.form.get("alternate_phone", "").strip()
+        profile.website           = request.form.get("website", "").strip()
+        try:
+            profile.years_experience   = int(request.form.get("years_experience", 0))
+            profile.install_capacity_kw= int(request.form.get("install_capacity_kw", 0))
+            profile.res_projects       = int(request.form.get("res_projects", 0))
+            profile.comm_projects      = int(request.form.get("comm_projects", 0))
+            profile.ind_projects       = int(request.form.get("ind_projects", 0))
+            profile.govt_projects      = int(request.form.get("govt_projects", 0))
+        except (ValueError, TypeError):
+            pass
+        profile.pm_surya_approved  = request.form.get("pm_surya_approved") == "1"
+        profile.discom_empanelled  = request.form.get("discom_empanelled") == "1"
+        profile.brands_supported   = ",".join(request.form.getlist("brands_supported"))
+        profile.updated_at         = datetime.now().strftime("%d-%m-%Y %H:%M")
+        db.session.commit()
+        # Update session company name
+        session["vendor_company"] = vendor.company_name
+        session["vendor_name"]    = vendor.owner_name
+        return jsonify({"ok": True, "message": "Profile updated successfully."})
+    return render_template("vendor_profile.html",
+        vendor=vendor, profile=profile,
+        districts=UP_DISTRICTS, brands=SOLAR_BRANDS)
+
+
+# ==========================
+# VENDOR PRICING
+# ==========================
+@app.route("/vendor-pricing")
+@vendor_required
+def vendor_pricing():
+    vendor = Vendor.query.get_or_404(session["vendor_id"])
+    pricing = VendorPricing.query.filter_by(vendor_id=vendor.id).all()
+    pricing_map = {(p.project_type, p.capacity_kw): p for p in pricing}
+    return render_template("vendor_pricing.html",
+        vendor=vendor, pricing_map=pricing_map,
+        capacities=KW_CAPACITIES, brands=SOLAR_BRANDS)
+
+
+@app.route("/vendor-pricing/save", methods=["POST"])
+@vendor_required
+def vendor_pricing_save():
+    vendor_id = session["vendor_id"]
+    now = datetime.now().strftime("%d-%m-%Y %H:%M")
+    data = request.get_json()
+    if not data:
+        return jsonify({"ok": False, "error": "No data received."}), 400
+    for row in data:
+        cap = int(row.get("capacity_kw", 0)) if str(row.get("capacity_kw","")).isdigit() else 0
+        if not cap:
+            continue
+        def _f(key):
+            try: return float(row.get(key) or 0)
+            except (ValueError, TypeError): return 0.0
+        def _i(key):
+            try: return int(row.get(key) or 0)
+            except (ValueError, TypeError): return 0
+        for ptype in ("Residential", "Commercial", "Government"):
+            price_key = {"Residential": "residential_price",
+                         "Commercial":  "commercial_price",
+                         "Government":  "govt_price"}[ptype]
+            existing = VendorPricing.query.filter_by(
+                vendor_id=vendor_id, project_type=ptype, capacity_kw=cap
+            ).first()
+            if not existing:
+                existing = VendorPricing(vendor_id=vendor_id, project_type=ptype, capacity_kw=cap)
+                db.session.add(existing)
+            existing.system_price      = _f(price_key)
+            existing.brand             = row.get("brand", "").strip()
+            existing.warranty_years    = _i("warranty_years")
+            existing.vendor_price      = _f("vendor_selling_price")
+            existing.hgs_commission    = _f("hgs_commission")
+            existing.final_price       = round(_f("vendor_selling_price") + _f("hgs_commission"), 2)
+            # Component pricing
+            existing.panel_price       = _f("panel_price")
+            existing.panel_wattage     = _i("panel_wattage")
+            existing.panel_quantity    = _i("panel_quantity")
+            existing.inverter_price    = _f("inverter_price")
+            existing.inverter_brand    = row.get("inverter_brand", "").strip()
+            existing.inverter_capacity = row.get("inverter_capacity", "").strip()
+            existing.structure_price   = _f("structure_price")
+            existing.structure_type    = row.get("structure_type", "").strip()
+            existing.install_charge    = _f("install_charge")
+            existing.elec_material     = _f("elec_material")
+            existing.net_meter_charge  = _f("net_meter_charge")
+            existing.transportation    = _f("transportation")
+            existing.documentation     = _f("documentation")
+            existing.miscellaneous     = _f("miscellaneous")
+            existing.gst_percent       = _f("gst_percent")
+            existing.updated_at        = now
+    db.session.commit()
+    return jsonify({"ok": True, "message": "Pricing saved."})
+
+
+# ==========================
+# QUOTATION REVISION WORKFLOW
+# ==========================
+@app.route("/vendor-quotation/<int:qid>/vendor-action", methods=["POST"])
+@vendor_required
+def vendor_quotation_vendor_action(qid):
+    """Vendor acts on a Revision request: Accept / Reject / Edit+Resubmit."""
+    q = VendorQuotation.query.get_or_404(qid)
+    if q.vendor_id != session["vendor_id"]:
+        return jsonify({"ok": False, "error": "Unauthorized."}), 403
+    action = request.form.get("action", "").strip()
+    now    = datetime.now().strftime("%d-%m-%Y %H:%M")
+
+    if action == "accept":
+        q.status     = "Accepted by Vendor"
+        q.updated_at = now
+        db.session.commit()
+        push_notification("admin", "Vendor Accepted Quotation",
+            f"{q.vendor.company_name} accepted quotation #{q.id} at ₹{q.net_price:,.0f}.")
+        return jsonify({"ok": True, "status": q.status,
+                        "message": "Quotation accepted."})
+
+    elif action == "reject":
+        reason = request.form.get("reason", "").strip()
+        q.status       = "Rejected by Vendor"
+        q.admin_remarks= q.admin_remarks  # keep admin remarks
+        q.remarks      = (q.remarks or "") + f"\n[Vendor Rejection] {reason}" if reason else q.remarks
+        q.updated_at   = now
+        db.session.commit()
+        push_notification("admin", "Vendor Rejected Quotation",
+            f"{q.vendor.company_name} rejected quotation #{q.id}. Reason: {reason or 'No reason given'}.")
+        return jsonify({"ok": True, "status": q.status,
+                        "message": "Quotation rejected."})
+
+    elif action == "resubmit":
+        # Vendor edits and resubmits revised quotation
+        def _f(key):
+            try: return float(request.form.get(key) or 0)
+            except (ValueError, TypeError): return 0.0
+        q.gross_price    = _f("gross_price")
+        q.subsidy_amount = _f("subsidy_amount")
+        q.net_price      = _f("net_price")
+        q.commission     = _f("commission")
+        q.remarks        = request.form.get("remarks", q.remarks).strip()
+        q.brand          = request.form.get("brand", q.brand).strip()
+        q.panel_brand    = request.form.get("panel_brand", q.panel_brand).strip()
+        q.inverter_brand = request.form.get("inverter_brand", q.inverter_brand).strip()
+        q.status         = "Revision Submitted"
+        q.updated_at     = now
+        db.session.commit()
+        push_notification("admin", "Vendor Submitted Revised Quotation",
+            f"{q.vendor.company_name} resubmitted quotation #{q.id} at ₹{q.net_price:,.0f}.")
+        push_notification("vendor", "Your Revision Was Submitted",
+            f"Your revised quotation #{q.id} has been sent to admin for review.",
+            target_id=q.vendor_id)
+        return jsonify({"ok": True, "status": q.status,
+                        "message": "Revised quotation submitted."})
+
+    return jsonify({"ok": False, "error": "Unknown action."}), 400
+
+
+@app.route("/admin/quotation/<int:qid>/action", methods=["POST"])
+@admin_required
+def admin_quotation_action(qid):
+    q = VendorQuotation.query.get_or_404(qid)
+    action = request.form.get("action")
+    now    = datetime.now().strftime("%d-%m-%Y %H:%M")
+    if action in ("Approved", "Rejected", "Revision"):
+        q.status        = action
+        q.admin_remarks = request.form.get("admin_remarks", "").strip()
+        q.updated_at    = now
+        db.session.commit()
+        # Notifications to vendor
+        if action == "Approved":
+            push_notification("vendor", "Quotation Approved ✓",
+                f"Your quotation #{q.id} for ₹{q.net_price:,.0f} has been approved!",
+                target_id=q.vendor_id)
+        elif action == "Rejected":
+            push_notification("vendor", "Quotation Rejected",
+                f"Your quotation #{q.id} has been rejected. Remarks: {q.admin_remarks or 'None'}.",
+                target_id=q.vendor_id)
+        elif action == "Revision":
+            push_notification("vendor", "Revision Requested on Quotation",
+                f"Admin requested a revision on quotation #{q.id}. Remarks: {q.admin_remarks or 'None'}.",
+                target_id=q.vendor_id)
+    return jsonify({"ok": True, "status": q.status})
+@app.route("/vendor-commission")
+@vendor_required
+def vendor_commission():
+    vendor = Vendor.query.get_or_404(session["vendor_id"])
+    comms  = VendorCommission.query.filter_by(vendor_id=vendor.id).all()
+    comm_map = {(c.project_type, c.capacity_kw): c for c in comms}
+    return render_template("vendor_commission.html",
+        vendor=vendor, comm_map=comm_map,
+        capacities=KW_CAPACITIES)
+
+
+@app.route("/vendor-commission/save", methods=["POST"])
+@vendor_required
+def vendor_commission_save():
+    vendor_id = session["vendor_id"]
+    now  = datetime.now().strftime("%d-%m-%Y %H:%M")
+    data = request.get_json()
+    if not data:
+        return jsonify({"ok": False, "error": "No data."}), 400
+    for row in data:
+        ptype = row.get("project_type", "").strip()
+        cap   = int(row.get("capacity_kw", 0))
+        if not ptype or not cap:
+            continue
+        existing = VendorCommission.query.filter_by(
+            vendor_id=vendor_id, project_type=ptype, capacity_kw=cap
+        ).first()
+        if not existing:
+            existing = VendorCommission(vendor_id=vendor_id, project_type=ptype, capacity_kw=cap)
+            db.session.add(existing)
+        try:
+            vp  = float(row.get("vendor_price") or 0)
+            hgs = float(row.get("hgs_commission") or 0)
+        except (ValueError, TypeError):
+            vp = hgs = 0
+        existing.vendor_price   = vp
+        existing.hgs_commission = hgs
+        existing.final_price    = vp + hgs
+        existing.updated_at     = now
+    db.session.commit()
+    return jsonify({"ok": True, "message": "Commission settings saved."})
+
+
+# ==========================
+# VENDOR COVERAGE
+# ==========================
+@app.route("/vendor-coverage", methods=["GET", "POST"])
+@vendor_required
+def vendor_coverage():
+    vendor   = Vendor.query.get_or_404(session["vendor_id"])
+    coverage = VendorCoverage.query.filter_by(vendor_id=vendor.id).first()
+    if not coverage:
+        coverage = VendorCoverage(vendor_id=vendor.id)
+        db.session.add(coverage)
+        db.session.commit()
+    if request.method == "POST":
+        import json
+        selected = request.form.getlist("districts")
+        all_dist = request.form.get("all_districts") == "1"
+        lead_types = request.form.getlist("lead_types")
+        coverage.districts    = json.dumps(selected)
+        coverage.all_districts= all_dist
+        coverage.lead_types   = json.dumps(lead_types)
+        coverage.updated_at   = datetime.now().strftime("%d-%m-%Y %H:%M")
+        db.session.commit()
+        return jsonify({"ok": True, "message": "Coverage saved."})
+    import json
+    selected_districts = []
+    selected_types     = []
+    try:
+        selected_districts = json.loads(coverage.districts or "[]")
+        selected_types     = json.loads(coverage.lead_types or "[]")
+    except Exception:
+        pass
+    return render_template("vendor_coverage.html",
+        vendor=vendor, coverage=coverage,
+        all_districts=UP_DISTRICTS, lead_types=LEAD_TYPES,
+        selected_districts=selected_districts,
+        selected_types=selected_types)
+
+
+# ==========================
+# VENDOR QUOTATION
+# ==========================
+@app.route("/vendor-quotations")
+@vendor_required
+def vendor_quotations():
+    vendor = Vendor.query.get_or_404(session["vendor_id"])
+    quotes = VendorQuotation.query.filter_by(vendor_id=vendor.id)\
+                .order_by(VendorQuotation.id.desc()).all()
+    return render_template("vendor_quotation.html",
+        vendor=vendor, quotes=quotes,
+        capacities=KW_CAPACITIES, brands=SOLAR_BRANDS)
+
+
+@app.route("/vendor-quotation/create", methods=["POST"])
+@vendor_required
+def vendor_quotation_create():
+    import json as _json
+    vendor_id = session["vendor_id"]
+    now = datetime.now().strftime("%d-%m-%Y %H:%M")
+    try:
+        cap    = int(request.form.get("capacity_kw") or 0)
+        ptype  = request.form.get("project_type", "Residential")
+        subsidy= float(request.form.get("subsidy_amount") or 0)
+        comm   = float(request.form.get("commission") or 0)
+    except (ValueError, TypeError):
+        cap = 0; subsidy = comm = 0.0; ptype = "Residential"
+
+    # Load vendor pricing for this capacity+type to build component breakdown
+    pricing = VendorPricing.query.filter_by(
+        vendor_id=vendor_id, project_type=ptype, capacity_kw=cap
+    ).first()
+
+    components = []
+    pricing_missing = False
+
+    if pricing:
+        panel_qty   = pricing.panel_quantity or cap  # fallback: 1 panel per KW
+        panel_total = round((pricing.panel_price or 0) * panel_qty, 2)
+        if panel_total > 0:
+            components.append({
+                "item": "Solar Panel",
+                "details": f"{pricing.brand or request.form.get('panel_brand','—')} | "
+                           f"{pricing.panel_wattage or '—'} W | Qty: {panel_qty}",
+                "unit_price": pricing.panel_price or 0,
+                "qty": panel_qty,
+                "amount": panel_total
+            })
+        if pricing.inverter_price:
+            components.append({
+                "item": "Inverter",
+                "details": f"{pricing.inverter_brand or request.form.get('inverter_brand','—')} | "
+                           f"{pricing.inverter_capacity or f'{cap} KW'}",
+                "unit_price": pricing.inverter_price,
+                "qty": 1,
+                "amount": pricing.inverter_price
+            })
+        if pricing.structure_price:
+            components.append({
+                "item": "Structure",
+                "details": pricing.structure_type or request.form.get("structure_type", "—"),
+                "unit_price": pricing.structure_price,
+                "qty": 1,
+                "amount": pricing.structure_price
+            })
+        for label, field in [
+            ("Installation Charge",   "install_charge"),
+            ("Electrical Material",   "elec_material"),
+            ("Net Meter Charge",      "net_meter_charge"),
+            ("Transportation",        "transportation"),
+            ("Documentation",         "documentation"),
+            ("Miscellaneous",         "miscellaneous"),
+        ]:
+            val = getattr(pricing, field, 0) or 0
+            if val:
+                components.append({"item": label, "details": "—", "unit_price": val, "qty": 1, "amount": val})
+
+        sub_total = round(sum(c["amount"] for c in components), 2)
+        gst_pct   = pricing.gst_percent or 0
+        gst_amt   = round(sub_total * gst_pct / 100, 2)
+        gross     = round(sub_total + gst_amt, 2)
+    else:
+        # No pricing configured — use manually supplied gross price
+        pricing_missing = True
+        try:
+            gross = float(request.form.get("gross_price") or 0)
+        except (ValueError, TypeError):
+            gross = 0.0
+        sub_total = gross
+        gst_pct   = 0.0
+        gst_amt   = 0.0
+
+    net = round(gross - subsidy + comm, 2)
+
+    q = VendorQuotation(
+        vendor_id       = vendor_id,
+        lead_id         = request.form.get("lead_id") or None,
+        customer_name   = request.form.get("customer_name", "").strip(),
+        customer_phone  = request.form.get("customer_phone", "").strip(),
+        capacity_kw     = cap,
+        project_type    = ptype,
+        brand           = request.form.get("brand", "").strip(),
+        panel_brand     = (pricing.brand if pricing else request.form.get("panel_brand", "")).strip(),
+        inverter_brand  = (pricing.inverter_brand if pricing else request.form.get("inverter_brand", "")).strip(),
+        structure_type  = (pricing.structure_type if pricing else request.form.get("structure_type", "")).strip(),
+        subsidy_amount  = subsidy,
+        gross_price     = gross,
+        net_price       = net,
+        commission      = comm,
+        remarks         = request.form.get("remarks", "").strip(),
+        status          = "Pending",
+        components_json = _json.dumps(components),
+        sub_total       = sub_total,
+        gst_amount      = gst_amt,
+        gst_percent     = gst_pct,
+        created_at      = now,
+        updated_at      = now,
+    )
+    db.session.add(q)
+    db.session.commit()
+    warn = " (Warning: Vendor pricing not configured — prices may be incomplete.)" if pricing_missing else ""
+    return jsonify({"ok": True, "id": q.id, "message": f"Quotation created.{warn}",
+                    "pricing_missing": pricing_missing})
+
+
+@app.route("/vendor-quotation/<int:qid>")
+@vendor_required
+def vendor_quotation_detail(qid):
+    q = VendorQuotation.query.get_or_404(qid)
+    if q.vendor_id != session["vendor_id"]:
+        abort(403)
+    vendor = Vendor.query.get_or_404(session["vendor_id"])
+    return render_template("vendor_quotation_detail.html", q=q, vendor=vendor)
+
+
+# ==========================
+# ADMIN: QUOTATION APPROVAL
+# ==========================
+@app.route("/admin/quotations")
+@login_required
+def admin_quotations():
+    quotes = VendorQuotation.query.order_by(VendorQuotation.id.desc()).all()
+    return render_template("admin_quotations.html", quotes=quotes)
+
+
+
+
+
+# ==========================
+# VENDOR BULK OPERATIONS
+# ==========================
+@app.route("/vendor-bulk", methods=["POST"])
+@login_required
+def vendor_bulk():
+    action  = request.form.get("action")
+    ids_raw = request.form.getlist("vendor_ids")
+    if not ids_raw or not action:
+        flash("No vendors selected.", "warning")
+        return redirect(url_for("vendor_list"))
+    ids = [int(i) for i in ids_raw if i.isdigit()]
+    vendors = Vendor.query.filter(Vendor.id.in_(ids)).all()
+    if action == "delete":
+        for v in vendors:
+            db.session.delete(v)
+        db.session.commit()
+        flash(f"Deleted {len(vendors)} vendor(s).", "success")
+    elif action == "enable":
+        for v in vendors:
+            v.is_active = True
+        db.session.commit()
+        flash(f"Enabled {len(vendors)} vendor(s).", "success")
+    elif action == "disable":
+        for v in vendors:
+            v.is_active = False
+        db.session.commit()
+        flash(f"Disabled {len(vendors)} vendor(s).", "success")
+    elif action == "export":
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Vendors"
+        headers = ["ID", "Company", "Owner", "Mobile", "Email", "District",
+                   "Username", "Vendor Code", "Status", "Created At"]
+        ws.append(headers)
+        for v in vendors:
+            ws.append([v.id, v.company_name, v.owner_name, v.mobile,
+                       v.email, v.district, v.username, v.vendor_code,
+                       "Active" if v.is_active else "Inactive", v.created_at])
+        buf = io.BytesIO()
+        wb.save(buf)
+        buf.seek(0)
+        return send_file(buf, as_attachment=True,
+            download_name="vendors_export.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    return redirect(url_for("vendor_list"))
+
 
 # ==========================
 # VENDOR CHANGE PASSWORD
@@ -854,6 +1861,10 @@ def vendor_dashboard():
         vendor_id=vendor_id, follow_date=today
     ).all()
 
+    # new feature counts
+    pending_quotations = VendorQuotation.query.filter_by(
+        vendor_id=vendor_id, status="Pending").count()
+
     return render_template(
         "vendor_dashboard.html",
         vendor=vendor,
@@ -865,6 +1876,7 @@ def vendor_dashboard():
         cancelled_leads=cancelled_leads,
         completion_pct=completion_pct,
         today_followups=today_followups,
+        pending_quotations=pending_quotations,
         f_status=f_status,
         f_search=f_search
     )
@@ -1562,6 +2574,311 @@ def logout():
     session.clear()
     logger.info("Admin logout: %s", username)
     return redirect(url_for("admin_login"))
+
+
+# ==========================
+# NOTIFICATIONS API
+# ==========================
+def push_notification(target_type, title, message, target_id=None):
+    n = Notification(
+        target_type=target_type, target_id=target_id,
+        title=title, message=message,
+        created_at=datetime.now().strftime("%d-%m-%Y %H:%M")
+    )
+    db.session.add(n)
+    db.session.commit()
+
+
+@app.route("/notifications/unread-count")
+def notifications_unread_count():
+    if "user_id" in session:
+        count = Notification.query.filter_by(target_type="admin", is_read=False).count()
+        return jsonify({"count": count})
+    if "vendor_id" in session:
+        count = Notification.query.filter_by(
+            target_type="vendor", target_id=session["vendor_id"], is_read=False
+        ).count()
+        return jsonify({"count": count})
+    return jsonify({"count": 0})
+
+
+@app.route("/notifications/list")
+def notifications_list():
+    if "user_id" in session:
+        items = Notification.query.filter_by(target_type="admin")\
+            .order_by(Notification.id.desc()).limit(20).all()
+    elif "vendor_id" in session:
+        items = Notification.query.filter(
+            Notification.target_type == "vendor",
+            Notification.target_id == session["vendor_id"]
+        ).order_by(Notification.id.desc()).limit(20).all()
+    else:
+        return jsonify([])
+    return jsonify([{
+        "id": n.id, "title": n.title, "message": n.message,
+        "is_read": n.is_read, "created_at": n.created_at
+    } for n in items])
+
+
+@app.route("/notifications/mark-read", methods=["POST"])
+def notifications_mark_read():
+    data = request.get_json(silent=True) or {}
+    nid  = data.get("id")
+    if nid:
+        n = Notification.query.get(nid)
+        if n:
+            n.is_read = True
+            db.session.commit()
+    else:
+        if "user_id" in session:
+            Notification.query.filter_by(target_type="admin").update({"is_read": True})
+        elif "vendor_id" in session:
+            Notification.query.filter_by(
+                target_type="vendor", target_id=session["vendor_id"]
+            ).update({"is_read": True})
+        db.session.commit()
+    return jsonify({"ok": True})
+
+
+# ==========================
+# VENDOR RATING
+# ==========================
+@app.route("/vendor-rate/<int:vendor_id>", methods=["POST"])
+@login_required
+def vendor_rate(vendor_id):
+    try:
+        rating = min(5.0, max(0.0, float(request.form.get("rating", 0))))
+    except (ValueError, TypeError):
+        rating = 0.0
+    review  = request.form.get("review", "").strip()
+    lead_id = request.form.get("lead_id")
+    r = VendorRating(
+        vendor_id=vendor_id,
+        lead_id=int(lead_id) if lead_id else None,
+        rating=rating, review=review,
+        rated_by=session.get("username", "Admin"),
+        created_at=datetime.now().strftime("%d-%m-%Y %H:%M")
+    )
+    db.session.add(r)
+    db.session.commit()
+    return jsonify({"ok": True, "message": "Rating submitted."})
+
+
+# ==========================
+# REVERSE AUCTION / LEAD AUCTION
+# ==========================
+@app.route("/lead-auction/<int:lead_id>")
+@login_required
+def lead_auction(lead_id):
+    import json, statistics
+    lead    = Lead.query.get_or_404(lead_id)
+    vendors = Vendor.query.filter_by(is_active=True).all()
+    eligible = []
+    for v in vendors:
+        cov = VendorCoverage.query.filter_by(vendor_id=v.id).first()
+        district_ok = False
+        if cov:
+            if cov.all_districts:
+                district_ok = True
+            else:
+                try:
+                    dist_list = json.loads(cov.districts or "[]")
+                except Exception:
+                    dist_list = []
+                district_ok = (not lead.district) or (lead.district in dist_list)
+        else:
+            district_ok = (not lead.district) or (v.district == lead.district)
+        if not district_ok:
+            continue
+        ratings  = [r.rating for r in VendorRating.query.filter_by(vendor_id=v.id).all()]
+        avg_rating = round(statistics.mean(ratings), 1) if ratings else 0.0
+        total  = Lead.query.filter_by(vendor_id=v.id).count()
+        done   = Lead.query.filter_by(vendor_id=v.id, status="Completed").count()
+        conv   = round(done / total * 100, 1) if total else 0
+        profile = VendorProfile.query.filter_by(vendor_id=v.id).first()
+        eligible.append({
+            "id": v.id, "company_name": v.company_name,
+            "owner_name": v.owner_name, "district": v.district,
+            "mobile": v.mobile, "email": v.email,
+            "avg_rating": avg_rating, "total_leads": total,
+            "completed_leads": done, "conversion_pct": conv,
+            "pm_surya": profile.pm_surya_approved if profile else False,
+            "discom":   profile.discom_empanelled  if profile else False,
+            "years_exp": profile.years_experience  if profile else 0,
+        })
+    eligible.sort(key=lambda x: (-x["conversion_pct"], -x["avg_rating"]))
+    return jsonify({"lead_id": lead_id, "vendors": eligible})
+
+
+# ==========================
+# QUOTATION COMPARISON
+# ==========================
+@app.route("/quotation-compare/<int:lead_id>")
+@login_required
+def quotation_compare(lead_id):
+    import statistics
+    lead   = Lead.query.get_or_404(lead_id)
+    quotes = VendorQuotation.query.filter_by(lead_id=lead_id)\
+                .order_by(VendorQuotation.net_price.asc()).all()
+    annotated = []
+    for q in quotes:
+        v       = q.vendor
+        ratings = [r.rating for r in VendorRating.query.filter_by(vendor_id=v.id).all()]
+        avg_r   = round(statistics.mean(ratings), 1) if ratings else 0
+        total   = Lead.query.filter_by(vendor_id=v.id).count()
+        done    = Lead.query.filter_by(vendor_id=v.id, status="Completed").count()
+        conv    = round(done / total * 100, 1) if total else 0
+        profile = VendorProfile.query.filter_by(vendor_id=v.id).first()
+        annotated.append({
+            "q": q, "vendor": v, "avg_rating": avg_r,
+            "conversion": conv, "total_leads": total,
+            "profile": profile, "tag": ""
+        })
+    if annotated:
+        min_price = min(annotated, key=lambda x: x["q"].net_price)
+        max_comm  = max(annotated, key=lambda x: x["q"].commission)
+        best_rate = max(annotated, key=lambda x: x["avg_rating"])
+        min_price["tag"] = "💰 Best Price"
+        if max_comm["q"].id != min_price["q"].id:
+            max_comm["tag"] = "⭐ Highest Commission"
+        if best_rate["q"].id not in (min_price["q"].id, max_comm["q"].id):
+            best_rate["tag"] = "🏆 Best Rated"
+    return render_template("admin_quotation_compare.html",
+        lead=lead, annotated=annotated)
+
+
+# ==========================
+# VENDOR PERFORMANCE
+# ==========================
+@app.route("/vendor-performance")
+@vendor_required
+def vendor_performance():
+    import statistics
+    from collections import defaultdict
+    vendor_id = session["vendor_id"]
+    vendor    = Vendor.query.get_or_404(vendor_id)
+    total     = Lead.query.filter_by(vendor_id=vendor_id).count()
+    completed = Lead.query.filter_by(vendor_id=vendor_id, status="Completed").count()
+    cancelled = Lead.query.filter_by(vendor_id=vendor_id, status="Cancelled").count()
+    pending   = Lead.query.filter(
+        Lead.vendor_id == vendor_id,
+        Lead.status.notin_(["Completed", "Cancelled"])
+    ).count()
+    conv_pct  = round(completed / total * 100, 1) if total else 0
+    quotes    = VendorQuotation.query.filter_by(vendor_id=vendor_id).all()
+    approved_quotes   = [q for q in quotes if q.status == "Approved"]
+    total_revenue     = sum(q.net_price   for q in approved_quotes)
+    total_commission  = sum(q.commission  for q in approved_quotes)
+    ratings  = [r.rating for r in VendorRating.query.filter_by(vendor_id=vendor_id).all()]
+    avg_rating = round(statistics.mean(ratings), 1) if ratings else 0
+    monthly   = defaultdict(int)
+    for l in Lead.query.filter_by(vendor_id=vendor_id).all():
+        if l.created_at:
+            try:
+                monthly[l.created_at[:7]] += 1
+            except Exception:
+                pass
+    months_sorted = sorted(monthly.keys())[-6:]
+    return render_template("vendor_performance.html",
+        vendor=vendor, total=total, completed=completed,
+        cancelled=cancelled, pending=pending, conv_pct=conv_pct,
+        total_revenue=total_revenue, total_commission=total_commission,
+        avg_rating=avg_rating, rating_count=len(ratings),
+        trend_labels=months_sorted,
+        trend_data=[monthly[m] for m in months_sorted],
+        quotes=quotes)
+
+
+# ==========================
+# ADMIN REPORTS
+# ==========================
+@app.route("/admin/reports")
+@login_required
+def admin_reports():
+    import statistics
+    from collections import defaultdict
+    vendors = Vendor.query.all()
+    vendor_stats = []
+    for v in vendors:
+        total    = Lead.query.filter_by(vendor_id=v.id).count()
+        done     = Lead.query.filter_by(vendor_id=v.id, status="Completed").count()
+        cancelled= Lead.query.filter_by(vendor_id=v.id, status="Cancelled").count()
+        conv     = round(done / total * 100, 1) if total else 0
+        ratings  = [r.rating for r in VendorRating.query.filter_by(vendor_id=v.id).all()]
+        avg_r    = round(statistics.mean(ratings), 1) if ratings else 0
+        qs       = VendorQuotation.query.filter_by(vendor_id=v.id, status="Approved").all()
+        revenue  = sum(q.net_price   for q in qs)
+        commission=sum(q.commission  for q in qs)
+        vendor_stats.append({
+            "vendor": v, "total": total, "done": done,
+            "cancelled": cancelled, "conv": conv,
+            "avg_rating": avg_r, "revenue": revenue, "commission": commission
+        })
+    top_by_done  = sorted(vendor_stats, key=lambda x: -x["done"])[:10]
+    top_by_rev   = sorted(vendor_stats, key=lambda x: -x["revenue"])[:10]
+    top_by_comm  = sorted(vendor_stats, key=lambda x: -x["commission"])[:10]
+    top_by_conv  = sorted(vendor_stats, key=lambda x: -x["conv"])[:10]
+    dist_counts  = defaultdict(int)
+    for l in Lead.query.all():
+        if l.district:
+            dist_counts[l.district] += 1
+    top_districts   = sorted(dist_counts.items(), key=lambda x: -x[1])[:10]
+    # Convert tuples → dicts for clean Jinja2 access
+    top_districts_list = [{"name": d, "count": c} for d, c in top_districts]
+    # Pre-serialize chart data as JSON for safe template injection
+    import json as _json
+    dist_chart_labels = _json.dumps([d["name"]  for d in top_districts_list])
+    dist_chart_data   = _json.dumps([d["count"] for d in top_districts_list])
+    conv_chart_labels = _json.dumps([r["vendor"].company_name for r in top_by_conv[:5]])
+    conv_chart_data   = _json.dumps([r["conv"] for r in top_by_conv[:5]])
+    total_leads     = Lead.query.count()
+    total_vendors   = Vendor.query.count()
+    active_vendors  = Vendor.query.filter_by(is_active=True).count()
+    total_quotations= VendorQuotation.query.count()
+    approved_count  = VendorQuotation.query.filter_by(status="Approved").count()
+    all_approved    = VendorQuotation.query.filter_by(status="Approved").all()
+    total_revenue   = sum(q.net_price   for q in all_approved)
+    total_commission= sum(q.commission  for q in all_approved)
+    return render_template("admin_reports.html",
+        top_by_done=top_by_done, top_by_rev=top_by_rev,
+        top_by_comm=top_by_comm, top_by_conv=top_by_conv,
+        top_districts=top_districts_list,
+        dist_chart_labels=dist_chart_labels, dist_chart_data=dist_chart_data,
+        conv_chart_labels=conv_chart_labels, conv_chart_data=conv_chart_data,
+        total_leads=total_leads, total_vendors=total_vendors,
+        active_vendors=active_vendors, total_quotations=total_quotations,
+        approved_count=approved_count, total_revenue=total_revenue,
+        total_commission=total_commission)
+
+
+# ==========================
+# GLOBAL SEARCH
+# ==========================
+@app.route("/global-search")
+@login_required
+def global_search():
+    q = request.args.get("q", "").strip()
+    if not q:
+        return jsonify({"vendors": [], "leads": [], "quotations": []})
+    like = f"%{q}%"
+    vendors = Vendor.query.filter(db.or_(
+        Vendor.company_name.like(like), Vendor.owner_name.like(like),
+        Vendor.mobile.like(like), Vendor.district.like(like),
+        Vendor.username.like(like)
+    )).limit(10).all()
+    leads = Lead.query.filter(db.or_(
+        Lead.name.like(like), Lead.phone.like(like),
+        Lead.city.like(like), Lead.district.like(like)
+    )).limit(10).all()
+    quotes = VendorQuotation.query.filter(db.or_(
+        VendorQuotation.customer_name.like(like),
+        VendorQuotation.customer_phone.like(like)
+    )).limit(10).all()
+    return jsonify({
+        "vendors":    [{"id": v.id, "name": v.company_name, "district": v.district} for v in vendors],
+        "leads":      [{"id": l.id, "name": l.name, "phone": l.phone, "district": l.district} for l in leads],
+        "quotations": [{"id": q.id, "customer": q.customer_name, "status": q.status} for q in quotes]
+    })
 
 # ==========================
 # ERROR HANDLERS

@@ -1,0 +1,154 @@
+{% extends 'admin_base.html' %}
+{% block page_title %}Quotation Comparison{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+  <li class="breadcrumb-item"><a href="/admin/quotations">Quotations</a></li>
+  <li class="breadcrumb-item active">Compare</li>
+{% endblock %}
+{% block admin %}
+<style>
+  .cmp-card { background:#fff; border-radius:16px; padding:24px 28px; box-shadow:0 6px 20px rgba(0,0,0,.07); margin-bottom:20px; }
+  .cmp-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .cmp-table th { background:#005b38; color:#fff; padding:11px 14px; font-weight:700; text-align:left; white-space:nowrap; }
+  .cmp-table td { padding:11px 14px; border-bottom:1px solid #f0f0f0; vertical-align:middle; }
+  .cmp-table tr:last-child td { border-bottom:none; }
+  .cmp-table tr:hover td { background:#f6fff9; }
+  .tag-pill { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; margin-left:6px; }
+  .tag-price { background:#d1e7dd; color:#0a3622; }
+  .tag-comm  { background:#fff3cd; color:#856404; }
+  .tag-rate  { background:#cfe2ff; color:#084298; }
+  .stars { color:#ffc107; font-size:13px; }
+  .sort-btn { background:none; border:1.5px solid #ccc; border-radius:8px; padding:5px 14px; font-size:12px; font-weight:700; cursor:pointer; }
+  .sort-btn.active { background:#005b38; color:#fff; border-color:#005b38; }
+  .sort-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  .lead-info { background:#e8f5e9; border-radius:12px; padding:14px 18px; margin-bottom:20px; display:flex; gap:32px; flex-wrap:wrap; }
+  .lead-info div { font-size:13px; }
+  .lead-info span { font-weight:700; color:#005b38; }
+  .empty-state { text-align:center; padding:60px 20px; color:#aaa; }
+  .assign-btn { background:#005b38; color:#fff; border:none; border-radius:8px; padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer; }
+  .assign-btn:hover { background:#00a651; }
+</style>
+
+<div class="crm-page-header">
+  <div>
+    <h1 class="crm-page-title"><i class="bi bi-bar-chart-line-fill me-2"></i>Quotation Comparison</h1>
+    <p class="crm-page-sub">Compare all vendor quotations for this lead and assign the best one</p>
+  </div>
+  <a href="/admin/quotations" class="btn-crm-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back to Quotations
+  </a>
+</div>
+
+<!-- Lead info strip -->
+<div class="lead-info">
+  <div>Lead #{{ lead.id }}</div>
+  <div>Customer: <span>{{ lead.name }}</span></div>
+  <div>Phone: <span>{{ lead.phone }}</span></div>
+  <div>District: <span>{{ lead.district or '—' }}</span></div>
+  <div>Status: <span>{{ lead.status }}</span></div>
+</div>
+
+{% if annotated %}
+<!-- Sort controls -->
+<div class="sort-bar" id="sortBar">
+  <button class="sort-btn active" onclick="sortTable('net_price','asc',this)"><i class="bi bi-sort-numeric-up me-1"></i>Lowest Price</button>
+  <button class="sort-btn" onclick="sortTable('commission','desc',this)"><i class="bi bi-graph-up me-1"></i>Highest Commission</button>
+  <button class="sort-btn" onclick="sortTable('avg_rating','desc',this)"><i class="bi bi-star-fill me-1"></i>Best Rating</button>
+  <button class="sort-btn" onclick="sortTable('conversion','desc',this)"><i class="bi bi-percent me-1"></i>Best Conversion</button>
+</div>
+
+<div class="cmp-card" style="padding:0;overflow:hidden;">
+  <table class="cmp-table" id="cmpTable">
+    <thead>
+      <tr>
+        <th>Vendor</th>
+        <th>District</th>
+        <th>Brand</th>
+        <th>Panel</th>
+        <th>Inverter</th>
+        <th>Warranty</th>
+        <th>Gross ₹</th>
+        <th>Subsidy ₹</th>
+        <th>Net Price ₹</th>
+        <th>Commission ₹</th>
+        <th>Rating</th>
+        <th>Conversion</th>
+        <th>Leads Done</th>
+        <th>DISCOM</th>
+        <th>PM Surya</th>
+        <th>Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="cmpBody">
+      {% for row in annotated %}
+      <tr
+        data-net_price="{{ row.q.net_price }}"
+        data-commission="{{ row.q.commission }}"
+        data-avg_rating="{{ row.avg_rating }}"
+        data-conversion="{{ row.conversion }}">
+        <td>
+          <strong>{{ row.vendor.company_name }}</strong>
+          {% if row.tag %}
+            <span class="tag-pill {% if 'Price' in row.tag %}tag-price{% elif 'Commission' in row.tag %}tag-comm{% else %}tag-rate{% endif %}">
+              {{ row.tag }}
+            </span>
+          {% endif %}
+          <br><small class="text-muted">{{ row.vendor.owner_name }}</small>
+        </td>
+        <td>{{ row.vendor.district }}</td>
+        <td>{{ row.q.brand or '—' }}</td>
+        <td>{{ row.q.panel_brand or '—' }}</td>
+        <td>{{ row.q.inverter_brand or '—' }}</td>
+        <td>{{ row.q.warranty_years if row.q.warranty_years else '—' }} yr</td>
+        <td>₹{{ '{:,.0f}'.format(row.q.gross_price) }}</td>
+        <td>₹{{ '{:,.0f}'.format(row.q.subsidy_amount) }}</td>
+        <td><strong style="color:#005b38">₹{{ '{:,.0f}'.format(row.q.net_price) }}</strong></td>
+        <td style="color:#856404"><strong>₹{{ '{:,.0f}'.format(row.q.commission) }}</strong></td>
+        <td>
+          <span class="stars">
+            {% for i in range(row.avg_rating|int) %}★{% endfor %}{% if row.avg_rating % 1 >= 0.5 %}½{% endif %}
+          </span>
+          <small class="text-muted ms-1">{{ row.avg_rating }}</small>
+        </td>
+        <td>{{ row.conversion }}%</td>
+        <td>{{ row.total_leads }}</td>
+        <td>{% if row.profile and row.profile.discom_empanelled %}<span class="badge bg-success">Yes</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</td>
+        <td>{% if row.profile and row.profile.pm_surya_approved %}<span class="badge bg-success">Yes</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</td>
+        <td style="font-size:11px;color:#888">{{ row.q.created_at }}</td>
+        <td>
+          <form method="POST" action="/assign-vendor/{{ lead.id }}" style="display:inline">
+            <input type="hidden" name="vendor_id" value="{{ row.vendor.id }}">
+            <button type="submit" class="assign-btn">Assign</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% else %}
+<div class="cmp-card">
+  <div class="empty-state">
+    <i class="bi bi-clipboard2-x" style="font-size:48px;display:block;margin-bottom:12px;"></i>
+    No quotations submitted for this lead yet.
+  </div>
+</div>
+{% endif %}
+
+<script>
+function sortTable(col, dir, btn) {
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  var tbody = document.getElementById('cmpBody');
+  var rows  = Array.from(tbody.querySelectorAll('tr'));
+  rows.sort(function(a, b) {
+    var av = parseFloat(a.dataset[col]) || 0;
+    var bv = parseFloat(b.dataset[col]) || 0;
+    return dir === 'asc' ? av - bv : bv - av;
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+</script>
+{% endblock %}

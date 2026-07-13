@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quotations — {{ vendor.company_name }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #eef4f2; font-family: 'Segoe UI', sans-serif; margin: 0; }
+    .v-sidebar {
+      width: 220px; height: 100vh; position: fixed; left: 0; top: 0;
+      background: #1a3c2f; padding: 28px 18px; color: white; overflow-y: auto;
+    }
+    .v-sidebar .brand { font-size: 22px; font-weight: 900; color: #ffc107; margin-bottom: 10px; }
+    .v-sidebar .vendor-info { font-size: 12px; color: #a5d6a7; margin-bottom: 28px; line-height: 1.6; }
+    .v-sidebar a {
+      display: flex; align-items: center; gap: 10px; color: white; text-decoration: none;
+      font-weight: 700; font-size: 14px; padding: 11px 12px; border-radius: 12px; margin-bottom: 6px; transition: .2s;
+    }
+    .v-sidebar a:hover, .v-sidebar a.active { background: rgba(255,255,255,.15); }
+    .v-sidebar a.logout { margin-top: 30px; background: rgba(255,50,50,.15); }
+    .v-content { margin-left: 220px; padding: 28px; }
+    .page-title { font-size: 26px; font-weight: 900; color: #005b38; margin-bottom: 22px; }
+    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .btn-primary-g {
+      background: #005b38; color: white; border: none; border-radius: 12px;
+      padding: 10px 22px; font-size: 14px; font-weight: 700; cursor: pointer;
+    }
+    .btn-primary-g:hover { background: #00a651; }
+    .card-section {
+      background: white; border-radius: 18px; padding: 0;
+      box-shadow: 0 8px 24px rgba(0,0,0,.08); overflow: hidden; margin-bottom: 24px;
+    }
+    .q-table { width: 100%; border-collapse: collapse; }
+    .q-table th { background: #005b38; color: white; padding: 12px 14px; font-size: 12px; font-weight: 700; text-align: left; }
+    .q-table td { padding: 12px 14px; border-bottom: 1px solid #f0f0f0; font-size: 13px; vertical-align: middle; }
+    .q-table tr:last-child td { border-bottom: none; }
+    .badge-pending  { background: #fff3cd; color: #856404; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .badge-approved { background: #d1e7dd; color: #0a3622; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .badge-rejected { background: #f8d7da; color: #842029; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .badge-revision { background: #cfe2ff; color: #084298; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    /* Vendor action buttons */
+    .btn-action-accept {
+      background: #d1e7dd; color: #0a3622; border: none; border-radius: 8px;
+      padding: 5px 11px; font-size: 11px; font-weight: 700; cursor: pointer;
+    }
+    .btn-action-accept:hover { background: #00a651; color: white; }
+    .btn-action-edit {
+      background: #fff3cd; color: #856404; border: none; border-radius: 8px;
+      padding: 5px 11px; font-size: 11px; font-weight: 700; cursor: pointer;
+    }
+    .btn-action-edit:hover { background: #ffc107; color: #333; }
+    .btn-action-reject {
+      background: #f8d7da; color: #842029; border: none; border-radius: 8px;
+      padding: 5px 11px; font-size: 11px; font-weight: 700; cursor: pointer;
+    }
+    .btn-action-reject:hover { background: #dc3545; color: white; }
+    /* Modal */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9999; align-items:flex-start; justify-content:center; overflow-y:auto; padding:40px 20px; }
+    .modal-box { background:#fff; border-radius:18px; padding:32px; width:100%; max-width:680px; box-shadow:0 20px 60px rgba(0,0,0,.25); margin:auto; }
+    .modal-box h5 { font-weight:900; color:#005b38; margin-bottom:20px; }
+    .form-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+    .form-group { display:flex; flex-direction:column; }
+    .form-group label { font-size:12px; font-weight:700; color:#555; margin-bottom:5px; }
+    .form-group input, .form-group select, .form-group textarea {
+      height:40px; border:1.5px solid #e0e0e0; border-radius:9px;
+      padding:0 12px; font-size:13px; outline:none; font-family:inherit;
+    }
+    .form-group textarea { height:70px; padding:8px 12px; resize:vertical; }
+    .form-group input:focus, .form-group select:focus { border-color:#00a651; }
+    .full-col { grid-column: 1 / -1; }
+    .price-row {
+      background:#f0fff4; border-radius:12px; padding:14px 18px;
+      display:flex; justify-content:space-between; align-items:center;
+      margin-top:14px; flex-wrap:wrap; gap:10px;
+    }
+    .price-row div { text-align:center; }
+    .price-row .amount { font-size:20px; font-weight:900; color:#005b38; }
+    .price-row .lbl { font-size:11px; color:#666; font-weight:700; }
+    .modal-footer { display:flex; gap:10px; margin-top:20px; }
+    .btn-cancel {
+      flex:1; height:42px; border:2px solid #ccc; border-radius:10px;
+      background:#fff; font-weight:700; cursor:pointer;
+    }
+    .btn-save {
+      flex:2; height:42px; border:none; border-radius:10px;
+      background:#005b38; color:#fff; font-weight:700; cursor:pointer;
+    }
+    #alertBox { display:none; padding:12px 16px; border-radius:10px; margin-bottom:16px; font-weight:600; }
+    .empty-state { text-align:center; padding:60px 20px; color:#aaa; }
+    .empty-state i { font-size:48px; margin-bottom:16px; display:block; }
+  </style>
+</head>
+<body>
+<div class="v-sidebar">
+  <div class="brand">☀ HGS CRM</div>
+  <div class="vendor-info">
+    <div><i class="fa-solid fa-building me-1"></i> {{ vendor.company_name }}</div>
+    <div><i class="fa-solid fa-location-dot me-1"></i> {{ vendor.district }}</div>
+    <div style="margin-top:6px;color:#ffc107;font-size:11px;font-weight:700">@{{ vendor.username }}</div>
+  </div>
+  <a href="/vendor-dashboard"><i class="fa-solid fa-gauge-high"></i> My Dashboard</a>
+  <a href="/vendor-profile"><i class="fa-solid fa-id-card"></i> My Profile</a>
+  <a href="/vendor-pricing"><i class="fa-solid fa-tags"></i> My Pricing</a>
+  <a href="/vendor-commission"><i class="fa-solid fa-hand-holding-dollar"></i> Commission</a>
+  <a href="/vendor-coverage"><i class="fa-solid fa-map-location-dot"></i> My Coverage</a>
+  <a href="/vendor-quotations" class="active"><i class="fa-solid fa-file-invoice"></i> Quotations</a>
+  <a href="/vendor-logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+</div>
+
+<div class="v-content">
+  <div class="header-row">
+    <div class="page-title" style="margin:0"><i class="fa-solid fa-file-invoice me-2"></i>Quotations</div>
+    <button class="btn-primary-g" onclick="document.getElementById('qModal').style.display='flex'">
+      <i class="fa-solid fa-plus me-2"></i>New Quotation
+    </button>
+  </div>
+  <div id="alertBox"></div>
+
+  <div class="card-section">
+    {% if quotes %}
+    <table class="q-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Customer</th>
+          <th>Phone</th>
+          <th>Capacity</th>
+          <th>Type</th>
+          <th>Gross Price</th>
+          <th>Subsidy</th>
+          <th>Net Price</th>
+          <th>Commission</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>View</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in quotes %}
+        <tr>
+          <td class="text-muted">{{ q.id }}</td>
+          <td>{{ q.customer_name }}</td>
+          <td>{{ q.customer_phone }}</td>
+          <td><strong>{{ q.capacity_kw }} KW</strong></td>
+          <td>{{ q.project_type }}</td>
+          <td>₹{{ '{:,.0f}'.format(q.gross_price) }}</td>
+          <td>₹{{ '{:,.0f}'.format(q.subsidy_amount) }}</td>
+          <td><strong>₹{{ '{:,.0f}'.format(q.net_price) }}</strong></td>
+          <td>₹{{ '{:,.0f}'.format(q.commission) }}</td>
+          <td>
+            <span class="badge-{{ q.status|lower|replace(' ','_') }}">{{ q.status }}</span>
+            {% if q.status == 'Revision' %}
+              <span class="badge-revision" style="display:block;margin-top:4px;">🔄 Revision Requested</span>
+              {% if q.admin_remarks %}
+              <div style="font-size:11px;color:#084298;margin-top:3px;max-width:180px;">
+                <strong>Admin:</strong> {{ q.admin_remarks }}
+              </div>
+              {% endif %}
+              <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+                <button class="btn-action-accept" onclick="vendorAction({{ q.id }}, 'accept')">
+                  <i class="fa-solid fa-check me-1"></i>Accept
+                </button>
+                <button class="btn-action-edit" onclick="openResubmit({{ q.id }})">
+                  <i class="fa-solid fa-pen me-1"></i>Edit
+                </button>
+                <button class="btn-action-reject" onclick="openReject({{ q.id }})">
+                  <i class="fa-solid fa-xmark me-1"></i>Reject
+                </button>
+              </div>
+            {% endif %}
+          </td>
+          <td style="font-size:12px;color:#888">{{ q.created_at }}</td>
+          <td>
+            <a href="/vendor-quotation/{{ q.id }}" target="_blank"
+               style="color:#005b38;font-weight:700;font-size:12px;text-decoration:none;">
+              <i class="fa-solid fa-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <i class="fa-solid fa-file-circle-plus"></i>
+      No quotations yet. Create your first quotation.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- NEW QUOTATION MODAL -->
+<div id="qModal" class="modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box">
+    <h5><i class="fa-solid fa-file-plus me-2"></i>New Quotation</h5>
+    <div id="qAlert" style="display:none;padding:10px 14px;border-radius:10px;margin-bottom:14px;font-size:14px;font-weight:600;"></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Customer Name *</label>
+        <input type="text" id="q_name" placeholder="Enter customer name">
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" id="q_phone" placeholder="Mobile number">
+      </div>
+      <div class="form-group">
+        <label>Capacity (KW) *</label>
+        <select id="q_cap">
+          {% for c in capacities %}
+          <option value="{{ c }}">{{ c }} KW</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Project Type</label>
+        <select id="q_type">
+          <option>Residential</option>
+          <option>Commercial</option>
+          <option>Industrial</option>
+          <option>Government</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Brand</label>
+        <select id="q_brand">
+          <option value="">— Select —</option>
+          {% for b in brands %}
+          <option value="{{ b }}">{{ b }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Panel Brand</label>
+        <input type="text" id="q_panel" placeholder="e.g. Waaree">
+      </div>
+      <div class="form-group">
+        <label>Inverter Brand</label>
+        <input type="text" id="q_inverter" placeholder="e.g. Havells">
+      </div>
+      <div class="form-group">
+        <label>Structure Type</label>
+        <input type="text" id="q_structure" placeholder="e.g. GI / MS">
+      </div>
+      <div class="form-group">
+        <label>Gross Price (₹) *</label>
+        <input type="number" id="q_gross" placeholder="0" min="0" oninput="calcNet()">
+      </div>
+      <div class="form-group">
+        <label>Subsidy Amount (₹)</label>
+        <input type="number" id="q_subsidy" placeholder="0" min="0" oninput="calcNet()">
+      </div>
+      <div class="form-group">
+        <label>Commission for HGS (₹)</label>
+        <input type="number" id="q_commission" placeholder="0" min="0">
+      </div>
+    </div>
+    <div class="price-row">
+      <div><div class="amount" id="disp_gross">₹0</div><div class="lbl">Gross Price</div></div>
+      <div style="font-size:22px;color:#aaa">−</div>
+      <div><div class="amount" id="disp_subsidy" style="color:#f57c00">₹0</div><div class="lbl">Subsidy</div></div>
+      <div style="font-size:22px;color:#aaa">=</div>
+      <div><div class="amount" id="disp_net" style="color:#1565c0">₹0</div><div class="lbl">Net Price</div></div>
+    </div>
+    <div class="form-group full-col" style="margin-top:14px;">
+      <label>Remarks</label>
+      <textarea id="q_remarks" placeholder="Any additional notes..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="document.getElementById('qModal').style.display='none'">Cancel</button>
+      <button class="btn-save" id="qSaveBtn" onclick="createQuotation()">
+        <i class="fa-solid fa-floppy-disk me-2"></i>Create Quotation
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function calcNet() {
+  var gross   = parseFloat(document.getElementById('q_gross').value)   || 0;
+  var subsidy = parseFloat(document.getElementById('q_subsidy').value) || 0;
+  var net = gross - subsidy;
+  document.getElementById('disp_gross').textContent   = '₹' + gross.toLocaleString('en-IN');
+  document.getElementById('disp_subsidy').textContent = '₹' + subsidy.toLocaleString('en-IN');
+  document.getElementById('disp_net').textContent     = '₹' + net.toLocaleString('en-IN');
+}
+
+function createQuotation() {
+  var alert = document.getElementById('qAlert');
+  var btn   = document.getElementById('qSaveBtn');
+  var name  = document.getElementById('q_name').value.trim();
+  var gross = document.getElementById('q_gross').value;
+  if (!name || !gross) {
+    alert.style.display='block'; alert.style.background='#fff3cd'; alert.style.color='#856404';
+    alert.textContent='Customer name and gross price are required.'; return;
+  }
+  btn.disabled=true; btn.textContent='Saving…';
+  var fd = new FormData();
+  fd.append('customer_name',  name);
+  fd.append('customer_phone', document.getElementById('q_phone').value);
+  fd.append('capacity_kw',    document.getElementById('q_cap').value);
+  fd.append('project_type',   document.getElementById('q_type').value);
+  fd.append('brand',          document.getElementById('q_brand').value);
+  fd.append('panel_brand',    document.getElementById('q_panel').value);
+  fd.append('inverter_brand', document.getElementById('q_inverter').value);
+  fd.append('structure_type', document.getElementById('q_structure').value);
+  fd.append('gross_price',    gross);
+  fd.append('subsidy_amount', document.getElementById('q_subsidy').value);
+  fd.append('commission',     document.getElementById('q_commission').value);
+  fd.append('remarks',        document.getElementById('q_remarks').value);
+  fetch('/vendor-quotation/create', { method:'POST', body:fd })
+    .then(r => r.json())
+    .then(d => {
+      btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-floppy-disk me-2"></i>Create Quotation';
+      if (d.ok) {
+        location.reload();
+      } else {
+        alert.style.display='block'; alert.style.background='#f8d7da'; alert.style.color='#842029';
+        alert.textContent = d.error || 'Error creating quotation.';
+      }
+    });
+}
+</script>
+
+<!-- ── REJECT MODAL ── -->
+<div id="rejectModal" class="modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box" style="max-width:440px;">
+    <h5><i class="fa-solid fa-xmark-circle me-2 text-danger"></i>Reject Quotation</h5>
+    <input type="hidden" id="reject_qid">
+    <div class="form-group">
+      <label>Rejection Reason *</label>
+      <textarea id="reject_reason" rows="3" placeholder="Please provide a reason for rejection…"
+        style="width:100%;border:1.5px solid #e0e0e0;border-radius:9px;padding:8px 12px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+    </div>
+    <div class="modal-footer" style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn-cancel" onclick="document.getElementById('rejectModal').style.display='none'">Cancel</button>
+      <button class="btn-save" style="background:#dc3545;" onclick="submitReject()">
+        <i class="fa-solid fa-xmark me-1"></i>Confirm Reject
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── RESUBMIT / EDIT MODAL ── -->
+<div id="resubmitModal" class="modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box" style="max-width:600px;">
+    <h5><i class="fa-solid fa-pen-to-square me-2 text-warning"></i>Edit &amp; Resubmit Quotation</h5>
+    <input type="hidden" id="resub_qid">
+    <div id="resubAlert" style="display:none;padding:10px 14px;border-radius:10px;margin-bottom:14px;font-size:13px;font-weight:600;"></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Brand</label>
+        <input type="text" id="resub_brand" placeholder="Solar brand">
+      </div>
+      <div class="form-group">
+        <label>Panel Brand</label>
+        <input type="text" id="resub_panel" placeholder="Panel brand">
+      </div>
+      <div class="form-group">
+        <label>Inverter Brand</label>
+        <input type="text" id="resub_inverter" placeholder="Inverter brand">
+      </div>
+      <div class="form-group">
+        <label>Gross Price (₹) *</label>
+        <input type="number" id="resub_gross" min="0" oninput="resubCalcNet()">
+      </div>
+      <div class="form-group">
+        <label>Subsidy Amount (₹)</label>
+        <input type="number" id="resub_subsidy" min="0" oninput="resubCalcNet()">
+      </div>
+      <div class="form-group">
+        <label>Commission for HGS (₹)</label>
+        <input type="number" id="resub_commission" min="0">
+      </div>
+    </div>
+    <div class="price-row" style="margin-top:12px;">
+      <div><div class="amount" id="resub_disp_net" style="color:#1565c0">₹0</div><div class="lbl">Net Price</div></div>
+    </div>
+    <div class="form-group full-col" style="margin-top:12px;">
+      <label>Remarks / Notes</label>
+      <textarea id="resub_remarks" rows="2" placeholder="Any revision notes…"
+        style="width:100%;border:1.5px solid #e0e0e0;border-radius:9px;padding:8px 12px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+    </div>
+    <div class="modal-footer" style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn-cancel" onclick="document.getElementById('resubmitModal').style.display='none'">Cancel</button>
+      <button class="btn-save" onclick="submitResubmit()">
+        <i class="fa-solid fa-paper-plane me-1"></i>Submit Revision
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── VENDOR ACTION JS ── -->
+<script>
+function vendorAction(qid, action) {
+  var fd = new FormData();
+  fd.append('action', action);
+  fetch('/vendor-quotation/' + qid + '/vendor-action', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) {
+        showVAlert('✓ ' + d.message, false);
+        setTimeout(function(){ location.reload(); }, 1200);
+      } else {
+        showVAlert('✗ ' + (d.error || 'Error.'), true);
+      }
+    })
+    .catch(function(){ showVAlert('✗ Network error.', true); });
+}
+
+function openReject(qid) {
+  document.getElementById('reject_qid').value = qid;
+  document.getElementById('reject_reason').value = '';
+  document.getElementById('rejectModal').style.display = 'flex';
+}
+function submitReject() {
+  var qid    = document.getElementById('reject_qid').value;
+  var reason = document.getElementById('reject_reason').value.trim();
+  if (!reason) {
+    document.getElementById('reject_reason').focus();
+    return;
+  }
+  var fd = new FormData();
+  fd.append('action', 'reject');
+  fd.append('reason', reason);
+  fetch('/vendor-quotation/' + qid + '/vendor-action', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('rejectModal').style.display = 'none';
+      if (d.ok) {
+        showVAlert('✓ ' + d.message, false);
+        setTimeout(function(){ location.reload(); }, 1200);
+      } else {
+        showVAlert('✗ ' + (d.error || 'Error.'), true);
+      }
+    })
+    .catch(function(){ showVAlert('✗ Network error.', true); });
+}
+
+function openResubmit(qid) {
+  document.getElementById('resub_qid').value     = qid;
+  document.getElementById('resub_brand').value   = '';
+  document.getElementById('resub_panel').value   = '';
+  document.getElementById('resub_inverter').value= '';
+  document.getElementById('resub_gross').value   = '';
+  document.getElementById('resub_subsidy').value = '';
+  document.getElementById('resub_commission').value = '';
+  document.getElementById('resub_remarks').value = '';
+  document.getElementById('resub_disp_net').textContent = '₹0';
+  document.getElementById('resubAlert').style.display = 'none';
+  document.getElementById('resubmitModal').style.display = 'flex';
+}
+function resubCalcNet() {
+  var gross   = parseFloat(document.getElementById('resub_gross').value)   || 0;
+  var subsidy = parseFloat(document.getElementById('resub_subsidy').value) || 0;
+  document.getElementById('resub_disp_net').textContent = '₹' + (gross - subsidy).toLocaleString('en-IN');
+}
+function submitResubmit() {
+  var qid   = document.getElementById('resub_qid').value;
+  var gross = document.getElementById('resub_gross').value;
+  var alert = document.getElementById('resubAlert');
+  if (!gross) {
+    alert.style.display='block'; alert.style.background='#fff3cd'; alert.style.color='#856404';
+    alert.textContent='Gross price is required.'; return;
+  }
+  var fd = new FormData();
+  fd.append('action',       'resubmit');
+  fd.append('brand',        document.getElementById('resub_brand').value);
+  fd.append('panel_brand',  document.getElementById('resub_panel').value);
+  fd.append('inverter_brand', document.getElementById('resub_inverter').value);
+  fd.append('gross_price',  gross);
+  fd.append('subsidy_amount', document.getElementById('resub_subsidy').value || 0);
+  var sub = parseFloat(document.getElementById('resub_subsidy').value) || 0;
+  fd.append('net_price',    (parseFloat(gross) - sub).toString());
+  fd.append('commission',   document.getElementById('resub_commission').value || 0);
+  fd.append('remarks',      document.getElementById('resub_remarks').value);
+  fetch('/vendor-quotation/' + qid + '/vendor-action', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) {
+        document.getElementById('resubmitModal').style.display = 'none';
+        showVAlert('✓ ' + d.message, false);
+        setTimeout(function(){ location.reload(); }, 1400);
+      } else {
+        alert.style.display='block'; alert.style.background='#f8d7da'; alert.style.color='#842029';
+        alert.textContent = '✗ ' + (d.error || 'Error submitting revision.');
+      }
+    })
+    .catch(function(){
+      alert.style.display='block'; alert.style.background='#f8d7da'; alert.style.color='#842029';
+      alert.textContent = '✗ Network error.';
+    });
+}
+
+function showVAlert(msg, isErr) {
+  var box = document.getElementById('alertBox');
+  box.style.display = 'block';
+  box.style.background = isErr ? '#f8d7da' : '#d1e7dd';
+  box.style.color      = isErr ? '#842029' : '#0a3622';
+  box.textContent = msg;
+  setTimeout(function(){ box.style.display = 'none'; }, 3000);
+}
+</script>
+</body>
+</html>
