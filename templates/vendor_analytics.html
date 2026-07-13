@@ -5,7 +5,7 @@
 <li class="breadcrumb-item active">Analytics</li>
 {% endblock %}
 
-{% block content %}
+{% block admin %}
 <style>
 .ana-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
 .ana-title{font-size:20px;font-weight:900;color:#005b38}
@@ -51,6 +51,77 @@
     </a>
   </div>
 </div>
+
+<!-- ── Summary KPI Cards ── -->
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px">
+  {% set kpis = [
+    ("Total Vendors",      total_vendors,    "fa-users",           "#005b38", "#e8f5e9"),
+    ("Active",             active_vendors,   "fa-circle-check",    "#00a651", "#f0fdf4"),
+    ("Disabled",           disabled_vendors, "fa-circle-xmark",    "#e11d48", "#fff1f2"),
+    ("PM Surya Approved",  pm_surya_count,   "fa-certificate",     "#d97706", "#fffbeb"),
+    ("DISCOM Empanelled",  discom_count,     "fa-plug",            "#1565c0", "#f0f4ff"),
+    ("Residential",        res_count,        "fa-house",           "#7c3aed", "#f5f3ff"),
+    ("Commercial",         com_count,        "fa-building",        "#0891b2", "#ecfeff"),
+    ("Government",         gov_count,        "fa-landmark",        "#065f46", "#d1fae5"),
+  ] %}
+  {% for label, val, icon, color, bg in kpis %}
+  <div style="background:{{ bg }};border-radius:12px;border:1px solid {{ color }}22;padding:16px 18px;display:flex;align-items:center;gap:12px">
+    <i class="fa-solid {{ icon }}" style="font-size:22px;color:{{ color }}"></i>
+    <div>
+      <div style="font-size:22px;font-weight:900;color:{{ color }};line-height:1">{{ val }}</div>
+      <div style="font-size:11px;color:#666;font-weight:600;margin-top:2px">{{ label }}</div>
+    </div>
+  </div>
+  {% endfor %}
+  <div style="background:#fff8f0;border-radius:12px;border:1px solid #e6510022;padding:16px 18px;display:flex;align-items:center;gap:12px">
+    <i class="fa-solid fa-percent" style="font-size:22px;color:#e65100"></i>
+    <div>
+      <div style="font-size:22px;font-weight:900;color:#e65100;line-height:1">₹{{ '{:,.0f}'.format(avg_commission) }}</div>
+      <div style="font-size:11px;color:#666;font-weight:600;margin-top:2px">Avg Commission</div>
+    </div>
+  </div>
+  <div style="background:#f0f4ff;border-radius:12px;border:1px solid #1565c022;padding:16px 18px;display:flex;align-items:center;gap:12px">
+    <i class="fa-solid fa-tag" style="font-size:22px;color:#1565c0"></i>
+    <div>
+      <div style="font-size:22px;font-weight:900;color:#1565c0;line-height:1">₹{{ '{:,.0f}'.format(avg_price) }}</div>
+      <div style="font-size:11px;color:#666;font-weight:600;margin-top:2px">Avg Min Price</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Top Districts ── -->
+{% if top_districts %}
+<div class="ana-card" style="margin-bottom:20px">
+  <div class="ana-card-hdr green"><i class="fa-solid fa-map-location-dot"></i> Top Districts by Vendor Coverage</div>
+  <div class="ana-card-body" style="display:flex;flex-wrap:wrap;gap:8px;padding:16px 20px">
+    {% for dist, cnt in top_districts %}
+    <span style="background:#e8f5e9;color:#005b38;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700">
+      {{ dist }} <span style="background:#005b38;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px">{{ cnt }}</span>
+    </span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Registration Trend ── -->
+{% if reg_trend %}
+<div class="ana-card" style="margin-bottom:20px">
+  <div class="ana-card-hdr blue"><i class="fa-solid fa-chart-line"></i> Vendor Registration Trend (Last 12 Months)</div>
+  <div class="ana-card-body">
+    {% set max_reg = reg_trend | map(attribute=1) | max %}
+    {% for month, cnt in reg_trend %}
+    {% set bar_w = ((cnt / max_reg * 100) | int) if max_reg else 0 %}
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div style="width:72px;font-size:12px;font-weight:600;color:#555;flex-shrink:0">{{ month }}</div>
+      <div style="flex:1;background:#f0f0f0;border-radius:4px;height:18px;position:relative">
+        <div style="width:{{ bar_w }}%;background:linear-gradient(90deg,#1565c0,#42a5f5);height:18px;border-radius:4px"></div>
+      </div>
+      <div style="width:24px;text-align:right;font-size:12px;font-weight:800;color:#1565c0">{{ cnt }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
 
 <div class="ana-grid">
 
