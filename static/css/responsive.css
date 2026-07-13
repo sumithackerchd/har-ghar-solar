@@ -51,12 +51,6 @@ img{max-width:100%;height:auto}
   .quote-btn{flex:1;min-width:100px;text-align:center}
   .login-dropdown .dropdown-menu{position:static!important;transform:none!important;box-shadow:none;border:1px solid var(--border);margin-top:4px}
 
-  /* GOV HEADER */
-  .gov-subtitle{display:none}
-  .header-contact{justify-content:flex-start;gap:8px}
-  .hc-info strong{font-size:11px}
-  .hc-loc{display:none}
-
   /* HERO */
   .slide-img{height:75vh;min-height:480px}
   .hero-content{padding:0 5%;max-width:100%}
@@ -124,12 +118,6 @@ img{max-width:100%;height:auto}
   /* SUBSIDY */
   .subsidy-section .row{flex-direction:column-reverse}
 
-  /* GOV HEADER */
-  .gov-header{padding:8px 0}
-  .gov-title{font-size:13px}
-  .header-contact{gap:6px;justify-content:flex-start}
-  .hc-wa,.hc-loc{display:none}
-
   /* FOOTER */
   .footer-bottom .col-md-3{text-align:center!important}
   .footer-legal{justify-content:center}
@@ -171,10 +159,6 @@ img{max-width:100%;height:auto}
 
   /* CAROUSEL CONTROLS */
   .carousel-control-prev,.carousel-control-next{width:36px;height:36px}
-
-  /* GOVT HEADER — minimal */
-  .gov-header .col-md-6:last-child{display:none}
-  .gov-brand-text p{display:none}
 
   /* NAVBAR */
   .logo-main{font-size:16px}

@@ -2083,7 +2083,6 @@ def admin_quotations():
 
 
 
-
 # ==========================
 # VENDOR BULK OPERATIONS
 # ==========================
