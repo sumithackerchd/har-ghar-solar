@@ -230,54 +230,221 @@ section{overflow:hidden}
    HERO SLIDER
 ============================================================ */
 .slide-img{
-  height:88vh;min-height:520px;
-  background-size:cover;background-position:center;
+  height:clamp(480px,72vh,720px);
+  background-size:cover;
+  background-position:65% center;   /* keeps right-side persons fully visible */
   position:relative;display:flex;align-items:center;
+  overflow:hidden;
 }
 .slide-img::before{
   content:'';position:absolute;inset:0;
-  background:linear-gradient(105deg,rgba(0,60,36,.88) 0%,rgba(0,50,30,.6) 50%,rgba(0,0,0,.2) 100%);
+  background:linear-gradient(105deg,rgba(0,60,36,.88) 0%,rgba(0,50,30,.6) 50%,rgba(0,0,0,.15) 100%);
 }
-.img1{background-image:url('../images/solar1.jpg')}
-.img2{background-image:url('../images/solar2.jpg')}
-.img3{background-image:url('../images/solar3.jpg')}
-.hero-content{position:relative;z-index:2;padding:0 0 0 8%;max-width:680px;color:var(--white)}
+/* Per-image background positions tuned to keep persons visible */
+.img1{background-image:url('../images/solar1.jpg');background-position:60% center}
+.img2{background-image:url('../images/solar2.jpg');background-position:55% center}
+.img3{background-image:url('../images/solar3.jpg');background-position:center center}
+.hero-content{
+  position:relative;z-index:2;
+  padding:0 0 0 clamp(16px,6%,80px);
+  max-width:min(680px,55%);
+  color:var(--white);
+}
 .hero-badge{
   display:inline-flex;align-items:center;gap:8px;
   background:rgba(255,193,7,.15);border:1px solid rgba(255,193,7,.5);
-  color:var(--gold);padding:6px 18px;border-radius:30px;
-  font-size:13px;font-weight:700;letter-spacing:.5px;
-  backdrop-filter:blur(8px);margin-bottom:20px;
+  color:var(--gold);padding:5px 16px;border-radius:30px;
+  font-size:clamp(11px,1vw,13px);font-weight:700;letter-spacing:.5px;
+  backdrop-filter:blur(8px);margin-bottom:16px;
 }
 .hero-content h1{
-  font-size:3.2rem;font-weight:900;line-height:1.15;
-  margin-bottom:18px;text-shadow:0 2px 20px rgba(0,0,0,.3);
+  font-size:clamp(1.6rem,3vw,3rem);font-weight:900;line-height:1.15;
+  margin-bottom:14px;text-shadow:0 2px 20px rgba(0,0,0,.3);
 }
 .hero-content h1 span{color:var(--gold)}
-.hero-content p{font-size:17px;opacity:.9;margin-bottom:28px;max-width:520px;line-height:1.7}
-.hero-buttons{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:36px}
+.hero-content p{
+  font-size:clamp(13px,1.3vw,16px);
+  opacity:.9;margin-bottom:22px;
+  max-width:520px;line-height:1.7;
+}
+.hero-buttons{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px}
 .hero-btn{
   display:inline-flex;align-items:center;gap:8px;
   background:linear-gradient(135deg,var(--gold),var(--gold-dark));
-  color:var(--primary-dark);padding:13px 28px;border-radius:50px;
-  font-weight:800;font-size:15px;
+  color:var(--primary-dark);
+  padding:clamp(9px,1vh,13px) clamp(18px,2vw,28px);
+  border-radius:50px;
+  font-weight:800;font-size:clamp(13px,1.1vw,15px);
   box-shadow:0 6px 25px rgba(255,193,7,.4);
-  transition:var(--transition);border:none;
+  transition:var(--transition);border:none;white-space:nowrap;
 }
 .hero-btn:hover{transform:translateY(-3px);box-shadow:0 10px 35px rgba(255,193,7,.6);color:var(--primary-dark)}
 .hero-btn-outline{
   display:inline-flex;align-items:center;gap:8px;
   border:2px solid rgba(255,255,255,.7);color:var(--white);
-  padding:13px 28px;border-radius:50px;font-weight:700;font-size:15px;
+  padding:clamp(9px,1vh,13px) clamp(18px,2vw,28px);
+  border-radius:50px;font-weight:700;font-size:clamp(13px,1.1vw,15px);
   backdrop-filter:blur(8px);background:rgba(255,255,255,.08);
-  transition:var(--transition);
+  transition:var(--transition);white-space:nowrap;
 }
 .hero-btn-outline:hover{background:rgba(255,255,255,.2);border-color:var(--white);color:var(--white);transform:translateY(-3px)}
-.hero-stats{display:flex;gap:30px;flex-wrap:wrap}
+.hero-stats{display:flex;gap:clamp(16px,2vw,30px);flex-wrap:wrap}
 .hero-stats .stat-item{text-align:center}
-.hero-stats h3{font-size:2rem;font-weight:900;color:var(--gold);margin:0;line-height:1}
-.hero-stats span{font-size:12px;opacity:.8;text-transform:uppercase;letter-spacing:.5px}
-.carousel-control-prev,.carousel-control-next{width:50px;height:50px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border-radius:50%;backdrop-filter:blur(6px)}
+.hero-stats h3{
+  font-size:clamp(1.4rem,2vw,2rem);
+  font-weight:900;color:var(--gold);margin:0;line-height:1;
+}
+.hero-stats span{font-size:11px;opacity:.8;text-transform:uppercase;letter-spacing:.5px}
+.carousel-control-prev,.carousel-control-next{
+  width:clamp(36px,4vw,50px);height:clamp(36px,4vw,50px);
+  top:50%;transform:translateY(-50%);
+  background:rgba(255,255,255,.15);border-radius:50%;backdrop-filter:blur(6px);
+}
+
+/* ============================================================
+   RESPONSIVE — BREAKPOINTS
+============================================================ */
+
+/* ── Large desktops 1400px+ ── */
+@media(min-width:1400px){
+  .slide-img{height:clamp(600px,68vh,760px)}
+  .hero-content h1{font-size:clamp(2.6rem,3.2vw,3.4rem)}
+}
+
+/* ── Standard desktops 992–1399px ── */
+@media(min-width:992px) and (max-width:1399px){
+  .slide-img{height:clamp(500px,70vh,680px)}
+  .hero-content h1{font-size:clamp(1.9rem,2.8vw,2.9rem)}
+}
+
+/* ── Tablets landscape 768–991px ── */
+@media(min-width:768px) and (max-width:991px){
+  .slide-img{
+    height:clamp(440px,65vh,580px);
+    background-position:70% center;
+  }
+  .img1{background-position:70% center}
+  .img2{background-position:70% center}
+  .hero-content{max-width:60%;padding-left:5%}
+  .hero-content h1{font-size:clamp(1.5rem,3.2vw,2.2rem)}
+  .hero-content p{font-size:14px}
+  .hero-btn,.hero-btn-outline{padding:9px 18px;font-size:13px}
+  .hero-stats h3{font-size:1.4rem}
+}
+
+/* ── Tablets portrait & large phones 576–767px ── */
+@media(min-width:576px) and (max-width:767px){
+  .slide-img{
+    height:auto;min-height:560px;
+    background-position:70% top;
+    align-items:flex-end;padding-bottom:32px;
+  }
+  .img1{background-position:68% top}
+  .img2{background-position:70% top}
+  .hero-content{
+    max-width:100%;
+    padding:20px 5% 0 5%;
+    background:linear-gradient(0deg,rgba(0,40,20,.85) 0%,transparent 100%);
+  }
+  .hero-content h1{font-size:clamp(1.35rem,4.5vw,1.9rem);margin-bottom:10px}
+  .hero-content p{font-size:13px;margin-bottom:14px;max-width:100%}
+  .hero-badge{font-size:11px;padding:4px 12px;margin-bottom:10px}
+  .hero-buttons{gap:8px;margin-bottom:16px}
+  .hero-btn,.hero-btn-outline{padding:9px 16px;font-size:12px}
+  .hero-stats{gap:16px}
+  .hero-stats h3{font-size:1.2rem}
+  .hero-stats span{font-size:10px}
+  .carousel-control-prev,.carousel-control-next{width:34px;height:34px}
+  .counter-num{font-size:2rem}
+  .counter-label{font-size:12px}
+}
+
+/* ── Mobile phones 0–575px ── */
+@media(max-width:575px){
+  /* Prevent horizontal overflow */
+  body,html{overflow-x:hidden;max-width:100vw}
+
+  /* Announcement strip */
+  .govt-strip{font-size:11px;padding:5px 0}
+
+  /* Navbar */
+  .logo-main{font-size:16px}
+  .logo-sub{font-size:10px}
+  .site-logo{width:38px;height:38px}
+  .nav-actions{gap:5px}
+  .btn-login-admin,.btn-login-vendor{padding:5px 10px;font-size:11px}
+  .quote-btn{padding:6px 14px;font-size:12px}
+
+  /* Hero */
+  .slide-img{
+    height:auto;
+    min-height:100svh;
+    min-height:100vh; /* fallback */
+    background-position:70% top;
+    background-size:cover;
+    align-items:flex-end;
+    padding-bottom:28px;
+  }
+  .img1{background-position:68% top}
+  .img2{background-position:65% top}
+  .img3{background-position:center top}
+  .slide-img::before{
+    background:linear-gradient(180deg,
+      rgba(0,30,15,.3) 0%,
+      rgba(0,50,30,.6) 50%,
+      rgba(0,60,36,.92) 100%);
+  }
+  .hero-content{
+    max-width:100%;
+    padding:0 16px 0 16px;
+  }
+  .hero-badge{
+    font-size:10px;padding:4px 10px;
+    margin-bottom:8px;letter-spacing:0;
+  }
+  .hero-content h1{
+    font-size:clamp(1.15rem,5.5vw,1.6rem);
+    line-height:1.2;margin-bottom:8px;
+  }
+  .hero-content p{
+    font-size:12px;line-height:1.6;
+    margin-bottom:12px;max-width:100%;
+  }
+  .hero-buttons{
+    flex-direction:column;gap:8px;
+    margin-bottom:14px;width:100%;
+  }
+  .hero-btn,.hero-btn-outline{
+    width:100%;justify-content:center;
+    padding:11px 16px;font-size:13px;
+    text-align:center;
+  }
+  .hero-stats{gap:12px;justify-content:center;margin-top:4px}
+  .hero-stats h3{font-size:1.1rem}
+  .hero-stats span{font-size:9px}
+  .carousel-control-prev,.carousel-control-next{width:32px;height:32px}
+  .carousel-indicators{bottom:4px}
+
+  /* Counters */
+  .counter-num{font-size:1.8rem}
+  .counter-label{font-size:11px}
+  .counter-icon{font-size:22px}
+  .counter-area .row{gap:0}
+  .counter-divider{display:none}
+
+  /* Section titles */
+  .section-title h2{font-size:1.5rem}
+  .section-title p{font-size:13px}
+}
+
+/* ── Very small phones 320–359px ── */
+@media(max-width:359px){
+  .hero-content h1{font-size:1.05rem}
+  .hero-content p{font-size:11px}
+  .hero-btn,.hero-btn-outline{font-size:12px;padding:10px 12px}
+  .hero-stats h3{font-size:1rem}
+  .counter-num{font-size:1.5rem}
+}
 
 /* ============================================================
    GOVT TRUST / PM SURYA GHAR BANNER
