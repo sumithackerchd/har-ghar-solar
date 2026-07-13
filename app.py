@@ -1430,8 +1430,8 @@ def vendor_profile():
             profile.govt_projects      = int(request.form.get("govt_projects", 0))
         except (ValueError, TypeError):
             pass
-        profile.pm_surya_approved  = "1" in request.form.getlist("pm_surya_approved")
-        profile.discom_empanelled  = "1" in request.form.getlist("discom_empanelled")
+        profile.pm_surya_approved  = request.form.get("pm_surya_approved") == "1"
+        profile.discom_empanelled  = request.form.get("discom_empanelled") == "1"
         profile.brands_supported   = ",".join(request.form.getlist("brands_supported"))
         profile.updated_at         = datetime.now().strftime("%d-%m-%Y %H:%M")
         db.session.commit()
@@ -2083,6 +2083,7 @@ def admin_quotations():
 
 
 
+
 # ==========================
 # VENDOR BULK OPERATIONS
 # ==========================
@@ -2398,7 +2399,10 @@ def vendor_detail(vendor_id):
     import json as _json, statistics as _stat
     v        = Vendor.query.get_or_404(vendor_id)
     profile  = VendorProfile.query.filter_by(vendor_id=vendor_id).first()
-    # profile may be None — template uses safe guards (profile and profile.field)
+    # Guard: if vendor has no profile yet, provide an in-memory default
+    # so the template never crashes on profile.field access
+    if not profile:
+        profile = VendorProfile(vendor_id=vendor_id)
     pricing  = VendorPricing.query.filter_by(vendor_id=vendor_id).order_by(
                     VendorPricing.capacity_kw, VendorPricing.project_type).all()
     commissions = VendorCommission.query.filter_by(vendor_id=vendor_id).order_by(
@@ -2608,54 +2612,6 @@ def vendor_analytics():
     top_revenue     = sorted(rows, key=lambda x: -x["total_rev"])[:10]
     top_completed   = sorted(rows, key=lambda x: -x["completed"])[:10]
 
-    # ── Summary stats ──
-    total_vendors   = len(vendors)
-    active_vendors  = sum(1 for v in vendors if v.is_active and not getattr(v, "is_deleted", False))
-    disabled_vendors= total_vendors - active_vendors
-
-    profiles_all    = VendorProfile.query.all()
-    profile_map     = {p.vendor_id: p for p in profiles_all}
-    pm_surya_count  = sum(1 for p in profiles_all if p.pm_surya_approved)
-    discom_count    = sum(1 for p in profiles_all if p.discom_empanelled)
-
-    # Coverage stats — count vendors serving each type
-    coverages       = VendorCoverage.query.all()
-    res_count = com_count = gov_count = 0
-    district_freq   = {}
-    import json as _json2
-    for c in coverages:
-        try:
-            types = _json2.loads(c.lead_types or "[]")
-        except Exception:
-            types = []
-        if "Residential" in types:  res_count += 1
-        if "Commercial"  in types:  com_count += 1
-        if "Government"  in types:  gov_count += 1
-        try:
-            dists = _json2.loads(c.districts or "[]")
-        except Exception:
-            dists = []
-        for d in dists:
-            district_freq[d] = district_freq.get(d, 0) + 1
-
-    top_districts   = sorted(district_freq.items(), key=lambda x: -x[1])[:10]
-
-    all_comms   = [r["avg_comm"] for r in rows if r["avg_comm"] > 0]
-    all_prices  = [r["min_price"] for r in rows if r["min_price"] > 0]
-    avg_commission = round(sum(all_comms) / len(all_comms), 0) if all_comms else 0
-    avg_price      = round(sum(all_prices) / len(all_prices), 0) if all_prices else 0
-
-    # Registration trend — monthly counts from vendor.created_at
-    from collections import Counter
-    monthly_reg = Counter()
-    for v in vendors:
-        if v.created_at:
-            parts = str(v.created_at).split("-")
-            if len(parts) == 3:
-                key = f"{parts[2]}-{parts[1]}"   # YYYY-MM
-                monthly_reg[key] += 1
-    reg_trend = sorted(monthly_reg.items())[-12:]   # last 12 months
-
     return render_template("vendor_analytics.html",
         top_commission=top_commission,
         top_low_price=top_low_price,
@@ -2663,19 +2619,6 @@ def vendor_analytics():
         top_rated=top_rated,
         top_revenue=top_revenue,
         top_completed=top_completed,
-        # summary stats
-        total_vendors=total_vendors,
-        active_vendors=active_vendors,
-        disabled_vendors=disabled_vendors,
-        pm_surya_count=pm_surya_count,
-        discom_count=discom_count,
-        res_count=res_count,
-        com_count=com_count,
-        gov_count=gov_count,
-        avg_commission=avg_commission,
-        avg_price=avg_price,
-        top_districts=top_districts,
-        reg_trend=reg_trend,
     )
 
 
