@@ -3927,6 +3927,14 @@ def why_trust_us():
 def how_we_verify():
     return render_template("trust/verify.html")
 
+from flask import send_from_directory
+
+@app.route('/googledddba798461442fe.html')
+def google_verify():
+    return send_from_directory('.', 'googledddba798461442fe.html')
+
+
+
 @app.route("/sitemap.xml")
 def sitemap():
     import datetime
