@@ -47,10 +47,25 @@
   <noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}"></noscript>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2051033451758355"
      crossorigin="anonymous"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   {% block extra_head %}{% endblock %}
 </head>
 <body>
 
+<!-- ===== Loader ===== -->
+<div id="loader">
+    <div class="loader-inner">
+        <div class="loader-sun">☀️</div>
+
+        <div class="loader-text">
+            Har Ghar Solar
+        </div>
+
+        <div class="loader-bar">
+            <div class="loader-progress"></div>
+        </div>
+    </div>
+</div>
 
 
 <!-- STICKY NAVBAR -->
