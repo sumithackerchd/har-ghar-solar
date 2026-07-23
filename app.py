@@ -7,6 +7,8 @@ import smtplib
 from datetime import datetime, timedelta
 from email.message import EmailMessage
 from functools import wraps
+from flask import send_from_directory
+
 
 from dotenv import load_dotenv
 from flask import (
@@ -4034,6 +4036,10 @@ def too_many_requests(e):
 def server_error(e):
     logger.error("500 error: %s", str(e))
     return render_template("errors/500.html"), 500
+
+@app.route("/robots.txt")
+def robots():
+    return send_from_directory("static", "robots.txt", mimetype="text/plain")
 
 # ==========================
 # RUN SERVER
