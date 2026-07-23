@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Solar Blog & Knowledge Center | Har Ghar Solar{% endblock %}
+{% block meta_desc %}Explore our extensive knowledge base on rooftop solar, PM Surya Ghar Yojana, solar costs, and maintenance. Get expert advice for your solar journey.{% endblock %}
+
+{% block content %}
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h1 class="display-4 fw-bold">Solar Knowledge Center</h1>
+      <p class="lead text-muted">Empowering you with the right information for your clean energy journey.</p>
+      {% if search_query %}
+      <p>Search results for: <strong>{{ search_query }}</strong></p>
+      {% endif %}
+      {% if current_category %}
+      <p>Category: <strong>{{ current_category }}</strong></p>
+      {% endif %}
+      {% if current_tag %}
+      <p>Tag: <strong>{{ current_tag }}</strong></p>
+      {% endif %}
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="row g-4">
+          {% for blog in blogs.items %}
+          <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+              <img src="{{ url_for('static', filename=blog.featured_image) }}" class="card-img-top" alt="{{ blog.title }}" loading="lazy" style="height: 200px; object-fit: cover;">
+              <div class="card-body p-4">
+                <span class="badge bg-success bg-opacity-10 text-success mb-2">{{ blog.category }}</span>
+                <h3 class="h5 card-title fw-bold">
+                  <a href="/blog/{{ blog.slug }}" class="text-decoration-none text-dark stretched-link">{{ blog.title }}</a>
+                </h3>
+                <p class="card-text text-muted small mb-3">{{ blog.meta_desc[:100] }}...</p>
+                <div class="d-flex justify-content-between align-items-center mt-auto">
+                  <small class="text-muted"><i class="bi bi-clock"></i> {{ blog.reading_time }} min read</small>
+                  <small class="text-muted"><i class="bi bi-calendar3"></i> {{ blog.published_at[:10] }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <div class="col-12 text-center py-5">
+            <h3>No articles found</h3>
+            <p>Try adjusting your search or filter criteria.</p>
+            <a href="/blog" class="btn btn-primary">Back to all articles</a>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if blogs.pages > 1 %}
+        <nav aria-label="Blog pagination" class="mt-5">
+          <ul class="pagination justify-content-center">
+            {% if blogs.has_prev %}
+            <li class="page-item">
+              <a class="page-link" href="{{ url_for('blog_list', page=blogs.prev_num) }}">Previous</a>
+            </li>
+            {% endif %}
+            
+            {% for page_num in blogs.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+              {% if page_num %}
+                {% if blogs.page == page_num %}
+                <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('blog_list', page=page_num) }}">{{ page_num }}</a></li>
+                {% endif %}
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+              {% endif %}
+            {% endfor %}
+            
+            {% if blogs.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="{{ url_for('blog_list', page=blogs.next_num) }}">Next</a>
+            </li>
+            {% endif %}
+          </ul>
+        </nav>
+        {% endif %}
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+        <!-- Search Widget -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+          <div class="card-body p-4">
+            <h4 class="h5 fw-bold mb-3">Search Articles</h4>
+            <form action="/blog/search" method="GET">
+              <div class="input-group">
+                <input type="text" class="form-control" name="q" placeholder="Search keywords..." required>
+                <button class="btn btn-success" type="submit"><i class="bi bi-search"></i></button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Categories Widget -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+          <div class="card-body p-4">
+            <h4 class="h5 fw-bold mb-3">Categories</h4>
+            <ul class="list-group list-group-flush list-unstyled">
+              {% for cat, count in categories %}
+              <li class="d-flex justify-content-between align-items-center mb-2">
+                <a href="/blog/category/{{ cat|urlencode }}" class="text-decoration-none text-dark hover-success">{{ cat }}</a>
+                <span class="badge bg-light text-dark rounded-pill">{{ count }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <!-- Popular Posts Widget -->
+        <div class="card border-0 shadow-sm rounded-4">
+          <div class="card-body p-4">
+            <h4 class="h5 fw-bold mb-3">Popular Posts</h4>
+            <ul class="list-unstyled mb-0">
+              {% for p in popular %}
+              <li class="mb-3 d-flex align-items-center gap-3">
+                <img src="{{ url_for('static', filename=p.featured_image) }}" alt="" class="rounded" width="60" height="60" style="object-fit: cover;" loading="lazy">
+                <div>
+                  <a href="/blog/{{ p.slug }}" class="text-decoration-none text-dark fw-semibold small d-block">{{ p.title }}</a>
+                  <small class="text-muted">{{ p.published_at[:10] }}</small>
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

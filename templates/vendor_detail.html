@@ -107,9 +107,9 @@
 <div class="vd-hero">
   <div class="vd-avatar">
     {% if profile and profile.company_logo %}
-      <img src="{{ profile.company_logo }}" alt="logo">
+      <img loading="lazy" src="{{ profile.company_logo }}" alt="logo">
     {% elif profile and profile.profile_photo %}
-      <img src="{{ profile.profile_photo }}" alt="photo">
+      <img loading="lazy" src="{{ profile.profile_photo }}" alt="photo">
     {% else %}
       {{ v.company_name[0].upper() }}
     {% endif %}
@@ -579,7 +579,7 @@
       {% set logo_url = (profile.company_logo if profile and profile.company_logo else '') %}
       <div class="doc-card {{ 'has-file' if logo_url else '' }}">
         <div class="doc-icon {{ 'has' if logo_url else '' }}">
-          {% if logo_url %}<img src="{{ logo_url }}" alt="Logo" style="width:64px;height:64px;object-fit:contain;border-radius:8px">
+          {% if logo_url %}<img loading="lazy" src="{{ logo_url }}" alt="Logo" style="width:64px;height:64px;object-fit:contain;border-radius:8px">
           {% else %}<i class="fa-solid fa-building"></i>{% endif %}
         </div>
         <div class="doc-label">Company Logo</div>
@@ -589,7 +589,7 @@
       {% set photo_url = (profile.profile_photo if profile and profile.profile_photo else '') %}
       <div class="doc-card {{ 'has-file' if photo_url else '' }}">
         <div class="doc-icon {{ 'has' if photo_url else '' }}">
-          {% if photo_url %}<img src="{{ photo_url }}" alt="Photo" style="width:64px;height:64px;object-fit:cover;border-radius:50%">
+          {% if photo_url %}<img loading="lazy" src="{{ photo_url }}" alt="Photo" style="width:64px;height:64px;object-fit:cover;border-radius:50%">
           {% else %}<i class="fa-solid fa-user-tie"></i>{% endif %}
         </div>
         <div class="doc-label">Profile Photo</div>

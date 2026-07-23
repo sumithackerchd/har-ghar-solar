@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Downloadable Solar Guides | Har Ghar Solar{% endblock %}
+{% block meta_desc %}Download free guides on solar installation, PM Surya Ghar Yojana subsidies, and solar maintenance.{% endblock %}
+
+{% block content %}
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h1 class="display-4 fw-bold">Download Free Solar Guides</h1>
+      <p class="lead text-muted">Everything you need to know, available at your fingertips.</p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+      <!-- Guide 1 -->
+      <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 text-center p-4">
+          <div class="display-1 text-danger mb-3"><i class="bi bi-file-earmark-pdf"></i></div>
+          <h4 class="fw-bold">Ultimate Solar Installation Guide</h4>
+          <p class="text-muted small">Step-by-step process of installing rooftop solar, choosing the right vendor, and avoiding common mistakes.</p>
+          <a href="#" class="btn btn-outline-danger mt-auto" onclick="alert('Download started!')"><i class="bi bi-download"></i> Download PDF</a>
+        </div>
+      </div>
+      <!-- Guide 2 -->
+      <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 text-center p-4">
+          <div class="display-1 text-danger mb-3"><i class="bi bi-file-earmark-pdf"></i></div>
+          <h4 class="fw-bold">PM Surya Ghar Subsidy Manual</h4>
+          <p class="text-muted small">Learn how to register on the national portal, apply for subsidy, and get up to ₹1,08,000 back.</p>
+          <a href="#" class="btn btn-outline-danger mt-auto" onclick="alert('Download started!')"><i class="bi bi-download"></i> Download PDF</a>
+        </div>
+      </div>
+      <!-- Guide 3 -->
+      <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 text-center p-4">
+          <div class="display-1 text-danger mb-3"><i class="bi bi-file-earmark-pdf"></i></div>
+          <h4 class="fw-bold">Solar Maintenance Checklist</h4>
+          <p class="text-muted small">Keep your solar panels running at peak efficiency with our detailed maintenance and cleaning checklist.</p>
+          <a href="#" class="btn btn-outline-danger mt-auto" onclick="alert('Download started!')"><i class="bi bi-download"></i> Download PDF</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

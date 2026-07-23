@@ -1,0 +1,21 @@
+{
+  "name": "Har Ghar Solar",
+  "short_name": "Har Ghar Solar",
+  "description": "Rooftop solar installation and PM Surya Ghar Yojana information platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#005B38",
+  "icons": [
+    {
+      "src": "/static/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

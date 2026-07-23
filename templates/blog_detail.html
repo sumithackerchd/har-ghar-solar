@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}{{ blog.meta_title }}{% endblock %}
+{% block meta_desc %}{{ blog.meta_desc }}{% endblock %}
+
+{% block extra_head %}
+{% if blog.schema_markup %}
+<script type="application/ld+json">
+{{ blog.schema_markup | safe }}
+</script>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/" class="text-success text-decoration-none">Home</a></li>
+            <li class="breadcrumb-item"><a href="/blog" class="text-success text-decoration-none">Blog</a></li>
+            <li class="breadcrumb-item"><a href="/blog/category/{{ blog.category|urlencode }}" class="text-success text-decoration-none">{{ blog.category }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ blog.title[:30] }}...</li>
+          </ol>
+        </nav>
+
+        <!-- Article Header -->
+        <div class="text-center mb-5">
+          <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill mb-3">{{ blog.category }}</span>
+          <h1 class="display-5 fw-bold mb-4">{{ blog.title }}</h1>
+          <div class="d-flex justify-content-center align-items-center gap-4 text-muted">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-person-circle fs-5"></i>
+              <span>By {{ blog.author }}</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-calendar3 fs-5"></i>
+              <span>Updated: {{ blog.updated_at[:10] }}</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-clock fs-5"></i>
+              <span>{{ blog.reading_time }} min read</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Featured Image -->
+        <div class="mb-5 rounded-4 overflow-hidden shadow-sm">
+          <img loading="lazy" src="{{ url_for('static', filename=blog.featured_image) }}" alt="{{ blog.title }}" class="img-fluid w-100" style="max-height: 500px; object-fit: cover;">
+        </div>
+
+        <!-- Article Content and Sidebar -->
+        <div class="row">
+          <!-- Main Content -->
+          <div class="col-lg-8 article-content">
+            <!-- AdSense Above Fold -->
+            <div class="mb-4 text-center">
+              <ins class="adsbygoogle"
+                   style="display:block"
+                   data-ad-client="ca-pub-2051033451758355"
+                   data-ad-slot="1234567890"
+                   data-ad-format="auto"
+                   data-full-width-responsive="true"></ins>
+              <script>
+                   (adsbygoogle = window.adsbygoogle || []).push({});
+              </script>
+            </div>
+
+            {{ blog.content | safe }}
+
+            <!-- AdSense Below Content -->
+            <div class="mt-5 text-center">
+              <ins class="adsbygoogle"
+                   style="display:block"
+                   data-ad-client="ca-pub-2051033451758355"
+                   data-ad-slot="0987654321"
+                   data-ad-format="auto"
+                   data-full-width-responsive="true"></ins>
+              <script>
+                   (adsbygoogle = window.adsbygoogle || []).push({});
+              </script>
+            </div>
+
+            <!-- Tags -->
+            <div class="mt-4 pt-4 border-top">
+              <h5 class="fw-bold mb-3">Tags</h5>
+              <div class="d-flex flex-wrap gap-2">
+                {% for tag in blog.tags.split(',') %}
+                <a href="/blog/tag/{{ tag.strip()|urlencode }}" class="badge bg-light text-dark text-decoration-none p-2 border hover-success">{{ tag.strip() }}</a>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Author Box -->
+            <div class="card border-0 bg-light rounded-4 mt-5">
+              <div class="card-body p-4 d-flex align-items-center gap-4">
+                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                  <i class="bi bi-person fs-3"></i>
+                </div>
+                <div>
+                  <h5 class="fw-bold mb-1">{{ blog.author }}</h5>
+                  <p class="text-muted mb-0">Solar Energy Expert at Har Ghar Solar. Dedicated to helping homeowners transition to renewable energy efficiently.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Article Sidebar -->
+          <div class="col-lg-4 mt-5 mt-lg-0">
+            <!-- Table of Contents Widget -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4 sticky-top" style="top: 100px;">
+              <div class="card-body p-4">
+                <h4 class="h5 fw-bold mb-3">Get a Free Quote</h4>
+                <p class="small text-muted">Ready to switch to solar? Let our experts guide you.</p>
+                <a href="/contact" class="btn btn-success w-100 mb-3">Contact Us Today</a>
+                
+                <hr>
+                
+                <h4 class="h5 fw-bold mb-3 mt-4">Related Articles</h4>
+                <ul class="list-unstyled mb-0">
+                  {% for r in related %}
+                  <li class="mb-3">
+                    <a href="/blog/{{ r.slug }}" class="text-decoration-none text-dark fw-semibold small hover-success d-block">{{ r.title }}</a>
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
